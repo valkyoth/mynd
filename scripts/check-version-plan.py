@@ -22,9 +22,26 @@ REQUIRED = (
 INCREMENTAL_ORDER = ("v0.12.3", "v0.14.0", "v0.14.1", "v0.14.2")
 INCREMENTAL_MARKERS = {
     "v0.12.3": "ordinary hashes are insufficient",
-    "v0.14.0": "StepReport",
+    "v0.14.0": "StepReport<S, C>",
     "v0.14.1": "Yielded",
     "v0.14.2": "generation-bound tokens",
+}
+FACADE_ORDER = (
+    "v0.94.6",
+    "v0.95.0",
+    "v0.95.1",
+    "v0.96.0",
+    "v0.96.1",
+    "v0.97.0",
+    "v0.97.1",
+    "v0.98.0",
+    "v0.98.1",
+    "v0.98.2",
+    "v0.99.6",
+)
+FACADE_MARKERS = {
+    "v0.94.6": "audited candidate baseline",
+    "v0.99.6": "final public API freeze",
 }
 
 
@@ -79,6 +96,21 @@ def main() -> int:
     for version, marker in INCREMENTAL_MARKERS.items():
         if marker not in release_bodies.get(version, ""):
             errors.append(f"{version} is missing incremental marker: {marker}")
+
+    try:
+        facade_positions = [versions.index(version) for version in FACADE_ORDER]
+    except ValueError as error:
+        errors.append(f"facade stabilization handoff is missing: {error}")
+    else:
+        if facade_positions != sorted(facade_positions):
+            errors.append("facade stabilization handoffs are out of dependency order")
+
+    for version, marker in FACADE_MARKERS.items():
+        if marker not in release_bodies.get(version, ""):
+            errors.append(f"{version} is missing facade marker: {marker}")
+
+    if "full public facade freezes only after v0.94.6" in text:
+        errors.append("v0.94.6 must remain a facade candidate, not the final freeze")
 
     for version, body_lines in releases:
         positions: list[int] = []
