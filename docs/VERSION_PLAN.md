@@ -307,6 +307,23 @@ independent workspaces, parent-backed budget grants, disjoint destination
 regions, and exclusive scratch. Registries and reusable color transforms are
 immutable and reentrant where claimed.
 
+## Incremental contract sequencing invariants
+
+The incremental contracts have a strict dependency order that release
+renumbering must not weaken:
+
+| Version | Prerequisite established |
+| --- | --- |
+| 0.12.3 | Source/session identity uses retained state or strong identity and defines mutable-source consistency. |
+| 0.14.0 | Every return uses one `StepReport` accounting and commit envelope. |
+| 0.14.1 | Resumable `Yielded` is distinct from terminal exhaustion and cancellation. |
+| 0.14.2 | Commit modes integrate every `StepReport` state with planned staging and generation-bound tokens. |
+
+Physical incremental commit modes cannot move back to 0.12.4 or any release
+before `Yielded` exists. Planning may define generic scratch and binding
+primitives earlier, but evidence for commits on every incremental outcome
+belongs exclusively to 0.14.2.
+
 ## Metadata and selective decoding contract
 
 Container milestones initially preserve bounded raw Exif, ICC, and XMP

@@ -19,6 +19,13 @@ REQUIRED = (
     "Verification:",
     "Exit criteria:",
 )
+INCREMENTAL_ORDER = ("v0.12.3", "v0.14.0", "v0.14.1", "v0.14.2")
+INCREMENTAL_MARKERS = {
+    "v0.12.3": "ordinary hashes are insufficient",
+    "v0.14.0": "StepReport",
+    "v0.14.1": "Yielded",
+    "v0.14.2": "generation-bound tokens",
+}
 
 
 def main() -> int:
@@ -56,6 +63,22 @@ def main() -> int:
     detailed_0x = {version[1:] for version in versions if version.startswith("v0.")}
     if summary_versions != detailed_0x:
         errors.append("0.x summary and detailed milestone versions differ")
+
+    if "v0.12.4" in versions:
+        errors.append("v0.12.4 must not own incremental decode commit modes")
+
+    try:
+        incremental_positions = [versions.index(version) for version in INCREMENTAL_ORDER]
+    except ValueError as error:
+        errors.append(f"incremental contract handoff is missing: {error}")
+    else:
+        if incremental_positions != sorted(incremental_positions):
+            errors.append("incremental contract handoffs are out of dependency order")
+
+    release_bodies = {version: "\n".join(body) for version, body in releases}
+    for version, marker in INCREMENTAL_MARKERS.items():
+        if marker not in release_bodies.get(version, ""):
+            errors.append(f"{version} is missing incremental marker: {marker}")
 
     for version, body_lines in releases:
         positions: list[int] = []
