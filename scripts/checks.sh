@@ -3,7 +3,9 @@ set -eu
 
 cargo fmt --all --check
 scripts/check_shell_syntax.sh
+scripts/check-readmes.sh
 scripts/check_doc_links.sh
+python3 scripts/check-version-plan.py
 scripts/validate-modularity-policy.sh check
 scripts/validate-security-policy.sh
 python3 scripts/check-runtime-dependencies.py
