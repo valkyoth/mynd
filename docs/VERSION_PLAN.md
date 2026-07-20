@@ -162,6 +162,14 @@ covers source replacement, source-over, straight/premultiplied conversion,
 exact integer rounding, zero alpha, and format-specific blend/disposal mapping;
 the later Porter-Duff release adds the remaining operators.
 
+Elementary floating-point math is an explicit `no_std` backend contract. The
+plan records which powers, roots, and related operations exist in pure `core`,
+which use deterministic software approximations, and which require an optional
+libm-style adapter. Domain reduction, exceptional inputs, maximum error,
+rounding, FMA policy, and backend selection are visible in conformance claims.
+Callers may select the deterministic software backend where supported; a
+backend change can never silently retain stronger evidence.
+
 Safe validated byte views and naturally typed caller buffers are the baseline;
 forbid(unsafe_code) rules out arbitrary byte-to-pixel casts. Future unsafe SIMD,
 reinterpretation, or arena support belongs in a tiny optional independently
@@ -210,9 +218,13 @@ caller-buffer execution, and optional fallible-owned convenience.
 
 Planning negotiates explicit source capabilities (ForwardOnly, Seek, ReadAt,
 KnownLength) and sink capabilities (ForwardOnly, Seek, WriteAt, Transactional).
-Missing capabilities return RequiresCapability before output changes. TIFF
-encoding may select offset planning, seeking, or a bounded two-pass strategy;
-a forward sink never promises rollback of already emitted bytes.
+Missing capabilities return RequiresCapability before output changes. Every
+encoder returns an EncodeLayoutPlan: ExactLength, BoundedLength with a maximum,
+CountingPassRequired, SeekOrWriteAtRequired, or BufferedRegionRequired. It also
+defines commit/recovery boundaries. A counting pass and emission pass bind the
+same configuration, metadata decisions, and source pixels. BMP sizes, PNG
+chunks, WebP RIFF lengths, TIFF offsets, metadata insertion, and transcoders use
+this common contract; a forward sink never promises rollback of emitted bytes.
 
 Execution follows Probe -> InspectHeader -> Plan -> BindWorkspace -> Execute ->
 Done/Error. Done and Error are sticky. A post-terminal step returns a
@@ -222,6 +234,12 @@ consumption/production, expose only committed output, and retain no borrow
 beyond the call unless encoded by a lifetime. Compatibility warnings cannot
 repair an Error. Done requires the format's terminator and trailing-data policy.
 Animations and indefinite streams may refine plans only within original limits.
+Each step also receives a caller-controlled work grant or maximum execution
+quantum. Entropy loops, ICC CLUTs, resampling taps, animation composition, and
+encoder searches expose deterministic cancellation checkpoints. Quantum
+exhaustion reveals no output beyond a commit boundary and resumes without
+repeating or skipping semantic work, bounding cancellation latency even for
+large valid inputs.
 
 Codec output has two explicit tiers:
 
@@ -233,6 +251,14 @@ Codec output has two explicit tiers:
 Native codec conformance and rendered-color conformance are evidenced
 separately so entropy/container failures cannot be confused with conversion
 failures.
+
+Before foundation candidate review, public types receive an explicit
+reentrancy and auto-trait contract. Decoder, encoder, plan, workspace, budget,
+view, registry, and transform types state intended `Send`/`Sync` behavior;
+compile-time assertions enforce it. Plans may execute concurrently only with
+independent workspaces, parent-backed budget grants, disjoint destination
+regions, and exclusive scratch. Registries and reusable color transforms are
+immutable and reentrant where claimed.
 
 ## Metadata and selective decoding contract
 
@@ -264,6 +290,10 @@ scale-during-decode. Support is format-specific and claimed only when its later
 - Resize and interpolation declare their color domain. Production defaults
   account for linear-light filtering, premultiplication before filtering alpha,
   zero/near-zero unpremultiplication, and gamut handling after interpolation.
+- Streaming and tiled filters declare halo regions for every plane and prove
+  seam equivalence. Lanczos, bicubic, affine borders, chroma planes, and
+  premultiplied-alpha filtering match whole-image, scanline-band, and disjoint
+  tile execution within the declared numeric tier.
 - Pull streaming is used only where valid; affine, vertical, and animation
   operations disclose cache, random-access, or snapshot requirements.
 - Scalar algorithms are authoritative. SIMD/GPU adapters are optional and
@@ -325,7 +355,9 @@ mynd-metadata, mynd-icc, mynd-ifd, mynd-exif, mynd-color, mynd-codec, one
 mynd-format crate per family, mynd-processing, and mynd. mynd-deflate is shared
 only where the bitstream is RFC 1951; GIF/TIFF LZW remain separate. mynd-ifd
 owns bounded graph/value mechanics while TIFF and Exif own their schemas.
-Optional outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
+mynd-math owns deterministic elementary approximations; any external libm
+integration is optional and cannot enter the core dependency graph. Optional
+outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 
 ## Milestone summary
 
@@ -340,6 +372,7 @@ Optional outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.5.2 | Shared color and blending specification ledger | Pinned ICC, sRGB, BT.601/709/2020, H.273, HDR, CIE, Porter-Duff, and blend sources with claim scope |
 | 0.5.3 | Scalar transfer, matrix/range, and alpha foundation | Integer/scalar reference vectors, premultiplication, range conversion, rounding, and native-sample preservation |
 | 0.5.4 | Minimal scalar animation composition kernel | Source/source-over, straight/premultiplied conversion, exact integer rounding, zero alpha, and format mapping |
+| 0.5.5 | Explicit no_std elementary-math backend | Pure-core/software/optional backend selection, domains, maximum error, FMA policy, and cross-target vectors |
 | 0.6.0 | Immutable/mutable image and plane views | Short-buffer, row-boundary, alias-policy, and Miri tests |
 | 0.7.0 | Frames, timing, canvas, disposal, blend, and frame rectangles | Off-canvas and cumulative-duration tests |
 | 0.8.0 | Allocation-free structured errors, warnings, reports, and offsets | Bounded formatting and terminal/log-injection tests |
@@ -348,8 +381,10 @@ Optional outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.11.0 | Slice reader/writer, exact reads, fixed output, checkpoints | Every-byte truncation and rollback tests |
 | 0.12.0 | Endian I/O, subranges, counting, seek/read-at | Nested-bound escape, offset, and seek-cycle tests |
 | 0.12.1 | Source/sink capability negotiation and execution lifecycle | Forward/seek/read-at/known-length and forward/seek/write-at/transactional planning plus sticky terminal-state tests |
+| 0.12.2 | General encoder sizing and commit planning | Exact/bounded/counting/seek/buffer plans, two-pass identity, recoverability, and pre-mutation capability failure |
 | 0.13.0 | MSB/LSB bit readers and writers | Every-bit truncation, width, refill, and shift proofs |
 | 0.14.0 | Incremental decoder/encoder progress contracts | Chunk-boundary equivalence and zero-progress rejection |
+| 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded per-step work, deterministic checkpoints/resume, committed-prefix safety, and worst-case latency tests |
 | 0.15.0 | Metadata envelopes and bounded Exif/ICC/XMP header transport | Offset/count validation without full metadata interpretation |
 | 0.15.1 | Bounded ICC v2/v4 structural parser | Tag counts/sizes/offsets/overlap, curves, LUT dimensions, recursion, opaque preservation, and fuzzing |
 | 0.15.2 | ICC matrix/TRC and chromatic-adaptation engine | Parametric curves, PCS conversion, adaptation, rendering intent, deterministic scalar vectors, and limits |
@@ -359,6 +394,7 @@ Optional outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.16.0 | Format IDs, media types, bounded probing, static registry | Collision, ambiguity, polyglot, and disabled-feature tests |
 | 0.17.0 | Fallible owned storage and std::io adapters | Allocation-failure, interrupted-I/O, and feature-matrix tests |
 | 0.18.0 | Foundation candidate review and representative-codec readiness | External design review, dummy lifecycle exercise, no-default/32-bit/WASM matrix, and documented evolvability |
+| 0.18.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests |
 | 0.19.0 | Common codec crate template and decode-plan contract | A dummy codec proves limit, scratch, progress, and rollback invariants |
 | 0.20.0 | BMP probe, file header, OS/2 and Windows DIB dispatch | Header-size confusion and offset corpus |
 | 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | 1/4/8/16/24/32-bit golden and truncation tests |
@@ -969,6 +1005,60 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.5.4 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.5.5 - Explicit no_std elementary-math backend
+
+Status: Planned.
+
+Context:
+
+This is the exclusive foundations handoff for explicit no_std elementary-math backend. Its API
+and attack-surface delta must be implemented, tested, reviewed, and pentested
+independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete explicit no_std elementary-math backend with bounded behavior, explicit claims, and
+evidence sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Explicit no_std elementary-math backend.
+- Define contracts, invariants, limits, capabilities, terminal states, errors,
+  output commits, compatibility, native/rendered behavior, and unsupported cases.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Specify powers, roots, and every elementary operation needed by ICC curves, transfer functions, Lab, HDR, and resampling.
+- Define domain reduction, exceptional inputs, maximum error, rounding, FMA use, and reproducible backend selection on WASM and targets without hardware floating point.
+- Offer a deterministic software backend where supported; selecting another backend changes the recorded conformance evidence explicitly.
+- Update changelog, notes, crate versions, packages, SBOM, and exact-version
+  pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Pure-core/software/optional backend selection, domains, maximum error, FMA policy, and cross-target vectors.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; capabilities, output tier, limitations,
+  numeric tolerance, metadata effects, and compatibility are explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the new surface and inherited invariants; all critical/high
+  findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.5.5 implementation stop reached. Run pentest for this exact commit.`
+
 ### v0.6.0 - Immutable/mutable image and plane views
 
 Status: Planned.
@@ -1387,6 +1477,60 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.12.1 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.12.2 - General encoder sizing and commit planning
+
+Status: Planned.
+
+Context:
+
+This is the exclusive foundations handoff for general encoder sizing and commit planning. Its API
+and attack-surface delta must be implemented, tested, reviewed, and pentested
+independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete general encoder sizing and commit planning with bounded behavior, explicit claims, and
+evidence sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: General encoder sizing and commit planning.
+- Define contracts, invariants, limits, capabilities, terminal states, errors,
+  output commits, compatibility, native/rendered behavior, and unsupported cases.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Define EncodeLayoutPlan variants ExactLength, BoundedLength { maximum }, CountingPassRequired, SeekOrWriteAtRequired, and BufferedRegionRequired.
+- Bind counting and emission passes to identical configuration, metadata policy, source pixels, numeric backend, and deterministic decisions.
+- Report unavailable sink capabilities before output mutation and define commit boundaries plus recoverability for forward-only sinks.
+- Update changelog, notes, crate versions, packages, SBOM, and exact-version
+  pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Exact/bounded/counting/seek/buffer plans, two-pass identity, recoverability, and pre-mutation capability failure.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; capabilities, output tier, limitations,
+  numeric tolerance, metadata effects, and compatibility are explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the new surface and inherited invariants; all critical/high
+  findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.12.2 implementation stop reached. Run pentest for this exact commit.`
+
 ### v0.13.0 - MSB/LSB bit readers and writers
 
 Status: Planned.
@@ -1492,6 +1636,60 @@ Exit criteria:
 - CI and CodeQL default setup are green, the permanent report records PASS, and
   the version release gate accepts the exact reviewed commit.
 - `v0.14.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.14.1 - Cooperative execution quantum and cancellation latency
+
+Status: Planned.
+
+Context:
+
+This is the exclusive foundations handoff for cooperative execution quantum and cancellation latency. Its API
+and attack-surface delta must be implemented, tested, reviewed, and pentested
+independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete cooperative execution quantum and cancellation latency with bounded behavior, explicit claims, and
+evidence sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Cooperative execution quantum and cancellation latency.
+- Define contracts, invariants, limits, capabilities, terminal states, errors,
+  output commits, compatibility, native/rendered behavior, and unsupported cases.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Require a caller-supplied work grant or maximum quantum for every incremental call.
+- Place deterministic checkpoints in entropy loops, ICC CLUT execution, resampling taps, animation composition, and encoder searches.
+- Quantum exhaustion exposes only committed output, preserves sticky lifecycle invariants, and resumes without repeating or skipping semantic work.
+- Update changelog, notes, crate versions, packages, SBOM, and exact-version
+  pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Bounded per-step work, deterministic checkpoints/resume, committed-prefix safety, and worst-case latency tests.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; capabilities, output tier, limitations,
+  numeric tolerance, metadata effects, and compatibility are explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the new surface and inherited invariants; all critical/high
+  findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.14.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.15.0 - Metadata envelopes and bounded Exif/ICC/XMP header transport
 
@@ -1962,6 +2160,60 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.18.0 implementation stop reached. Run pentest for this exact commit.`
 
+
+### v0.18.1 - Reentrancy, concurrency, and auto-trait contract
+
+Status: Planned.
+
+Context:
+
+This is the exclusive foundations handoff for reentrancy, concurrency, and auto-trait contract. Its API
+and attack-surface delta must be implemented, tested, reviewed, and pentested
+independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete reentrancy, concurrency, and auto-trait contract with bounded behavior, explicit claims, and
+evidence sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Reentrancy, concurrency, and auto-trait contract.
+- Define contracts, invariants, limits, capabilities, terminal states, errors,
+  output commits, compatibility, native/rendered behavior, and unsupported cases.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- State intended Send/Sync behavior for decoders, encoders, plans, workspaces, budgets, views, registries, and color transforms with compile-time assertions.
+- Permit one plan to execute concurrently only with independent typed workspaces, parent-backed child grants, disjoint destinations, and exclusive scratch.
+- Document which states may move between threads and require reusable registries/transforms to be immutable and reentrant where claimed.
+- Update changelog, notes, crate versions, packages, SBOM, and exact-version
+  pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; capabilities, output tier, limitations,
+  numeric tolerance, metadata effects, and compatibility are explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the new surface and inherited invariants; all critical/high
+  findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.18.1 implementation stop reached. Run pentest for this exact commit.`
 
 ## Phase: Simple and lossless codecs
 
@@ -7842,6 +8094,9 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Define per-plane halo requirements and prove seam equivalence for Lanczos,
+  bicubic, affine borders, chroma planes, and premultiplied-alpha filtering
+  across whole-image, scanline-band, and independently scheduled tile runs.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 

@@ -43,8 +43,8 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 165:
-        errors.append(f"expected 165 release handoffs, found {len(versions)}")
+    if len(versions) != 169:
+        errors.append(f"expected 169 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 
