@@ -66,6 +66,32 @@ PRE_1_FARBFELD_MARKERS = {
     "v1.0.0-rc.1": "production image-format matrix with farbfeld decode and encode",
     "v1.0.0": "promoted support matrix still includes the exact audited farbfeld",
 }
+BMP_ORDER = (
+    "v0.20.0",
+    "v0.20.1",
+    "v0.20.2",
+    "v0.20.3",
+    "v0.21.0",
+    "v0.22.0",
+    "v0.23.0",
+    "v0.24.0",
+    "v0.25.0",
+    "v0.25.1",
+    "v0.25.2",
+)
+BMP_MARKERS = {
+    "v0.20.0": "machine-readable cross-product",
+    "v0.20.1": "RGBTRIPLE",
+    "v0.20.2": "40/108/124-byte dispatch",
+    "v0.20.3": "BA/IC/CI/PT/CP",
+    "v0.21.0": "Per-header depth/palette/stride/orientation matrix",
+    "v0.22.0": "BI_ALPHABITFIELDS decision",
+    "v0.23.0": "compressed top-down rejection",
+    "v0.24.0": "Calibrated/sRGB/profile/intent revision matrix",
+    "v0.25.0": "Per-dialect encoder capability matrix",
+    "v0.25.1": "Header/depth encoder matrix",
+    "v0.25.2": "no wildcard, nearest-version, or fallback claims",
+}
 
 
 def main() -> int:
@@ -90,8 +116,8 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 173:
-        errors.append(f"expected 173 release handoffs, found {len(versions)}")
+    if len(versions) != 176:
+        errors.append(f"expected 176 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 
@@ -148,6 +174,19 @@ def main() -> int:
         normalized_body = " ".join(release_bodies.get(version, "").split())
         if marker not in normalized_body:
             errors.append(f"{version} is missing pre-1.0 farbfeld marker: {marker}")
+
+    try:
+        bmp_positions = [versions.index(version) for version in BMP_ORDER]
+    except ValueError as error:
+        errors.append(f"BMP dialect handoff is missing: {error}")
+    else:
+        if bmp_positions != sorted(bmp_positions):
+            errors.append("BMP dialect handoffs are out of dependency order")
+
+    for version, marker in BMP_MARKERS.items():
+        normalized_body = " ".join(release_bodies.get(version, "").split())
+        if marker not in normalized_body:
+            errors.append(f"{version} is missing BMP dialect marker: {marker}")
 
     if "full public facade freezes only after v0.94.6" in text:
         errors.append("v0.94.6 must remain a facade candidate, not the final freeze")

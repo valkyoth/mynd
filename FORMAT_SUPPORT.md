@@ -5,7 +5,7 @@ tests, specification mapping, conformance evidence, and security review.
 
 | Format | Probe | Structural parse | Decode | Encode | Metadata | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| BMP | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
+| BMP/DIB versioned dialects | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.20.0-v0.25.2`); each header/compression combination is claimed separately |
 | TGA | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
 | GIF87a/89a | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
 | farbfeld | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.34.0`) |

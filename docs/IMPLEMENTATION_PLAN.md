@@ -169,11 +169,21 @@ Security focus: dimension/product overflow, exact input/output length,
 truncation at every header and sample byte, endian correctness, alpha
 preservation, zero dimensions, trailing bytes, and allocation/work limits.
 
-### BMP (0.25-0.45)
+### BMP (normative handoffs v0.20.0-v0.25.2)
 
-Start with file/DIB headers and 24-bit uncompressed bottom-up decoding into a
-caller-provided RGB/BGR view. Add header families, depths, palettes, bitfields,
-top-down images, RLE, bounded profiles, and encoders one release at a time.
+Treat BMP as a versioned dialect family, never one permissive parser. First pin
+the source and support matrix, file-envelope policy, and exact header-size
+dispatch. Then handle the 12-byte core family, Windows 40-byte
+`BITMAPINFOHEADER`, 108-byte `BITMAPV4HEADER`, 124-byte `BITMAPV5HEADER`,
+de-facto 52/56-byte compatibility headers only after provenance review, and
+each admitted OS/2 2.x header revision in the dedicated OS/2 handoff. Unknown
+sizes do not inherit the nearest known layout.
+
+After structural dispatch is fixed, add BI_RGB depths and palettes, bitfields
+and alpha masks, top-down rules, RLE4/RLE8, V4/V5 color/profile behavior, and
+encoders one bounded release at a time. OS/2 Huffman 1D, RLE24, bitmap arrays,
+icons/pointers, and embedded BI_JPEG/BI_PNG receive explicit supported or
+unsupported decisions; no broad “BMP supported” label hides those branches.
 
 Security focus: header-size confusion, pixel offsets, signed height minimum,
 row padding, palette underflow, mask overlap, RLE escapes/deltas, embedded

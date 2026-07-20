@@ -9,7 +9,7 @@ metadata and links, not copyrighted standards text.
 
 | Family | Primary source | Edition/status | Repository status |
 | --- | --- | --- | --- |
-| BMP/DIB | [Microsoft Bitmap Storage](https://learn.microsoft.com/en-us/windows/win32/gdi/bitmap-storage), structure pages, and applicable Microsoft Open Specifications | Living Microsoft documentation; exact page revisions captured per milestone | Approved public source; clause map pending |
+| BMP/DIB | Microsoft [Bitmap Storage](https://learn.microsoft.com/en-us/windows/win32/gdi/bitmap-storage), [Bitmap Header Types](https://learn.microsoft.com/en-us/windows/win32/gdi/bitmap-header-types), `BITMAPCOREHEADER`, `BITMAPINFOHEADER`, `BITMAPV4HEADER`, `BITMAPV5HEADER`, compression pages, applicable Microsoft Open Specifications, and original IBM OS/2 bitmap documentation for every admitted OS/2 dialect | Living Microsoft GDI/Open Specifications plus exact IBM editions; URLs, revisions, and document hashes captured per dialect milestone | Microsoft sources are approved public anchors; OS/2 variants and de-facto 52/56-byte headers remain blocked until primary-source provenance and an explicit admission decision are recorded |
 | TGA | Truevision TGA File Format Specification 2.0, Technical Manual 2.2, January 1991 | Original publisher manual; surviving copies are mirrors | Provenance-sensitive; implementation blocked until a local copy is hashed and reviewed |
 | GIF87a | CompuServe Graphics Interchange Format 87a | Original 1987 specification | Source copy and hash required before GIF work |
 | GIF89a | [CompuServe GIF89a specification hosted by W3C](https://www.w3.org/Graphics/GIF/spec-gif89a.txt) | 31 July 1990; extends GIF87a | Approved public anchor; local evidence hash required before GIF work |

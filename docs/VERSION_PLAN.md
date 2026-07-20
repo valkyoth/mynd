@@ -73,7 +73,7 @@ are pinned when implementation begins.
 | WebP | [RFC 9649](https://www.rfc-editor.org/info/rfc9649/), [RFC 6386](https://www.rfc-editor.org/rfc/rfc6386.html), [VP8L](https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification) | VP8, VP8L, ALPH, VP8X, animation, metadata, unknown chunks, order |
 | GIF | GIF87a and [GIF89a](https://www.w3.org/Graphics/GIF/spec-gif89a.txt) | Normative blocks versus Netscape/de facto extensions |
 | TIFF | TIFF 6.0, Technical Notes, corrected JPEG-in-TIFF rules | Strips, tiles, planes, pages, compression, predictors, JPEG variants, color, ICC, tags; BigTIFF is separate |
-| BMP | Microsoft DIB documentation for every admitted OS/2 and Windows family | Dialects, masks, RLE, V4/V5 color, embedded profiles, inert linked paths |
+| BMP | Microsoft GDI and Open Specifications for the core/INFO/V4/V5 families, original IBM documentation for every admitted OS/2 family, and pinned primary provenance for compatibility headers | Exact header sizes, envelopes, palettes, masks, RLE, V4/V5 color, embedded profiles, inert linked paths, and explicit unsupported dialects |
 | Netpbm | [PBM/PGM/PPM](https://netpbm.sourceforge.net/doc/pnm.html) and PAM documents | Plain/raw syntax, comments, concatenation, MAXVAL, 16-bit, PAM inclusion |
 | QOI | Author's [QOI specification](https://phoboslab.org/log/2021/12/qoi-specification) | Pixel termination, marker, wraparound, hints, trailing data |
 | farbfeld | [suckless definition](https://tools.suckless.org/farbfeld/) | RGBA16-BE, unassociated alpha, exact length, trailing data |
@@ -81,8 +81,10 @@ are pinned when implementation begins.
 
 ## Format-profile decisions visible in release gates
 
-- BMP gates decide BI_JPEG/BI_PNG embedded payloads and every admitted OS/2
-  variant, including RLE24 and Huffman 1D, while linked profiles remain inert.
+- BMP gates separately decide every header/compression combination, including
+  BI_JPEG/BI_PNG embedded payloads, de-facto 52/56-byte headers, and every
+  documented OS/2 variant including RLE24 and Huffman 1D; linked profiles
+  remain inert.
 - GIF gates name Comment, Plain Text, Application, and unknown extensions and
   decide missing EOI/trailer, extra pixels, zero delay, and reserved disposal.
 - JPEG gates cover DNL, DAC, restart reset, abbreviated tables, multiscan
@@ -97,6 +99,43 @@ are pinned when implementation begins.
   and overlapping strip/tile policy. BigTIFF stays separate.
 - Netpbm gates define the exact header-to-raw-raster boundary, concatenated
   images, trailing material, and unknown PAM tuple policy.
+
+## BMP dialect admission contract
+
+BMP is a family of file envelopes, DIB header revisions, palette layouts,
+compression modes, and color/profile extensions. Support is never inferred
+from a `BM` signature or a header that is merely large enough. The first DWORD
+of the DIB header selects an exact, allow-listed layout; unknown, truncated,
+oversized, or internally inconsistent sizes fail closed without falling back
+to a shorter structure.
+
+| Version | Dialect responsibility |
+| --- | --- |
+| 0.20.0 | Pin the Microsoft and IBM sources, define `.bmp` versus bare-DIB entry points, validate the 14-byte file envelope, and freeze the header/compression/depth support matrix. |
+| 0.20.1 | Parse the 12-byte core family with unsigned dimensions, planes=1, allowed depths, and three-byte `RGBTRIPLE` palette entries. |
+| 0.20.2 | Parse Windows 40-byte `BITMAPINFOHEADER`, 108-byte `BITMAPV4HEADER`, and 124-byte `BITMAPV5HEADER`; admit 52/56-byte V2/V3 compatibility headers only from pinned primary provenance. |
+| 0.20.3 | Parse each admitted IBM OS/2 2.x extended header revision and record explicit decisions for bitmap arrays and icon/pointer signatures. |
+| 0.21.0 | Decode each admitted header/depth/palette BI_RGB combination with dialect-correct row and orientation rules. |
+| 0.22.0 | Decode version-correct external versus inline RGB/alpha masks and reject invalid overlap, width, placement, or compression combinations. |
+| 0.23.0 | Decode only admitted RLE4/RLE8 combinations, with compressed top-down forms rejected. |
+| 0.24.0 | Interpret V4/V5 calibrated color, rendering intent, embedded-profile ranges, and inert linked-profile data without external I/O. |
+| 0.25.0-0.25.1 | Emit only explicitly selected canonical dialects; every encoder declares its header, masks, palette, orientation, compression, and profile policy. |
+| 0.25.2 | Audit the complete cross-product and publish supported, unsupported, and rejected combinations, including OS/2 Huffman 1D/RLE24 and BI_JPEG/BI_PNG decisions. |
+
+The pre-1.0 file API admits standalone `BM` bitmap files. Bare packed DIBs use
+a distinct API because they lack `BITMAPFILEHEADER`. OS/2 bitmap arrays and
+icon/pointer signatures (`BA`, `IC`, `CI`, `PT`, and `CP`) remain unsupported
+unless v0.20.3 explicitly admits their container semantics. A shared numeric
+compression value is interpreted only inside its admitted header family;
+Windows, OS/2, and de-facto extensions never borrow one another's semantics.
+
+The dialect matrix keys every claim by file envelope, DIB header name and exact
+size, dimensions/planes/depth, palette entry width, mask placement,
+compression, orientation, color/profile fields, decode tier, and encode tier.
+Each cell links to a primary source, implementation module, positive and
+negative fixtures, truncation cases, differential evidence, and a final
+Supported or Unsupported decision. “Unknown BMP version” is always Unsupported,
+never a best-effort parse.
 
 ## Fail-closed architecture
 
@@ -543,14 +582,17 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.17.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests |
 | 0.18.0 | Foundation candidate review and representative-codec readiness | External design review, dummy lifecycle exercise, no-default/32-bit/WASM matrix, and documented evolvability |
 | 0.19.0 | Common codec crate template and decode-plan contract | A dummy codec proves limit, scratch, progress, and rollback invariants |
-| 0.20.0 | BMP probe, file header, OS/2 and Windows DIB dispatch | Header-size confusion and offset corpus |
-| 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | 1/4/8/16/24/32-bit golden and truncation tests |
-| 0.22.0 | BMP bitfields, alpha masks, top-down rules | Mask overlap/gap/full-width and signed-height tests |
-| 0.23.0 | BMP RLE4/RLE8 | Escape, delta, padding, exact-output, and no-progress fuzzing |
-| 0.24.0 | BMP V4/V5 color declarations and embedded-profile transport | Profile-range, overlap, and linked-profile no-I/O tests |
-| 0.25.0 | BMP deterministic uncompressed encoders | Dialect-specific golden files, exact headers/padding, determinism, and round trips |
+| 0.20.0 | BMP source ledger, file envelope, and dialect-matrix freeze | `.bmp`/bare-DIB separation, exact-size dispatch policy, primary-source provenance, and combination matrix |
+| 0.20.1 | BMP 12-byte core-family headers and RGBTRIPLE palettes | Unsigned dimensions, planes/depth matrix, three-byte palette bounds, offsets, and truncation |
+| 0.20.2 | BMP Windows INFO/V4/V5 and V2/V3 compatibility headers | Exact 40/108/124-byte dispatch, 52/56-byte provenance gate, field-boundary corpus, and no fallback |
+| 0.20.3 | BMP OS/2 2.x extended headers and container decision | IBM-source revision matrix, palette/layout differences, compression namespace, and BA/IC/CI/PT/CP policy |
+| 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | Per-header depth/palette/stride/orientation matrix, 1/4/8/16/24/32-bit goldens, and truncation tests |
+| 0.22.0 | BMP bitfields, alpha masks, top-down rules | External/inline mask placement, BI_ALPHABITFIELDS decision, overlap/gap/full-width, and signed-height tests |
+| 0.23.0 | BMP RLE4/RLE8 | Header/depth admission, bottom-up enforcement, escape/delta/padding/exact-output, and no-progress fuzzing |
+| 0.24.0 | BMP V4/V5 color declarations and embedded-profile transport | Calibrated/sRGB/profile/intent matrix, range/overlap validation, and linked-profile no-I/O tests |
+| 0.25.0 | BMP deterministic uncompressed encoders | Explicit output-dialect policy, exact headers/masks/palettes/padding, determinism, and round trips |
 | 0.25.1 | BMP deterministic RLE4/RLE8 encoders | Escape/padding/delta policy, deterministic packets, bounded work, and decode/encode round trips |
-| 0.25.2 | Complete declared BMP dialect audit | BI_RGB/bitfield/RLE encoders, OS/2 decisions, embedded BI_JPEG/BI_PNG policy, differential, corpus, and fuzz review |
+| 0.25.2 | Complete declared BMP dialect audit | Exhaustive envelope/header/depth/palette/mask/compression/orientation/profile matrix, OS/2 legacy decisions, embedded payload policy, and external review |
 | 0.26.0 | QOI structural parse and bounded decoder | Pixel count, wraparound, end-marker, trailing-data tests |
 | 0.27.0 | QOI deterministic encoder | Reference-vector and encode/decode conformance |
 | 0.28.0 | Bounded Netpbm tokenizer | Comment, whitespace, decimal overflow, token-length fuzzing |
@@ -2626,37 +2668,56 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.19.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.20.0 - BMP probe, file header, OS/2 and Windows DIB dispatch
+### v0.20.0 - BMP source ledger, file envelope, and dialect-matrix freeze
 
 Status: Planned.
 
 Context:
 
 This is the exclusive simple and lossless codecs handoff for
-bmp probe, file header, os/2 and windows dib dispatch. Its API and attack-surface delta must be implemented,
+bmp source provenance, file-envelope validation, and the dialect-matrix freeze.
+No dialect parser or pixel decoder may begin until this release defines exact
+entry points and combinations. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
 
-Complete bmp probe, file header, os/2 and windows dib dispatch with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete the BMP source ledger, file envelope, and dialect-matrix freeze with
+bounded behavior, explicit claims, and evidence sufficient for an exact-commit
+security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: BMP probe, file header, OS/2 and Windows DIB dispatch.
+- Complete only the release-scoped capability: BMP source ledger, file envelope, and dialect-matrix freeze.
 - Define contracts, invariants, limits, capabilities, terminal states, errors,
   output commits, compatibility, native/rendered behavior, and unsupported cases.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Pin exact Microsoft GDI/Open Specification revisions, original IBM OS/2
+  sources, and primary provenance for every compatibility header before its
+  admission; source uncertainty is Unsupported, not a guessed layout.
+- Separate standalone `.bmp` files from bare packed DIBs. Validate the 14-byte
+  `BITMAPFILEHEADER`, reserved fields, declared file size, pixel offset, DIB
+  start, intervening masks/palette/profile regions, and actual source bounds
+  without trusting redundant size fields.
+- Freeze a machine-readable cross-product keyed by envelope, exact DIB header
+  size/name, dimensions, planes, depth, palette width, mask placement,
+  compression, orientation, profile behavior, and decode/encode tier. Every
+  cell is Supported or Unsupported and links to planned evidence.
+- Recognize only allow-listed header sizes. Unknown, truncated, oversized, or
+  inconsistent headers fail before allocation/output and never fall back to a
+  shorter known structure.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Header-size confusion and offset corpus.
+- Required release evidence: `.bmp`/bare-DIB separation, exact-size dispatch
+  policy, primary-source ledger, complete dialect cross-product, header-size
+  confusion and offset corpus, and fail-closed unknown-size tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2668,6 +2729,8 @@ Verification:
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
+- No BMP parser milestone starts until the source ledger and dialect matrix
+  contain no implicit, inherited, or “best effort” support cell.
 - Claims link to passing evidence; capabilities, output tier, limitations,
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
@@ -2677,6 +2740,198 @@ Exit criteria:
 - CI and CodeQL default setup are green, the permanent report records PASS, and
   the version release gate accepts the exact reviewed commit.
 - `v0.20.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.20.1 - BMP 12-byte core-family headers and RGBTRIPLE palettes
+
+Status: Planned.
+
+Context:
+
+This is the exclusive simple and lossless codecs handoff for the 12-byte
+`BITMAPCOREHEADER` family shared by early Windows/OS/2-compatible DIBs. It does
+not reuse INFO-family signed-dimension, palette, mask, compression, or profile
+semantics. Later BMP families remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete bounded structural parsing for the 12-byte core family with an exact
+layout, explicit capabilities, and evidence sufficient for an exact-commit
+security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: BMP 12-byte core-family headers and RGBTRIPLE palettes.
+- Parse exact unsigned 16-bit width/height, require planes=1, and accept only
+  the source-admitted 1/4/8/24-bpp core depths; zero or unsupported
+  combinations fail before output planning.
+- Locate and bound three-byte `RGBTRIPLE` palette entries independently from
+  four-byte INFO-family `RGBQUAD` entries. Derive default palette counts with
+  checked shifts and reconcile them with the pixel offset and available bytes.
+- Reject top-down, masks, RLE, color-profile, and extension fields that the core
+  layout cannot represent; trailing bytes never enlarge the header implicitly.
+- Keep Windows/OS/2 provenance ambiguity visible in metadata without inventing
+  distinct semantics where the bytes cannot distinguish them.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, security documentation, changelog, notes, packages, SBOM,
+  and the exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Exact 12-byte dispatch, unsigned-dimension and
+  planes/depth matrices, RGBTRIPLE palette bounds, pixel-offset reconciliation,
+  every-field truncation, and cross-family confusion tests.
+- Add positive and negative fixtures for minimum/maximum dimensions, every
+  admitted depth/palette count, short/overlong palettes, offsets inside headers
+  or palettes, fake extension bytes, and core-versus-INFO reinterpretation.
+- Audit checked arithmetic, offsets, source/session binding, limits, scratch,
+  output planning, terminal transitions, and zero-progress behavior.
+- Run applicable unit, property, truncation, mutation, differential, fuzz,
+  Kani, Miri, sanitizer, stack, code-size, performance, and denial-of-service
+  checks plus repository, dependency, toolchain, feature, platform, and SBOM gates.
+
+Exit criteria:
+
+- The 12-byte core family is structurally complete and no later-header
+  semantics leak into it.
+- Every admitted and rejected combination links to primary-source mapping and
+  passing evidence; unsupported behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers header confusion, palette sizing, offsets, truncation, and
+  inherited invariants; all critical/high findings are fixed and retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.20.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.20.2 - BMP Windows INFO/V4/V5 and V2/V3 compatibility headers
+
+Status: Planned.
+
+Context:
+
+This is the exclusive simple and lossless codecs handoff for Windows-family
+DIB headers. The official 40-byte `BITMAPINFOHEADER`, 108-byte
+`BITMAPV4HEADER`, and 124-byte `BITMAPV5HEADER` are distinct layouts. De-facto
+52/56-byte V2/V3 headers are a separate compatibility claim and are admitted
+only after primary provenance is pinned. Pixel and color execution remain in
+later releases.
+
+Goal:
+
+Complete exact structural dispatch for Windows INFO/V4/V5 and explicitly
+admitted V2/V3 compatibility headers without size fallback or semantic bleed.
+
+Deliverables:
+
+- Complete only the release-scoped capability: BMP Windows INFO/V4/V5 and V2/V3 compatibility headers.
+- Parse the exact 40/108/124-byte layouts with signed dimensions, planes,
+  depths, compression, image size, resolution, palette counts, masks, color
+  space, intent, and profile range fields appropriate to each revision.
+- Treat 52/56-byte headers as named compatibility dialects only if their exact
+  field layouts and provenance are recorded; otherwise return Unsupported.
+- Distinguish masks appended after a 40-byte header from masks stored inside
+  later headers. Never infer alpha from an unused BI_RGB high byte or from
+  bytes belonging to a palette/pixel region.
+- Validate extension-field availability, reserved values, offsets, ranges, and
+  combination legality before allocation/output; parsing V4/V5 fields does not
+  claim their color semantics before v0.24.0.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, security documentation, changelog, notes, packages, SBOM,
+  and the exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Exact 40/108/124-byte dispatch, explicit
+  52/56-byte provenance decision, every-field boundary/truncation corpus,
+  external-versus-inline mask placement, and no-shorter-header fallback.
+- Add fixtures for header sizes one byte below/above every known size, claimed
+  sizes larger than input, extension/pixel overlap, palette/mask ambiguity,
+  signed-height extrema, invalid planes/depth/compression tuples, and profile
+  ranges outside the file.
+- Audit checked arithmetic, offsets, source/session binding, limits, scratch,
+  output planning, terminal transitions, and zero-progress behavior.
+- Run applicable unit, property, truncation, mutation, differential, fuzz,
+  Kani, Miri, sanitizer, stack, code-size, performance, and denial-of-service
+  checks plus repository, dependency, toolchain, feature, platform, and SBOM gates.
+
+Exit criteria:
+
+- Every Windows/compatibility header is either exact-layout Supported or
+  explicitly Unsupported; unknown sizes cannot enter a pixel decoder.
+- Each admitted combination links to primary-source mapping and passing
+  evidence; V4/V5 color/profile execution remains gated on v0.24.0.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers size confusion, mask placement, signed extrema, overlaps, and
+  inherited invariants; all critical/high findings are fixed and retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.20.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.20.3 - BMP OS/2 2.x extended headers and container decision
+
+Status: Planned.
+
+Context:
+
+This is the exclusive simple and lossless codecs handoff for IBM OS/2 2.x
+extended bitmap headers and their surrounding container namespace. Numeric
+fields that resemble Windows values do not inherit Windows semantics. Work is
+blocked until exact original IBM editions and hashes are in the source ledger.
+
+Goal:
+
+Complete source-bound structural parsing and explicit admission decisions for
+each documented OS/2 2.x header revision without guessing undocumented sizes,
+compression meanings, palette layouts, or container behavior.
+
+Deliverables:
+
+- Complete only the release-scoped capability: BMP OS/2 2.x extended headers and container decision.
+- Enumerate each IBM-documented `BITMAPINFOHEADER2` revision and shortened form
+  by exact size and field layout; record Supported or Unsupported independently.
+- Validate OS/2 dimensions, planes, depths, recording/rendering fields,
+  palette-entry width, color encoding, and declared image size using only the
+  pinned revision's semantics.
+- Give the OS/2 compression namespace its own typed dispatch. RLE24 and Huffman
+  1D remain unavailable until their later admission/implementation decision;
+  colliding Windows numeric values cannot select a Windows decoder.
+- Decide standalone `BM` support separately from bitmap-array and icon/pointer
+  signatures `BA`, `IC`, `CI`, `PT`, and `CP`. Unadmitted containers return
+  Unsupported before following offsets or allocating frame tables.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, security documentation, changelog, notes, packages, SBOM,
+  and the exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: IBM-source revision matrix, exact-size dispatch,
+  palette/layout differences, typed compression namespace, and explicit
+  BA/IC/CI/PT/CP admission results.
+- Add fixtures for every admitted revision and signature, cyclic/overlapping
+  array offsets, cross-family numeric collisions, short headers, unknown sizes,
+  palette/pixel overlap, dimensions/planes/depth extrema, and unsupported
+  compression values.
+- Audit checked arithmetic, offsets, source/session binding, limits, scratch,
+  output planning, terminal transitions, and zero-progress behavior.
+- Run applicable unit, property, truncation, mutation, differential, fuzz,
+  Kani, Miri, sanitizer, stack, code-size, performance, and denial-of-service
+  checks plus repository, dependency, toolchain, feature, platform, and SBOM gates.
+
+Exit criteria:
+
+- Every sourced OS/2 2.x header/container form is Supported or Unsupported by
+  exact identity; no numeric or structural behavior is borrowed from Windows.
+- Missing primary documentation, an unresolved signature, or an implicit
+  compression mapping blocks release and all later BMP milestones.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers family confusion, offset graphs, compression dispatch,
+  truncation, and inherited invariants; all critical/high findings are fixed
+  and retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.20.3 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.21.0 - BMP BI_RGB depths, palettes, padding, row orientation
 
@@ -2703,12 +2958,23 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Implement BI_RGB only through the exact dialect table: core-family depths and
+  RGBTRIPLE palettes remain separate from INFO/V4/V5 depths and RGBQUAD
+  palettes; unsupported depth/header pairs fail before output mutation.
+- Compute row bits, DWORD-aligned stride, absolute-height storage, pixel extent,
+  and source/output requirements with checked arithmetic. Reconcile zero or
+  redundant image-size fields without allowing them to shrink required bytes.
+- Permit negative-height top-down storage only for a header/compression pair
+  whose source admits it; reject signed-height minimum and compressed top-down
+  forms without applying absolute value unsafely.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: 1/4/8/16/24/32-bit golden and truncation tests.
+- Required release evidence: Per-header depth/palette/stride/orientation matrix,
+  1/4/8/16/24/32-bit goldens, signed-height extrema, redundant-size mismatch,
+  row-padding, palette-bound, and every-row truncation tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2755,12 +3021,23 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Distinguish three masks appended after a 40-byte INFO header from inline
+  RGB/alpha masks in admitted V2/V3/V4/V5 headers. Mask bytes cannot overlap a
+  palette, profile, or pixel payload and the pixel offset cannot hide a missing
+  mask.
+- Require masks to fit the declared depth, use contiguous bits where mandated,
+  and obey overlap and required-channel rules. An absent alpha mask is not
+  inferred from unused BI_RGB bits.
+- Record an explicit, source-backed `BI_ALPHABITFIELDS`/Windows CE compatibility
+  decision rather than aliasing its numeric value to an OS/2 compression mode.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Mask overlap/gap/full-width and signed-height tests.
+- Required release evidence: External/inline mask-placement matrix,
+  BI_ALPHABITFIELDS decision, absent-alpha behavior, overlap/gap/full-width,
+  pixel-offset confusion, and signed-height tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2807,12 +3084,21 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Admit RLE8 only for sourced 8-bpp header combinations and RLE4 only for
+  sourced 4-bpp combinations. Reject core-family, V4/V5, OS/2, or other pairings
+  unless their exact dialect cell explicitly permits the mode.
+- Require positive bottom-up height, bounded encoded and absolute runs,
+  word-aligned absolute payloads, in-range delta moves, explicit end-of-line and
+  end-of-bitmap handling, exact committed output, and deterministic trailing
+  data policy.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Escape, delta, padding, exact-output, and no-progress fuzzing.
+- Required release evidence: Header/depth admission matrix, compressed top-down
+  rejection, escape/delta/absolute/padding boundaries, early/late terminators,
+  exact-output accounting, and no-progress fuzzing.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2859,12 +3145,21 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Separate calibrated RGB endpoints/gamma, sRGB, system/default space,
+  rendering intent, embedded profile, and linked profile cases by exact V4/V5
+  revision. Reserved and incompatible combinations fail or warn only according
+  to the pinned source policy.
+- Validate profile offsets relative to the correct header origin, checked
+  profile end, pixel/palette/mask overlap, placement rules, and declared size.
+  Linked profile bytes remain inert data and can never trigger file or network I/O.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Profile-range, overlap, and linked-profile no-I/O tests.
+- Required release evidence: Calibrated/sRGB/profile/intent revision matrix,
+  fixed-point endpoint/gamma validation, profile-origin/range/overlap cases,
+  reserved fields, and linked-profile no-I/O tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2911,12 +3206,20 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Publish an explicit encoder dialect policy. The caller selects an admitted
+  named header revision or a documented canonical default; the encoder never
+  chooses a header from input-controlled padding or preserved unknown bytes.
+- Plan exact file/header/mask/palette/profile/pixel sizes and offsets before
+  emission. Emit only depth, orientation, alpha, color, and metadata
+  combinations supported by that selected revision, with reserved bytes zeroed.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Dialect-specific golden files, exact headers/padding, determinism, and round trips.
+- Required release evidence: Per-dialect encoder capability matrix, canonical
+  default rationale, exact headers/masks/palettes/padding/offsets, reserved-byte
+  normalization, determinism, and same/cross-dialect round trips.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2963,12 +3266,19 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Emit RLE4/RLE8 only for the exact header/depth pairs admitted by v0.23.0;
+  reject top-down orientation and dialects whose compression namespace differs.
+- Define canonical encoded-versus-absolute choice, row termination, final
+  bitmap termination, absolute-run padding, delta policy, and size fields before
+  emission; encoder search spends the caller's work budget.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Escape/padding/delta policy, deterministic packets, bounded work, and decode/encode round trips.
+- Required release evidence: Header/depth encoder matrix, canonical
+  escape/padding/delta/terminator policy, exact size fields, deterministic
+  packets, bounded work, and decode/encode round trips.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3015,12 +3325,26 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Freeze the exhaustive support table across file/bare-DIB envelope, exact
+  header version/size, depth, palette entry width, mask location, compression,
+  orientation, color/profile mode, decode tier, and encode tier. No aggregate
+  BMP claim may exceed the table's cells.
+- Resolve OS/2 Huffman 1D, RLE24, bitmap arrays, icon/pointer forms,
+  BI_ALPHABITFIELDS, CMYK/RLE variants, and embedded BI_JPEG/BI_PNG individually.
+  Any supported choice requires a prior implementation handoff and full
+  evidence; otherwise it is explicitly Unsupported for 1.0.
+- Differential-test each admitted dialect against independent implementations,
+  classify every disagreement, and retain cross-family/polyglot cases that try
+  to reinterpret one header or compression namespace as another.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: BI_RGB/bitfield/RLE encoders, OS/2 decisions, embedded BI_JPEG/BI_PNG policy, differential, corpus, and fuzz review.
+- Required release evidence: Exhaustive dialect cross-product, BI_RGB/bitfield/RLE
+  decode and encoder claims, OS/2 legacy and container decisions,
+  BI_ALPHABITFIELDS/CMYK/embedded-payload policy, differential results, corpus
+  provenance, fuzz coverage, and independent security review.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3032,6 +3356,8 @@ Verification:
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
+- Every known header and compression family is Supported with evidence or
+  explicitly Unsupported; there are no wildcard, nearest-version, or fallback claims.
 - Claims link to passing evidence; capabilities, output tier, limitations,
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
