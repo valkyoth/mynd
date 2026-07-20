@@ -60,6 +60,12 @@ FACADE_MARKERS = {
     "v0.99.6": "verification-only final public API freeze",
 }
 ASSURANCE_ONLY = tuple(f"v0.99.{minor}" for minor in range(6))
+PRE_1_FARBFELD_MARKERS = {
+    "v0.2.0": "reconciled image list and pre-1.0 implementation plan must name farbfeld",
+    "v0.34.0": "farbfeld decode and encode",
+    "v1.0.0-rc.1": "production image-format matrix with farbfeld decode and encode",
+    "v1.0.0": "promoted support matrix still includes the exact audited farbfeld",
+}
 
 
 def main() -> int:
@@ -137,6 +143,11 @@ def main() -> int:
             errors.append(f"{version} is not bound to the v0.98.3 assurance input")
         if "product implementation and public API changes are prohibited" not in normalized_body:
             errors.append(f"{version} does not prohibit post-reconciliation changes")
+
+    for version, marker in PRE_1_FARBFELD_MARKERS.items():
+        normalized_body = " ".join(release_bodies.get(version, "").split())
+        if marker not in normalized_body:
+            errors.append(f"{version} is missing pre-1.0 farbfeld marker: {marker}")
 
     if "full public facade freezes only after v0.94.6" in text:
         errors.append("v0.94.6 must remain a facade candidate, not the final freeze")

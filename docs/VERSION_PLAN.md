@@ -26,6 +26,9 @@ This sequence replaces the former v0.25.0-v0.111.0 roadmap. Pre-1.0 scope now
 contains BMP, QOI, Netpbm, farbfeld, PNG/APNG, GIF, declared classic-JPEG
 profiles, WebP, and declared TIFF 6.0 profiles. TGA and formats not expressly
 admitted below are outside the 1.0 claim.
+farbfeld is a required pre-1.0 codec: its v0.34.0 decode/encode handoff and
+v0.35.0 simple-codec security audit must remain in the production support
+matrix through the 1.0 candidate and byte-for-byte promotion.
 
 Version 0.2.0 is a blocking reconciliation across README.md,
 FORMAT_SUPPORT.md, docs/IMPLEMENTATION_PLAN.md, docs/POST_1_0_CODEC_PLAN.md,
@@ -758,6 +761,9 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - This is blocking: no implementation handoff begins until every old-scope document and crate graph agrees with the normative roadmap.
+- The reconciled image list and pre-1.0 implementation plan must name farbfeld,
+  its dedicated codec boundary, original specification source, and v0.34.0
+  decode/encode handoff explicitly.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
@@ -9778,12 +9784,18 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Freeze the production image-format matrix with farbfeld decode and encode
+  admitted only from the v0.34.0 implementation and v0.35.0 cross-codec audit,
+  including its official source record, exact-length tests, conformance
+  evidence, limitations, and security review.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Pentest and reproduce the exact .crate archives.
+- Required release evidence: Pentest and reproduce the exact .crate archives;
+  the candidate support matrix explicitly retains audited farbfeld decode and
+  encode.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -9830,6 +9842,9 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Verify the byte-for-byte promoted support matrix still includes the exact
+  audited farbfeld decode/encode capability accepted by v1.0.0-rc.1; promotion
+  cannot add, remove, or alter its claims.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 

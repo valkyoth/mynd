@@ -8,6 +8,7 @@ tests, specification mapping, conformance evidence, and security review.
 | BMP | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
 | TGA | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
 | GIF87a/89a | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned |
+| farbfeld | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.34.0`) |
 | PNM, QOI, PNG, JPEG, TIFF, WebP, AVIF, JXL, J2K, JLS, JXR, JXS | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Post-1.0 |
 
 The support vocabulary is: `probe-only`, `structural-parse`,

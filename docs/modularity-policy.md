@@ -5,7 +5,7 @@ The facade must not become the implementation home.
 - `mynd` provides ergonomic feature-gated dispatch and re-exports.
 - Format-neutral types, arithmetic, I/O, metadata, color, processing, and
   quantization live in focused crates.
-- BMP, TGA, GIF, PNG, classic JPEG, and JPEG XL are separate security surfaces.
+- BMP, TGA, GIF, farbfeld, PNG, classic JPEG, and JPEG XL are separate security surfaces.
 - Complex metadata standards become separate crates when implemented.
 - Codecs depend inward on shared crates; shared crates never depend on codecs.
 - All internal dependencies set `default-features = false`.

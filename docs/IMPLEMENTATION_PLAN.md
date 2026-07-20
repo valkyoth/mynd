@@ -20,13 +20,16 @@ Priority order:
 5. performance;
 6. advanced encoding quality.
 
-The initial 1.0 scope is BMP, TGA, and GIF. PNG, classic JPEG, and JPEG XL are
-post-1.0 codec projects. Their future complexity must not destabilize the core.
+The initial 1.0 scope includes BMP, TGA, GIF, and farbfeld. The normative
+release sequence may admit additional formats before 1.0; farbfeld is
+explicitly required and is not a post-1.0 candidate. PNG, classic JPEG, and
+JPEG XL remain governed by `docs/VERSION_PLAN.md`, whose current scope and
+version assignments take precedence over this architectural overview.
 
 ## 2. Architecture
 
 ```text
-mynd-cli -> mynd facade -> mynd-bmp / mynd-tga / mynd-gif
+mynd-cli -> mynd facade -> mynd-bmp / mynd-tga / mynd-gif / mynd-farbfeld
                          -> mynd-codec
                             |-> mynd-core -> mynd-math
                             |-> mynd-io
@@ -154,6 +157,18 @@ bypass, and zero-progress states.
 
 ## 7. Initial codec phases
 
+### farbfeld (pre-1.0; normative handoff v0.34.0)
+
+Implement the fixed 16-byte big-endian header and exact-width RGBA16 big-endian
+pixel stream as a small independent codec crate. Decode and encode use checked
+`width * height * 8` arithmetic, caller-owned buffers in the no-allocation
+path, explicit unassociated-alpha semantics, deterministic output, and an
+explicit trailing-data policy.
+
+Security focus: dimension/product overflow, exact input/output length,
+truncation at every header and sample byte, endian correctness, alpha
+preservation, zero dimensions, trailing bytes, and allocation/work limits.
+
 ### BMP (0.25-0.45)
 
 Start with file/DIB headers and 24-bit uncompressed bottom-up decoding into a
@@ -252,7 +267,7 @@ fuzz/proof additions, known unsupported features, and residual security limits.
 Version 1.0.0 is published only when:
 
 - core and no-allocation APIs are stable;
-- BMP, TGA, and GIF support matrices are honest and complete for claimed scope;
+- BMP, TGA, GIF, and farbfeld support matrices are honest and complete for claimed scope;
 - every accepted input path is resource-bounded;
 - default code has no unsafe Rust and no known critical/high security issue;
 - meaningful parser states have fuzz and conformance coverage;

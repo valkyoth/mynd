@@ -13,6 +13,7 @@ metadata and links, not copyrighted standards text.
 | TGA | Truevision TGA File Format Specification 2.0, Technical Manual 2.2, January 1991 | Original publisher manual; surviving copies are mirrors | Provenance-sensitive; implementation blocked until a local copy is hashed and reviewed |
 | GIF87a | CompuServe Graphics Interchange Format 87a | Original 1987 specification | Source copy and hash required before GIF work |
 | GIF89a | [CompuServe GIF89a specification hosted by W3C](https://www.w3.org/Graphics/GIF/spec-gif89a.txt) | 31 July 1990; extends GIF87a | Approved public anchor; local evidence hash required before GIF work |
+| farbfeld | [suckless farbfeld format definition](https://tools.suckless.org/farbfeld/) | Original public format definition; exact snapshot captured at the implementation milestone | Approved public source; requirement map and source snapshot required before `v0.34.0` |
 
 ## Future formats
 
