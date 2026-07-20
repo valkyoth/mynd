@@ -22,10 +22,18 @@ REQUIRED = (
 INCREMENTAL_ORDER = ("v0.12.3", "v0.14.0", "v0.14.1", "v0.14.2")
 INCREMENTAL_MARKERS = {
     "v0.12.3": "ordinary hashes are insufficient",
-    "v0.14.0": "StepReport<S, C>",
+    "v0.14.0": "DecodeStepReport<'a>",
     "v0.14.1": "Yielded",
     "v0.14.2": "generation-bound tokens",
 }
+STEP_REPORT_MARKERS = (
+    "EncodeStepReport<'a>",
+    "all eventual Progress",
+    "LimitExceeded, Error",
+    "explicit lifetime",
+    "caller-provided and plan-sized",
+    "committing unreportable pixels",
+)
 FACADE_ORDER = (
     "v0.94.6",
     "v0.95.0",
@@ -37,12 +45,21 @@ FACADE_ORDER = (
     "v0.98.0",
     "v0.98.1",
     "v0.98.2",
+    "v0.98.3",
+    "v0.99.0",
+    "v0.99.1",
+    "v0.99.2",
+    "v0.99.3",
+    "v0.99.4",
+    "v0.99.5",
     "v0.99.6",
 )
 FACADE_MARKERS = {
     "v0.94.6": "audited candidate baseline",
-    "v0.99.6": "final public API freeze",
+    "v0.98.3": "Zero unresolved implementation or public-API issues",
+    "v0.99.6": "verification-only final public API freeze",
 }
+ASSURANCE_ONLY = tuple(f"v0.99.{minor}" for minor in range(6))
 
 
 def main() -> int:
@@ -67,8 +84,8 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 172:
-        errors.append(f"expected 172 release handoffs, found {len(versions)}")
+    if len(versions) != 173:
+        errors.append(f"expected 173 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 
@@ -97,6 +114,10 @@ def main() -> int:
         if marker not in release_bodies.get(version, ""):
             errors.append(f"{version} is missing incremental marker: {marker}")
 
+    for marker in STEP_REPORT_MARKERS:
+        if marker not in release_bodies.get("v0.14.0", ""):
+            errors.append(f"v0.14.0 is missing concrete report marker: {marker}")
+
     try:
         facade_positions = [versions.index(version) for version in FACADE_ORDER]
     except ValueError as error:
@@ -109,8 +130,18 @@ def main() -> int:
         if marker not in release_bodies.get(version, ""):
             errors.append(f"{version} is missing facade marker: {marker}")
 
+    for version in ASSURANCE_ONLY:
+        body = release_bodies.get(version, "")
+        normalized_body = " ".join(body.split())
+        if "exact v0.98.3 input" not in normalized_body:
+            errors.append(f"{version} is not bound to the v0.98.3 assurance input")
+        if "product implementation and public API changes are prohibited" not in normalized_body:
+            errors.append(f"{version} does not prohibit post-reconciliation changes")
+
     if "full public facade freezes only after v0.94.6" in text:
         errors.append("v0.94.6 must remain a facade candidate, not the final freeze")
+    if "release blocker no later than\nv0.99.6" in text:
+        errors.append("adapter corrections must close at v0.98.3 before assurance")
 
     for version, body_lines in releases:
         positions: list[int] = []

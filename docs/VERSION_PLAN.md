@@ -256,14 +256,53 @@ work. A separately named relaxed mode may leave uncommitted bytes unspecified.
 Scratch and destination requirements are known during planning; insufficiency
 fails before mutation and no mode silently downgrades.
 
-Every call returns one allocation-free `StepReport<S, C>` envelope containing
-typed state and commit payloads plus input_consumed, output_produced, and
-work_consumed, including Progress and Done. Its public field shape is fixed at
-v0.14.0: later handoffs enable `Yielded` and concrete no-commit, bounded-row,
-bounded-frame, and disjoint-region payloads without redesigning the envelope.
-Region-token count/storage spend limits, and tokens bind to the session/output
-generation so reset or another destination rejects them. A linear “valid
-prefix” is never used for disjoint regions.
+Every public incremental decoder and encoder trait method returns one fixed,
+allocation-free concrete alias established at v0.14.0. The normative shape is:
+
+```rust
+pub type DecodeStepReport<'a> = StepReport<StepState, CommitSet<'a>>;
+pub type EncodeStepReport<'a> = StepReport<StepState, CommitSet<'a>>;
+
+#[non_exhaustive]
+pub enum StepState {
+    Progress,
+    NeedInput { minimum_additional: usize },
+    NeedOutput(OutputNeed),
+    Yielded,
+    Done,
+    Cancelled,
+    LimitExceeded,
+    Error,
+}
+
+#[non_exhaustive]
+pub enum OutputNeed {
+    Destination { minimum_additional: usize },
+    CommitTokens { minimum_additional: usize },
+}
+
+#[non_exhaustive]
+pub enum CommitSet<'a> {
+    None,
+    Bytes(ByteRange),
+    Rows(RowRange),
+    Frames(FrameRange),
+    Regions(&'a [RegionToken]),
+}
+```
+
+`StepReport` also contains exact input_consumed, output_produced, and
+work_consumed fields. The aliases, explicit lifetime, fields, and all eventual
+state/commit categories exist at v0.14.0; v0.14.1 and v0.14.2 enable their
+behavior rather than redesigning the return type. The region slice borrows
+caller-provided, plan-sized token storage. Execution reserves a token slot
+before committing a region. Exhaustion returns
+`NeedOutput(OutputNeed::CommitTokens { minimum_additional })`, preserves every
+already-issued token in the reported slice, and commits no unreportable pixels.
+No path allocates or grows a hidden collection. Region-token count/storage
+spend limits, and tokens bind to the session/output generation so reset or
+another destination rejects them. A linear “valid prefix” is never used for
+disjoint regions.
 
 Execution follows Probe -> InspectHeader -> Plan -> BindWorkspace -> Execute,
 then terminates as Done, Cancelled, or Error. All three outcomes are sticky. A
@@ -318,7 +357,7 @@ renumbering must not weaken:
 | Version | Prerequisite established |
 | --- | --- |
 | 0.12.3 | Source/session identity uses retained state or strong identity and defines mutable-source consistency. |
-| 0.14.0 | Every return uses one allocation-free `StepReport<S, C>` accounting envelope whose typed state and commit payload shape can represent later outcomes. |
+| 0.14.0 | Every trait fixes `DecodeStepReport<'a>`/`EncodeStepReport<'a>` aliases, declares all eventual non-exhaustive states and commit categories, and uses caller-planned region-token storage. |
 | 0.14.1 | Resumable `Yielded` is distinct from terminal exhaustion and cancellation. |
 | 0.14.2 | Commit modes integrate every `StepReport` state with planned staging and generation-bound tokens. |
 
@@ -339,13 +378,18 @@ API freeze:
 | 0.96.0-0.96.1 | Exercise scheduler ownership, budget partitioning, cancellation, and service integration through parallel adapters. |
 | 0.97.0-0.97.1 | Exercise descriptor stability, row alignment, synchronization, and device-boundary ownership through GPU-facing adapters. |
 | 0.98.0-0.98.2 | Exercise diagnostics, transactional output, batch limits, and service profiles through CLI integration. |
-| 0.99.6 | Resolve all reviewed adapter feedback, run the external pentest and reproducibility gates, and perform the final public API freeze. |
+| 0.98.3 | Resolve every cross-adapter facade issue, prohibit adapter-specific forks, rerun affected compatibility matrices, and establish the exact implementation admitted to assurance. |
+| 0.99.0-0.99.5 | Fuzz, prove, and audit the exact reconciled v0.98.3 implementation; any implementation or public-API correction invalidates affected evidence and returns to reconciliation. |
+| 0.99.6 | Verify and freeze the already-corrected facade, run the external pentest and reproducibility gates, and make no implementation or public-API correction. |
 
-Every v0.95.x-v0.98.x handoff records whether it exposed facade pressure. Any
+Every v0.95.x-v0.98.2 handoff records whether it exposed facade pressure. Any
 required correction is reviewed, documented, compatibility-tested, and
-pentested in that handoff or is tracked as a release blocker no later than
-v0.99.6. The candidate may change during this window; no adapter may silently
-fork or bypass the shared facade.
+pentested in that handoff or becomes a v0.98.3 release blocker. v0.98.3 exits
+only with zero unresolved implementation or public-API issues and no adapter
+forking or bypassing the shared facade. The v0.99.x assurance campaign applies
+to that exact reconciled implementation. A later implementation or public-API
+change invalidates affected evidence and requires reconciliation plus reruns;
+v0.99.6 only verifies and freezes the already-corrected facade.
 
 ## Metadata and selective decoding contract
 
@@ -371,8 +415,9 @@ termination, region-of-interest, reduced-resolution output, strip/tile
 selection, progressive preview events, animation frame ranges, and
 scale-during-decode. Support is format-specific and claimed only when its later
 0.94.x handoff passes. v0.94.6 establishes the audited facade candidate;
-v0.95.x-v0.98.x adapter evidence informs reviewed corrections, and the full
-public facade freezes only at v0.99.6.
+v0.95.x-v0.98.2 adapter evidence informs reviewed corrections, v0.98.3 closes
+them before assurance begins, and the full public facade freezes only at
+v0.99.6.
 
 Selective decode names coordinate spaces: encoded/native image,
 orientation-normalized image, animation canvas, and frame-local rectangle.
@@ -480,7 +525,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.12.2 | General encoder sizing and commit planning | Compositional length/strategy/input/sink/scratch/commit fields, replayability, two-pass identity, and pre-mutation failure |
 | 0.12.3 | Source-bound decode session planning | Exact-session/header/token/digest identity, stable-snapshot policy, complete configuration binding, and pre-output revalidation |
 | 0.13.0 | MSB/LSB bit readers and writers | Every-bit truncation, width, refill, and shift proofs |
-| 0.14.0 | Incremental decoder/encoder progress contracts | Allocation-free `StepReport<S, C>` accounting envelope, extension-safe typed state/commit payloads, chunk-boundary equivalence, and zero-progress rejection |
+| 0.14.0 | Incremental decoder/encoder progress contracts | Fixed `DecodeStepReport<'a>`/`EncodeStepReport<'a>` return aliases, all eventual non-exhaustive states/commit categories, caller-planned token storage, and exact accounting |
 | 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded work, Yielded/LimitExceeded/Cancelled semantics, deterministic resume, committed prefixes, and latency tests |
 | 0.14.2 | Physically enforceable incremental decode commit modes | Planned atomic/unit/region staging, no downgrade, generation-bound tokens, and StepReport commits on every state |
 | 0.15.0 | Metadata envelopes and bounded Exif/ICC/XMP header transport | Offset/count validation without full metadata interpretation |
@@ -622,13 +667,14 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.98.0 | mynd-cli inspect and validate | Escaped metadata, bounded defaults, exit-code contract |
 | 0.98.1 | CLI decode/encode/convert/frame operations | Transactional files and color-policy disclosure |
 | 0.98.2 | CLI batch/service profiles | Aggregate budgets, cancellation, hostile filename tests |
+| 0.98.3 | Cross-adapter facade reconciliation | Every adapter issue resolved, no facade forks, affected compatibility matrices rerun, and exact assurance input fixed |
 | 0.99.0 | cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher | Coverage report and minimized persistent corpus |
 | 0.99.1 | Long-running fuzz and every-byte/bit truncation campaigns | No stalls, panics, or inconsistent terminal states |
 | 0.99.2 | Kani math/view/bit/geometry proofs | Published assumptions and unwind bounds |
 | 0.99.3 | Kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs | Output, dictionary, table, and progress invariants |
 | 0.99.4 | Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit | All supported configurations pass |
 | 0.99.5 | Official conformance, differential, color, performance, and DoS freeze | Every claim linked to evidence; no unexplained disagreement |
-| 0.99.6 | Reproducible SBOM/package/provenance, external pentest, and final public API freeze | All adapter feedback resolved; no critical/high finding; clean retest |
+| 0.99.6 | Reproducible SBOM/package/provenance, external pentest, and final public API freeze | Already-corrected facade verified unchanged; no critical/high finding; clean retest |
 
 ## Phase: Foundations
 
@@ -1767,13 +1813,19 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Return one StepReport on every call with state, input_consumed,
-  output_produced, work_consumed, and committed units; Progress and Done use the
-  same envelope as every nonterminal and terminal outcome.
-- Stabilize an allocation-free `StepReport<S, C>` public envelope whose typed
-  state and commit payload parameters accommodate later `Yielded`, no-commit,
-  bounded-row, bounded-frame, and disjoint-region representations without
-  changing the envelope fields or requiring allocation.
+- Fix every incremental decoder and encoder trait to one concrete
+  `DecodeStepReport<'a>` or `EncodeStepReport<'a>` alias over
+  `StepReport<StepState, CommitSet<'a>>`; every call reports exact state,
+  input_consumed, output_produced, work_consumed, and committed units.
+- Declare `StepState` and `CommitSet<'a>` non-exhaustive and include at v0.14.0
+  all eventual Progress, NeedInput, NeedOutput, Yielded, Done, Cancelled,
+  LimitExceeded, Error, no-commit, byte, row, frame, and disjoint-region
+  categories. Later milestones enable behavior without adding categories or
+  changing the trait return type.
+- Give every borrowed commit payload an explicit lifetime. Region-token storage
+  is caller-provided and plan-sized; reserve a slot before region mutation, and
+  report exact `CommitTokens` capacity exhaustion without allocating, hidden
+  growth, losing existing tokens, or committing unreportable pixels.
 - Done, Cancelled, and Error are sticky; post-terminal step is deterministic, Reset clears local state without refunding cumulative budget, and warnings cannot repair Error.
 - NeedInput/NeedOutput report exact counts and only committed output; no borrow outlives a call unless represented in the type; Done requires terminator/trailing policy.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
@@ -1781,7 +1833,10 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Allocation-free `StepReport<S, C>` accounting envelope, extension-safe typed state/commit payloads, chunk-boundary equivalence, and zero-progress rejection.
+- Required release evidence: Fixed allocation-free trait return aliases, all
+  eventual non-exhaustive states and commit categories, explicit borrow
+  lifetimes, caller-planned token-capacity exhaustion, chunk-boundary
+  equivalence, and zero-progress rejection.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -1793,6 +1848,9 @@ Verification:
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
+- Compile-time API tests prove each trait has one fixed report alias, downstream
+  matches remain extension-safe, and commit payload borrows cannot outlive
+  caller-provided token storage.
 - Claims link to passing evidence; capabilities, output tier, limitations,
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
@@ -1829,6 +1887,8 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Require a caller-supplied work grant or maximum quantum for every incremental call.
 - Place deterministic checkpoints in entropy loops, ICC CLUT execution, resampling taps, animation composition, and encoder searches.
+- Enable the `Yielded`, `LimitExceeded`, and `Cancelled` state categories already
+  declared by v0.14.0 without changing either fixed trait return alias.
 - Quantum exhaustion returns Yielded { work_consumed }; a zero grant yields without input/output changes and resume never repeats or skips semantic work.
 - Distinguish resumable Yielded, sticky terminal LimitExceeded, and terminal caller Cancelled requiring explicit Reset without budget refund.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
@@ -1884,7 +1944,10 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Define Atomic, CommittedRows, CommittedFrames, CommittedRegions, and explicitly named relaxed behavior.
 - Plan scratch and destination requirements before mutation; unsupported capabilities or insufficient staging fail early and never downgrade Atomic or another requested mode.
-- Return one StepReport with exact committed units for Progress, NeedInput, NeedOutput, Yielded, Done, Cancelled, and Error.
+- Enable the byte, row, frame, and disjoint-region `CommitSet<'a>` categories
+  declared by v0.14.0 without changing either fixed trait return alias.
+- Return one StepReport with exact committed units for Progress, NeedInput,
+  NeedOutput, Yielded, Done, Cancelled, LimitExceeded, and Error.
 - Charge region-token count/storage and bind tokens to the session, destination, and generation so reset or reuse rejects them.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
@@ -8689,7 +8752,7 @@ This is the exclusive color, metadata, processing, and facade handoff for
 fallible owned convenience APIs and the facade candidate integration audit. It
 establishes an audited candidate baseline, not the final public API freeze;
 async, WASM, parallel, GPU, service, and CLI adapters may expose requirements
-that drive reviewed corrections through v0.98.x. Its API and attack-surface delta must be implemented,
+that drive reviewed corrections through v0.98.3. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
@@ -8732,7 +8795,8 @@ Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
 - The candidate facade is audited and integration-ready, but remains explicitly
-  open to reviewed adapter-driven corrections until v0.99.6.
+  open to reviewed adapter-driven corrections until the v0.98.3 reconciliation
+  gate closes.
 - Claims link to passing evidence; capabilities, output tier, limitations,
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
@@ -8748,7 +8812,9 @@ Exit criteria:
 
 Exercise the audited facade candidate through async, WASM, parallel, GPU,
 service, and CLI adapters; review and pentest any resulting facade corrections;
-then freeze evidence through fuzzing and proofs before the final API freeze.
+close all implementation and public-API issues at v0.98.3; then run fuzzing,
+proofs, and audits against that exact reconciled implementation before the
+verification-only final API freeze.
 
 ### v0.95.0 - Runtime-neutral async source/sink adapters
 
@@ -9218,6 +9284,81 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.98.2 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.98.3 - Cross-adapter facade reconciliation
+
+Status: Planned.
+
+Context:
+
+This is the final implementation-changing integration handoff. It follows
+async, WASM, parallel, GPU, service, and CLI execution against the v0.94.6
+candidate and precedes every v0.99.x assurance campaign. Assurance is
+unavailable until this handoff closes every adapter-discovered implementation
+and public-API issue on one shared facade.
+
+Goal:
+
+Reconcile all execution-domain feedback into one exact, reviewed, tested, and
+pentested implementation that can enter assurance without known API debt or
+adapter-specific behavior forks.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Cross-adapter facade reconciliation.
+- Resolve the issue registers produced by v0.95.0-v0.98.2 for lifetimes,
+  pinning, backpressure, cancellation, buffer ownership, scheduling, budget
+  partitioning, GPU row alignment and synchronization, diagnostics,
+  transactional output, batch limits, and service integration.
+- Prohibit adapter-specific facade forks, bypasses, shadow contracts, and
+  unreviewed compatibility shims; every execution domain uses the same public
+  contract and shared semantics.
+- Review and document each correction, its compatibility impact, migration
+  path, security impact, and affected evidence. Add a regression test linked to
+  every closed issue.
+- Rerun every affected cross-domain compatibility matrix and the complete
+  async, WASM, parallel, GPU, service, CLI, no_std, alloc/std, feature, and
+  supported-Rust integration matrix against the corrected facade.
+- Record the exact reconciled source commit, dependency lock, generated
+  artifacts, support claims, and test manifests that v0.99.0-v0.99.6 must use.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, security documentation, changelog,
+  release notes, crate versions, packages, SBOM, and exact-version pentest
+  report scaffold.
+
+Verification:
+
+- Required release evidence: Every adapter issue resolved, zero facade forks,
+  linked correction regressions, affected compatibility matrices rerun, and
+  one exact assurance-input implementation recorded.
+- Independently audit the closed-issue register against every adapter release;
+  unexplained, deferred, or unowned implementation/API findings fail the gate.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, work,
+  lifetimes, ownership, cancellation, and synchronization boundaries.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- Zero unresolved implementation or public-API issues remain from any adapter
+  domain, and no adapter-specific facade fork or bypass exists.
+- Every correction has review, documentation, compatibility evidence,
+  regression coverage, and a clean security retest.
+- The exact reconciled commit and artifacts are the only admitted inputs to
+  v0.99.0-v0.99.6. Any later implementation or public-API change invalidates
+  affected assurance evidence and returns the project to this reconciliation
+  gate before assurance resumes.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the reconciled surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.98.3 implementation stop reached. Run pentest for this exact commit.`
+
 ### v0.99.0 - cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher
 
 Status: Planned.
@@ -9225,9 +9366,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+cargo-fuzz suites for every parser, entropy engine, metadata path, and
+dispatcher. Its harness and evidence delta must be implemented and reviewed
+independently against the exact v0.98.3 input; product implementation and
+public API changes are prohibited and return to reconciliation.
 
 Goal:
 
@@ -9277,9 +9419,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-long-running fuzz and every-byte/bit truncation campaigns. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+long-running fuzz and every-byte/bit truncation campaigns. Its corpus and
+evidence delta must be implemented and reviewed independently against the exact
+v0.98.3 input; product implementation and public API changes are prohibited
+and return to reconciliation.
 
 Goal:
 
@@ -9329,9 +9472,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-kani math/view/bit/geometry proofs. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+kani math/view/bit/geometry proofs. Its proof-harness and evidence delta must be
+implemented and reviewed independently against the exact v0.98.3 input;
+product implementation and public API changes are prohibited and return to
+reconciliation.
 
 Goal:
 
@@ -9381,9 +9525,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-kani deflate/lzw/huffman/jpeg/webp/tiff state proofs. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs. Its proof-harness and
+evidence delta must be implemented and reviewed independently against the exact
+v0.98.3 input; product implementation and public API changes are prohibited
+and return to reconciliation.
 
 Goal:
 
@@ -9433,9 +9578,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-miri, sanitizers, 32-bit, wasm, feature-combination, and stack audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit. Its
+configuration and evidence delta must be implemented and reviewed independently
+against the exact v0.98.3 input; product implementation and public API changes
+are prohibited and return to reconciliation.
 
 Goal:
 
@@ -9485,9 +9631,10 @@ Status: Planned.
 Context:
 
 This is the exclusive integration and assurance handoff for
-official conformance, differential, color, performance, and dos freeze. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+official conformance, differential, color, performance, and DoS freeze. Its
+fixture and evidence delta must be implemented and reviewed independently
+against the exact v0.98.3 input; product implementation and public API changes
+are prohibited and return to reconciliation.
 
 Goal:
 
@@ -9539,10 +9686,12 @@ Context:
 This is the exclusive integration and assurance handoff for
 reproducible SBOM/package/provenance, external pentest, and the final public API
 freeze. It follows execution-domain validation of the v0.94.6 candidate and
-cannot begin until all async, WASM, parallel, GPU, service, and CLI facade
-feedback is resolved. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+the complete v0.99.0-v0.99.5 assurance campaign over the exact v0.98.3
+reconciled implementation. It verifies and freezes existing bytes and public
+contracts; it does not resolve findings or change implementation/API behavior.
+Any such change returns to v0.98.3 and invalidates affected assurance evidence.
+Its API and attack-surface delta must be reviewed and pentested independently.
+Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9559,17 +9708,22 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Resolve and document every facade issue recorded by v0.95.x-v0.98.x, rerun
-  the affected compatibility and execution-domain matrices, and freeze the
-  public API only after async, WASM, parallel, GPU, service, and CLI adapters
-  all exercise the corrected candidate.
+- Verify that the closed v0.98.3 adapter-issue register, source commit,
+  dependency lock, generated artifacts, support claims, and test manifests are
+  exactly those exercised by v0.99.0-v0.99.5, then freeze that already-corrected
+  public API without implementation or API changes.
+- Treat every pentest or reproducibility finding that requires implementation
+  or public-API correction as a mandatory return to v0.98.3 followed by reruns
+  of all affected v0.99.x evidence; v0.99.6 may resume only on a clean candidate.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: All adapter feedback resolved, final public API
-  freeze, no critical/high finding, and clean retest.
+- Required release evidence: Byte-for-byte and contract-level identity with the
+  v0.98.3 assurance input, complete v0.99.0-v0.99.5 evidence for that identity,
+  verification-only final public API freeze, no critical/high finding, and
+  clean retest.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -9581,8 +9735,9 @@ Verification:
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- The final public API is frozen only after every execution domain passes
-  against the same corrected facade and no adapter-specific fork remains.
+- The final public API is frozen only after every execution domain and assurance
+  gate passes against the unchanged v0.98.3 reconciled facade; no
+  adapter-specific fork remains and v0.99.6 made no implementation/API change.
 - Claims link to passing evidence; capabilities, output tier, limitations,
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
