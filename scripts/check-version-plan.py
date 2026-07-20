@@ -11,7 +11,14 @@ from pathlib import Path
 PLAN = Path("docs/VERSION_PLAN.md")
 HEADING = re.compile(r"^#{2,3} (v[0-9][^ ]*) - ")
 SUMMARY = re.compile(r"^\| (0\.\d+\.\d+) \|")
-REQUIRED = ("Status:", "Goal:", "Deliverables:", "Verification:", "Exit criteria:")
+REQUIRED = (
+    "Status:",
+    "Context:",
+    "Goal:",
+    "Deliverables:",
+    "Verification:",
+    "Exit criteria:",
+)
 
 
 def main() -> int:
@@ -36,8 +43,8 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 113:
-        errors.append(f"expected 113 release handoffs, found {len(versions)}")
+    if len(versions) != 115:
+        errors.append(f"expected 115 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 
