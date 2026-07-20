@@ -114,7 +114,8 @@ ByteSource
   transactional.
 - Every loop has a structural bound or spends a monotonic work budget.
 - Incremental steps report consumed/produced units and Progress, NeedInput,
-  NeedOutput, or Done; zero/zero Progress is an invariant failure.
+  NeedOutput, Yielded, Done, or a typed terminal result; zero/zero Progress is
+  an invariant failure. Yielded is resumable and distinct from LimitExceeded.
 - Nonterminal EOF is Truncated; unsupported normative behavior is Unsupported;
   bad data is Malformed; exhaustion is LimitExceeded.
 - Output commits at declared rows, frames, or checkpoints, yielding a known
@@ -170,10 +171,12 @@ rounding, FMA policy, and backend selection are visible in conformance claims.
 Callers may select the deterministic software backend where supported; a
 backend change can never silently retain stronger evidence.
 
-Safe validated byte views and naturally typed caller buffers are the baseline;
-forbid(unsafe_code) rules out arbitrary byte-to-pixel casts. Future unsafe SIMD,
-reinterpretation, or arena support belongs in a tiny optional independently
-audited adapter behind a scalar reference.
+Safe validated byte views and naturally typed caller buffers are the baseline.
+Every first-party Rust crate retains #![forbid(unsafe_code)]; arbitrary
+byte-to-pixel casts, unsafe arenas, and first-party unsafe SIMD are outside the
+contract. SIMD uses safe Rust or an explicitly audited optional external
+backend with no transitive/default activation. Disabling acceleration always
+retains the authoritative scalar implementation and its full conformance path.
 
 ## Resource accounting, scratch, and execution
 
@@ -219,12 +222,16 @@ caller-buffer execution, and optional fallible-owned convenience.
 Planning negotiates explicit source capabilities (ForwardOnly, Seek, ReadAt,
 KnownLength) and sink capabilities (ForwardOnly, Seek, WriteAt, Transactional).
 Missing capabilities return RequiresCapability before output changes. Every
-encoder returns an EncodeLayoutPlan: ExactLength, BoundedLength with a maximum,
-CountingPassRequired, SeekOrWriteAtRequired, or BufferedRegionRequired. It also
-defines commit/recovery boundaries. A counting pass and emission pass bind the
-same configuration, metadata decisions, and source pixels. BMP sizes, PNG
-chunks, WebP RIFF lengths, TIFF offsets, metadata insertion, and transcoders use
-this common contract; a forward sink never promises rollback of emitted bytes.
+encoder returns a compositional EncodeLayoutPlan with independent fields:
+LengthKnowledge (Exact, UpperBound, Unknown), EmissionStrategy (OnePass,
+CountThenEmit, Backpatch, BufferedRegion), EncodeInputCapabilities (SinglePass,
+Replayable, RandomAccess, stable frame/metadata sequence), SinkCapabilities,
+ScratchRequirements, and CommitPolicy. Buffered regions have explicit maxima
+charged to the live-memory ledger. Counting and emission both spend input/work
+budgets and bind identical configuration, metadata decisions, numeric backend,
+and source pixels. BMP sizes, PNG chunks, WebP RIFF lengths, TIFF offsets,
+metadata insertion, and transcoders use this common contract; a forward-only
+input cannot promise replay and a forward sink cannot promise rollback.
 
 Execution follows Probe -> InspectHeader -> Plan -> BindWorkspace -> Execute ->
 Done/Error. Done and Error are sticky. A post-terminal step returns a
@@ -237,9 +244,12 @@ Animations and indefinite streams may refine plans only within original limits.
 Each step also receives a caller-controlled work grant or maximum execution
 quantum. Entropy loops, ICC CLUTs, resampling taps, animation composition, and
 encoder searches expose deterministic cancellation checkpoints. Quantum
-exhaustion reveals no output beyond a commit boundary and resumes without
-repeating or skipping semantic work, bounding cancellation latency even for
-large valid inputs.
+exhaustion returns Yielded { work_consumed }, reveals no output beyond a commit
+boundary, and resumes without repeating or skipping semantic work. A zero grant
+returns Yielded without touching input or output. LimitExceeded is sticky
+global exhaustion. Cancelled is a terminal caller abort that requires explicit
+Reset and never refunds cumulative budget. These distinctions bound
+cancellation latency even for large valid inputs.
 
 Codec output has two explicit tiers:
 
@@ -381,20 +391,20 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.11.0 | Slice reader/writer, exact reads, fixed output, checkpoints | Every-byte truncation and rollback tests |
 | 0.12.0 | Endian I/O, subranges, counting, seek/read-at | Nested-bound escape, offset, and seek-cycle tests |
 | 0.12.1 | Source/sink capability negotiation and execution lifecycle | Forward/seek/read-at/known-length and forward/seek/write-at/transactional planning plus sticky terminal-state tests |
-| 0.12.2 | General encoder sizing and commit planning | Exact/bounded/counting/seek/buffer plans, two-pass identity, recoverability, and pre-mutation capability failure |
+| 0.12.2 | General encoder sizing and commit planning | Compositional length/strategy/input/sink/scratch/commit fields, replayability, two-pass identity, and pre-mutation failure |
 | 0.13.0 | MSB/LSB bit readers and writers | Every-bit truncation, width, refill, and shift proofs |
 | 0.14.0 | Incremental decoder/encoder progress contracts | Chunk-boundary equivalence and zero-progress rejection |
-| 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded per-step work, deterministic checkpoints/resume, committed-prefix safety, and worst-case latency tests |
+| 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded work, Yielded/LimitExceeded/Cancelled semantics, deterministic resume, committed prefixes, and latency tests |
 | 0.15.0 | Metadata envelopes and bounded Exif/ICC/XMP header transport | Offset/count validation without full metadata interpretation |
 | 0.15.1 | Bounded ICC v2/v4 structural parser | Tag counts/sizes/offsets/overlap, curves, LUT dimensions, recursion, opaque preservation, and fuzzing |
 | 0.15.2 | ICC matrix/TRC and chromatic-adaptation engine | Parametric curves, PCS conversion, adaptation, rendering intent, deterministic scalar vectors, and limits |
 | 0.15.3 | ICC v2 LUT pipelines and deterministic interpolation | LUT dimensions/elements, interpolation, PCS bounds, intent, numeric tolerance, and v2 profiles |
 | 0.15.4 | ICC v4 mAB/mBA and processing-element pipelines | Element counts/types/order, curves, matrices, CLUTs, recursion, interpolation, and v4 profiles |
-| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and execution audit | PCS conversion, intents, adaptation, v2/v4 differential profiles, tolerances, fuzzing, and freeze |
+| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and execution audit | Execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, differential tests, and freeze |
 | 0.16.0 | Format IDs, media types, bounded probing, static registry | Collision, ambiguity, polyglot, and disabled-feature tests |
 | 0.17.0 | Fallible owned storage and std::io adapters | Allocation-failure, interrupted-I/O, and feature-matrix tests |
+| 0.17.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests |
 | 0.18.0 | Foundation candidate review and representative-codec readiness | External design review, dummy lifecycle exercise, no-default/32-bit/WASM matrix, and documented evolvability |
-| 0.18.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests |
 | 0.19.0 | Common codec crate template and decode-plan contract | A dummy codec proves limit, scratch, progress, and rollback invariants |
 | 0.20.0 | BMP probe, file header, OS/2 and Windows DIB dispatch | Header-size confusion and offset corpus |
 | 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | 1/4/8/16/24/32-bit golden and truncation tests |
@@ -413,7 +423,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, header termination, unknown fields |
 | 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images and official-tool differential tests |
 | 0.34.0 | farbfeld decode and encode | Exact-size arithmetic, RGBA16-BE, alpha semantics |
-| 0.35.0 | Simple-codec security and API freeze | Cross-codec probe fuzzing, 32-bit memory tests, external delta review |
+| 0.35.0 | Simple-codec contract and security freeze | Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review |
 | 0.36.0 | PNG source map, signature, chunk state machine, CRC, ordering | Unknown-critical and CRC policy tests |
 | 0.37.0 | PNG IHDR and color-type/bit-depth validation | Full normative combination matrix |
 | 0.38.0 | Shared mynd-zlib plus stored/fixed mynd-deflate | RFC 1950/1951 vectors, Adler-32, fixed caller storage, transactional bits, and truncation |
@@ -506,11 +516,11 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.90.0 | Lanczos3 resampling | Tap planning, ring-buffer limits, reference vectors |
 | 0.91.0 | Remaining Porter-Duff compositing operators | Shared source/source-over compatibility, remaining operators, linear domain, alpha, overlap, and invariants |
 | 0.92.0 | Declared artistic blend modes | Formula, clamping, NaN, and interoperability tests |
-| 0.93.0 | Optional isolated SIMD backends | Scalar differential, tail/alignment, Miri/sanitizer evidence |
+| 0.93.0 | Optional safe SIMD or audited external backends | Scalar differential, tail/alignment, dependency/unsafe-boundary, Miri, and sanitizer evidence |
 | 0.94.0 | Streaming and tiled processing graph | Scratch bounds, fusion equivalence, cancellation, and honest random-access disclosure |
 | 0.94.1 | Metadata/header-only, region, and frame-range decoding | Early termination, ROI bounds, valid-prefix semantics, frame selection, budgets, and format support matrix |
 | 0.94.2 | Reduced-resolution and progressive-preview decoding | JPEG reduced IDCT, TIFF strip/tile selection, progressive events, scale-during-decode policy, and numeric evidence |
-| 0.94.3 | Processing and selective-decoding security audit | Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and API freeze |
+| 0.94.3 | Processing and selective-decoding contract freeze | Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and processing/selective contract freeze |
 | 0.94.4 | Unified borrowed inspection and decode_into facade | Hints/mismatch, static dispatch, native/rendered and raw/composited selection, limits/scratch/warnings, and disabled features |
 | 0.94.5 | Unified encoder and transcoding facade | encode_from, capability planning, conversion orchestration, MetadataEffect, transactional policy, and format selection |
 | 0.94.6 | Fallible owned convenience APIs and facade integration audit | Allocation failure, owned decode/encode/transcode, all-feature combinations, representative codecs, and public API freeze |
@@ -1501,15 +1511,16 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Define EncodeLayoutPlan variants ExactLength, BoundedLength { maximum }, CountingPassRequired, SeekOrWriteAtRequired, and BufferedRegionRequired.
-- Bind counting and emission passes to identical configuration, metadata policy, source pixels, numeric backend, and deterministic decisions.
-- Report unavailable sink capabilities before output mutation and define commit boundaries plus recoverability for forward-only sinks.
+- Define independent LengthKnowledge, EmissionStrategy, EncodeInputCapabilities, SinkCapabilities, ScratchRequirements, and CommitPolicy fields.
+- Require explicit maximum memory for every buffered region; a forward-only source cannot satisfy CountThenEmit without replayability.
+- Bind counting/emission to identical configuration, metadata policy, source pixels, and numeric backend while charging both passes to input/work budgets.
+- Report unavailable input or sink capabilities before output mutation and define commit boundaries plus recoverability for forward-only sinks.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Exact/bounded/counting/seek/buffer plans, two-pass identity, recoverability, and pre-mutation capability failure.
+- Required release evidence: Compositional length/strategy/input/sink/scratch/commit fields, replayability, two-pass identity, and pre-mutation failure.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -1663,13 +1674,14 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Require a caller-supplied work grant or maximum quantum for every incremental call.
 - Place deterministic checkpoints in entropy loops, ICC CLUT execution, resampling taps, animation composition, and encoder searches.
-- Quantum exhaustion exposes only committed output, preserves sticky lifecycle invariants, and resumes without repeating or skipping semantic work.
+- Quantum exhaustion returns Yielded { work_consumed }; a zero grant yields without input/output changes and resume never repeats or skips semantic work.
+- Distinguish resumable Yielded, sticky terminal LimitExceeded, and terminal caller Cancelled requiring explicit Reset without budget refund.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Bounded per-step work, deterministic checkpoints/resume, committed-prefix safety, and worst-case latency tests.
+- Required release evidence: Bounded work, Yielded/LimitExceeded/Cancelled semantics, deterministic resume, committed prefixes, and latency tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -1976,12 +1988,17 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Publish an ICC execution-profile matrix covering profile classes,
+  input/output channel topologies, transform directions, intent fallback,
+  matrix/TRC versus LUT/mAB/mBA paths, named-color/device-link policy, and every
+  unsupported class. Structurally valid non-executable profiles return
+  Unsupported while remaining preservable.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: PCS conversion, intents, adaptation, v2/v4 differential profiles, tolerances, fuzzing, and freeze.
+- Required release evidence: Execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, differential tests, and freeze.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2107,6 +2124,61 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.17.0 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.17.1 - Reentrancy, concurrency, and auto-trait contract
+
+Status: Planned.
+
+Context:
+
+This is the exclusive foundations handoff for reentrancy, concurrency, and auto-trait contract. Its API
+and attack-surface delta must be implemented, tested, reviewed, and pentested
+independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete reentrancy, concurrency, and auto-trait contract with bounded behavior, explicit claims, and
+evidence sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Reentrancy, concurrency, and auto-trait contract.
+- Define contracts, invariants, limits, capabilities, terminal states, errors,
+  output commits, compatibility, native/rendered behavior, and unsupported cases.
+- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
+  corpus provenance, numeric tolerances, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- State intended Send/Sync behavior for decoders, encoders, plans, workspaces, budgets, views, registries, and color transforms with compile-time assertions.
+- Permit one plan to execute concurrently only with independent typed workspaces, parent-backed child grants, disjoint destinations, and exclusive scratch.
+- Document which states may move between threads and require reusable registries/transforms to be immutable and reentrant where claimed.
+- Update changelog, notes, crate versions, packages, SBOM, and exact-version
+  pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests.
+- Audit arithmetic, offsets, terminal transitions, capability negotiation,
+  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
+  numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
+- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; capabilities, output tier, limitations,
+  numeric tolerance, metadata effects, and compatibility are explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
+  candidate commit.
+- Pentest covers the new surface and inherited invariants; all critical/high
+  findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the version release gate accepts the exact reviewed commit.
+- `v0.17.1 implementation stop reached. Run pentest for this exact commit.`
+
+
 ### v0.18.0 - Foundation candidate review and representative-codec readiness
 
 Status: Planned.
@@ -2160,60 +2232,6 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.18.0 implementation stop reached. Run pentest for this exact commit.`
 
-
-### v0.18.1 - Reentrancy, concurrency, and auto-trait contract
-
-Status: Planned.
-
-Context:
-
-This is the exclusive foundations handoff for reentrancy, concurrency, and auto-trait contract. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
-
-Goal:
-
-Complete reentrancy, concurrency, and auto-trait contract with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Reentrancy, concurrency, and auto-trait contract.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- State intended Send/Sync behavior for decoders, encoders, plans, workspaces, budgets, views, registries, and color transforms with compile-time assertions.
-- Permit one plan to execute concurrently only with independent typed workspaces, parent-backed child grants, disjoint destinations, and exclusive scratch.
-- Document which states may move between threads and require reusable registries/transforms to be immutable and reentrant where claimed.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.18.1 implementation stop reached. Run pentest for this exact commit.`
 
 ## Phase: Simple and lossless codecs
 
@@ -3156,25 +3174,25 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.34.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.35.0 - Simple-codec security and API freeze
+### v0.35.0 - Simple-codec contract and security freeze
 
 Status: Planned.
 
 Context:
 
 This is the exclusive simple and lossless codecs handoff for
-simple-codec security and api freeze. Its API and attack-surface delta must be implemented,
+simple-codec contract and security freeze. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
 
-Complete simple-codec security and api freeze with bounded behavior, explicit claims, and
+Complete simple-codec contract and security freeze with bounded behavior, explicit claims, and
 evidence sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Simple-codec security and API freeze.
+- Complete only the release-scoped capability: Simple-codec contract and security freeze.
 - Define contracts, invariants, limits, capabilities, terminal states, errors,
   output commits, compatibility, native/rendered behavior, and unsupported cases.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
@@ -3186,7 +3204,7 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Cross-codec probe fuzzing, 32-bit memory tests, external delta review.
+- Required release evidence: Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -8017,37 +8035,40 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.92.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.93.0 - Optional isolated SIMD backends
+### v0.93.0 - Optional safe SIMD or audited external backends
 
 Status: Planned.
 
 Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
-optional isolated simd backends. Its API and attack-surface delta must be implemented,
+optional safe simd or audited external backends. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
 
-Complete optional isolated simd backends with bounded behavior, explicit claims, and
+Complete optional safe simd or audited external backends with bounded behavior, explicit claims, and
 evidence sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Optional isolated SIMD backends.
+- Complete only the release-scoped capability: Optional safe SIMD or audited external backends.
 - Define contracts, invariants, limits, capabilities, terminal states, errors,
   output commits, compatibility, native/rendered behavior, and unsupported cases.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Keep #![forbid(unsafe_code)] in every first-party crate. Acceleration is safe
+  Rust or an explicitly audited optional external backend with no transitive
+  activation; disabling it preserves the scalar implementation.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Scalar differential, tail/alignment, Miri/sanitizer evidence.
+- Required release evidence: Scalar differential, tail/alignment, dependency/unsafe-boundary, Miri, and sanitizer evidence.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -8228,25 +8249,25 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.94.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.3 - Processing and selective-decoding security audit
+### v0.94.3 - Processing and selective-decoding contract freeze
 
 Status: Planned.
 
 Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
-processing and selective-decoding security audit. Its API and attack-surface delta must be implemented,
+processing and selective-decoding contract freeze. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
 
-Complete processing and selective-decoding security audit with bounded behavior, explicit claims, and
+Complete processing and selective-decoding contract freeze with bounded behavior, explicit claims, and
 evidence sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Processing and selective-decoding security audit.
+- Complete only the release-scoped capability: Processing and selective-decoding contract freeze.
 - Define contracts, invariants, limits, capabilities, terminal states, errors,
   output commits, compatibility, native/rendered behavior, and unsupported cases.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
@@ -8258,7 +8279,7 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and API freeze.
+- Required release evidence: Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and processing/selective contract freeze.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
