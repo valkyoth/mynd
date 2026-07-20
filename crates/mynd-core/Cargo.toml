@@ -1,0 +1,25 @@
+[package]
+name = "mynd-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Format-neutral no_std image types for the mynd ecosystem."
+license.workspace = true
+readme = "README.md"
+documentation = "https://docs.rs/mynd-core"
+homepage.workspace = true
+repository.workspace = true
+keywords = ["image", "codec", "no-std", "graphics"]
+categories = ["multimedia::images", "no-std"]
+include = ["Cargo.toml", "README.md", "src/**/*.rs"]
+
+[features]
+default = []
+alloc = []
+std = ["alloc"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[lints]
+workspace = true

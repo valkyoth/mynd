@@ -1,0 +1,16 @@
+[release]
+version = "0.1.0"
+
+[crates.mynd-core]
+previous_version = "0.0.0"
+version = "0.1.0"
+change = "code"
+publish = true
+reason = "Establish the documented no_std core package boundary."
+
+[crates.mynd]
+previous_version = "0.0.0"
+version = "0.1.0"
+change = "code"
+publish = true
+reason = "Establish the facade and repository foundation."
