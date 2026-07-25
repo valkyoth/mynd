@@ -35,7 +35,7 @@ STEP_REPORT_MARKERS = (
     "committing unreportable pixels",
 )
 FACADE_ORDER = (
-    "v0.94.6",
+    "v0.94.8",
     "v0.95.0",
     "v0.95.1",
     "v0.96.0",
@@ -46,6 +46,11 @@ FACADE_ORDER = (
     "v0.98.1",
     "v0.98.2",
     "v0.98.3",
+    "v0.98.4",
+    "v0.98.5",
+    "v0.98.6",
+    "v0.98.7",
+    "v0.98.8",
     "v0.99.0",
     "v0.99.1",
     "v0.99.2",
@@ -53,13 +58,25 @@ FACADE_ORDER = (
     "v0.99.4",
     "v0.99.5",
     "v0.99.6",
+    "v0.99.7",
+    "v0.99.8",
+    "v0.99.9",
+    "v0.99.10",
+    "v0.99.11",
+    "v0.99.12",
+    "v0.99.13",
+    "v0.99.14",
+    "v0.99.15",
+    "v0.99.16",
+    "v0.99.17",
+    "v0.99.18",
 )
 FACADE_MARKERS = {
-    "v0.94.6": "audited candidate baseline",
-    "v0.98.3": "Zero unresolved implementation or public-API issues",
-    "v0.99.6": "verification-only final public API freeze",
+    "v0.94.8": "audited candidate baseline",
+    "v0.98.8": "Zero unresolved implementation or public-API issues",
+    "v0.99.18": "verification-only final public API freeze",
 }
-ASSURANCE_ONLY = tuple(f"v0.99.{minor}" for minor in range(6))
+ASSURANCE_ONLY = tuple(f"v0.99.{minor}" for minor in range(18))
 PRE_1_FARBFELD_MARKERS = {
     "v0.2.0": "reconciled image list and pre-1.0 implementation plan must name farbfeld",
     "v0.34.0": "farbfeld decode and encode",
@@ -92,6 +109,66 @@ BMP_MARKERS = {
     "v0.25.1": "Header/depth encoder matrix",
     "v0.25.2": "no wildcard, nearest-version, or fallback claims",
 }
+SIZING_ORDERS = {
+    "PNG framing": ("v0.36.0", "v0.36.1", "v0.36.2", "v0.37.0"),
+    "Deflate": ("v0.38.0", "v0.38.1", "v0.38.2", "v0.39.0"),
+    "PNG color metadata": ("v0.44.0", "v0.44.1", "v0.44.2"),
+    "APNG": ("v0.46.0", "v0.46.1", "v0.46.2", "v0.46.3", "v0.46.4"),
+    "JPEG declarations": (
+        "v0.52.0",
+        "v0.52.1",
+        "v0.52.2",
+        "v0.52.3",
+        "v0.53.0",
+        "v0.53.1",
+    ),
+    "TIFF compression": (
+        "v0.71.0",
+        "v0.71.1",
+        "v0.72.0",
+        "v0.72.1",
+        "v0.72.2",
+        "v0.72.3",
+    ),
+    "TIFF layout": ("v0.74.0", "v0.74.1", "v0.74.2"),
+    "VP8L transforms": (
+        "v0.68.0",
+        "v0.68.1",
+        "v0.68.2",
+        "v0.68.3",
+        "v0.68.4",
+        "v0.68.5",
+    ),
+    "TIFF encoders": tuple(f"v0.77.{minor}" for minor in range(15)),
+    "drawing": tuple(f"v0.92.{minor}" for minor in range(1, 6)),
+    "selective decode": (
+        "v0.94.1",
+        "v0.94.2",
+        "v0.94.3",
+        "v0.94.4",
+        "v0.94.5",
+    ),
+}
+SIZING_MARKERS = {
+    "v0.33.0": "PFM has incompatible",
+    "v0.72.3": "separately sourced Adobe extension",
+    "v0.81.0": "external entities",
+    "v0.68.2": "distinct from the entropy color cache",
+    "v0.92.5": "fonts",
+}
+RETIRED_OVERSIZED_TITLES = (
+    "PNG source map, signature, chunk state machine, CRC, ordering",
+    "PNG cHRM/gAMA/sRGB/iCCP/cICP/mDCV/cLLI and precedence",
+    "JPEG source map, marker/segment parser, frame/scan/table declarations",
+    "TIFF LZW, Deflate, and horizontal predictors",
+    "Tiles, planar layouts, multipage/SubIFD traversal",
+    "CLI decode/encode/convert/frame operations",
+    "Kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs",
+    "VP8L predictor, subtract-green, color-index, and cache transforms",
+    "TIFF tile, planar, and multipage encoders",
+    "TIFF extended color and JPEG encoders",
+    "Miri, sanitizers, target, feature, and stack audit",
+)
 
 
 def main() -> int:
@@ -116,19 +193,37 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 176:
-        errors.append(f"expected 176 release handoffs, found {len(versions)}")
+    if len(versions) != 258:
+        errors.append(f"expected 258 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 
-    summary_versions = {
+    summary_start = lines.index("## Milestone summary")
+    summary_end = next(
+        index
+        for index, line in enumerate(lines[summary_start + 1:], summary_start + 1)
+        if line.startswith("## Phase:")
+    )
+    summary_version_list = [
         match.group(1)
-        for line in lines
+        for line in lines[summary_start:summary_end]
         if (match := SUMMARY.match(line)) is not None
-    }
+    ]
+    summary_versions = set(summary_version_list)
     detailed_0x = {version[1:] for version in versions if version.startswith("v0.")}
     if summary_versions != detailed_0x:
         errors.append("0.x summary and detailed milestone versions differ")
+    detailed_0x_list = [
+        version[1:] for version in versions if version.startswith("v0.")
+    ]
+    if summary_version_list != detailed_0x_list:
+        errors.append("0.x summary and detailed milestone order differs")
+    numeric_versions = [
+        tuple(int(component) for component in version.split("."))
+        for version in detailed_0x_list
+    ]
+    if numeric_versions != sorted(numeric_versions):
+        errors.append("0.x handoffs are not in monotonically increasing SemVer order")
 
     if "v0.12.4" in versions:
         errors.append("v0.12.4 must not own incremental decode commit modes")
@@ -165,8 +260,8 @@ def main() -> int:
     for version in ASSURANCE_ONLY:
         body = release_bodies.get(version, "")
         normalized_body = " ".join(body.split())
-        if "exact v0.98.3 input" not in normalized_body:
-            errors.append(f"{version} is not bound to the v0.98.3 assurance input")
+        if "exact v0.98.8 input" not in normalized_body:
+            errors.append(f"{version} is not bound to the v0.98.8 assurance input")
         if "product implementation and public API changes are prohibited" not in normalized_body:
             errors.append(f"{version} does not prohibit post-reconciliation changes")
 
@@ -188,10 +283,29 @@ def main() -> int:
         if marker not in normalized_body:
             errors.append(f"{version} is missing BMP dialect marker: {marker}")
 
-    if "full public facade freezes only after v0.94.6" in text:
-        errors.append("v0.94.6 must remain a facade candidate, not the final freeze")
-    if "release blocker no later than\nv0.99.6" in text:
-        errors.append("adapter corrections must close at v0.98.3 before assurance")
+    for label, order in SIZING_ORDERS.items():
+        try:
+            positions = [versions.index(version) for version in order]
+        except ValueError as error:
+            errors.append(f"{label} sizing handoff is missing: {error}")
+        else:
+            if positions != sorted(positions):
+                errors.append(f"{label} sizing handoffs are out of order")
+
+    for version, marker in SIZING_MARKERS.items():
+        normalized_body = " ".join(release_bodies.get(version, "").split())
+        if marker not in normalized_body:
+            errors.append(f"{version} is missing sizing marker: {marker}")
+
+    if "## Release sizing invariant" not in text:
+        errors.append("release sizing invariant is missing")
+    for retired_title in RETIRED_OVERSIZED_TITLES:
+        if retired_title in text:
+            errors.append(f"retired oversized milestone returned: {retired_title}")
+    if "full public facade freezes only after v0.94.8" in text:
+        errors.append("v0.94.8 must remain a facade candidate, not the final freeze")
+    if "release blocker no later than\nv0.99.18" in text:
+        errors.append("adapter corrections must close at v0.98.8 before assurance")
 
     for version, body_lines in releases:
         positions: list[int] = []

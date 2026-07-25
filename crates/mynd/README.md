@@ -54,11 +54,11 @@ The default feature set is intentionally empty.
 | `no_std` facade and core crate boundary | Foundation available | 0.1.x |
 | Validated image metadata and caller-owned buffers | Planned | 0.6.x-0.12.x |
 | Bounded streaming primitives | Planned | 0.13.x-0.18.x |
-| BMP, QOI, PNM, and farbfeld | Planned | 0.19.x-0.35.x |
+| BMP, QOI, Netpbm PNM/PAM, and farbfeld | Planned | 0.19.x-0.35.x |
 | PNG, GIF, JPEG, WebP, and TIFF | Planned | 0.36.x-0.77.x |
-| Color, resize, transform, and drawing operations | Planned | 0.78.x-0.94.x |
-| Optional parallelism, async adapters, GPU hooks, and CLI | Planned | 0.95.x-0.104.x |
-| Production stabilization and 1.0 security review | Planned | 0.105.x-1.0.0 |
+| Color, resize, transform, and bounded raster-drawing primitives | Planned | 0.78.x-0.94.x |
+| Optional parallelism, async adapters, GPU hooks, and CLI | Planned | 0.95.x-0.98.x |
+| Production stabilization and 1.0 security review | Planned | 0.99.x-1.0.0 |
 
 Each release must satisfy its stated verification and security exit criteria;
 future capabilities are not considered available merely because they appear on

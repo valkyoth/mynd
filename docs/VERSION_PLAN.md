@@ -13,6 +13,22 @@ must be small enough to implement, test, review, pentest, and stop cleanly
 before tagging. Split work whenever one safe review pass is insufficient.
 Schedule pressure never permits scope to roll silently into the next version.
 
+## Release sizing invariant
+
+An implementation handoff owns one independently reviewable parser state
+machine, algorithm, format process, metadata policy, adapter command, or facade
+surface. An evidence-only handoff owns one bounded campaign over an unchanged
+implementation. A release may integrate prerequisites needed for that one
+outcome, but it may not introduce a second independent state machine or defer
+part of its security proof to a later tag.
+
+Field groups remain together only when one normative transition table and one
+test matrix cover them. Format audits may aggregate already implemented,
+unchanged surfaces, but cannot add behavior. If implementation review, fuzz
+triage, proof work, or pentest scope cannot finish as one coherent decision,
+the handoff must split before code begins. The summary and detailed handoffs
+are machine-checked for identical, monotonically ordered version sets.
+
 ```text
 v0.N.0       primary release in family N
 v0.N.P       explicitly scoped additive/evidence patch in family N
@@ -72,9 +88,9 @@ are pinned when implementation begins.
 | JPEG | [ITU-T T.81](https://www.itu.int/rec/T-REC-T.81/en), corrigenda, separately scoped JFIF/T.871, Exif, ICC APP2, Adobe conventions | Sequential, progressive, lossless, arithmetic, differential, hierarchical, precision, encoders |
 | WebP | [RFC 9649](https://www.rfc-editor.org/info/rfc9649/), [RFC 6386](https://www.rfc-editor.org/rfc/rfc6386.html), [VP8L](https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification) | VP8, VP8L, ALPH, VP8X, animation, metadata, unknown chunks, order |
 | GIF | GIF87a and [GIF89a](https://www.w3.org/Graphics/GIF/spec-gif89a.txt) | Normative blocks versus Netscape/de facto extensions |
-| TIFF | TIFF 6.0, Technical Notes, corrected JPEG-in-TIFF rules | Strips, tiles, planes, pages, compression, predictors, JPEG variants, color, ICC, tags; BigTIFF is separate |
+| TIFF | [TIFF 6.0](https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf), Adobe PageMaker/Photoshop Technical Notes, and corrected JPEG-in-TIFF rules | Strips, tiles, planes, pages, compression, TIFF Predictor 2, separately sourced Adobe floating-point Predictor 3, JPEG variants, color, ICC, tags; BigTIFF is separate |
 | BMP | Microsoft GDI and Open Specifications for the core/INFO/V4/V5 families, original IBM documentation for every admitted OS/2 family, and pinned primary provenance for compatibility headers | Exact header sizes, envelopes, palettes, masks, RLE, V4/V5 color, embedded profiles, inert linked paths, and explicit unsupported dialects |
-| Netpbm | [PBM/PGM/PPM](https://netpbm.sourceforge.net/doc/pnm.html) and PAM documents | Plain/raw syntax, comments, concatenation, MAXVAL, 16-bit, PAM inclusion |
+| Netpbm | [PBM/PGM/PPM](https://netpbm.sourceforge.net/doc/pnm.html) and [PAM](https://netpbm.sourceforge.net/doc/pam.html) | Plain/raw syntax, comments, concatenation, MAXVAL, 16-bit, and PAM; PFM is explicitly outside the official Netpbm claim and pre-1.0 scope |
 | QOI | Author's [QOI specification](https://phoboslab.org/log/2021/12/qoi-specification) | Pixel termination, marker, wraparound, hints, trailing data |
 | farbfeld | [suckless definition](https://tools.suckless.org/farbfeld/) | RGBA16-BE, unassociated alpha, exact length, trailing data |
 | Shared color and blending | Pinned ICC v2 and ICC.1:2022/v4.4 sources, sRGB, BT.601/709/2020, H.273, PQ/HLG when claimed, CIE XYZ/Lab, Porter-Duff, and the selected artistic-blend specification | Edition, numeric domain, rounding, alpha, gamut, tolerance, and unsupported operations |
@@ -95,10 +111,12 @@ are pinned when implementation begins.
   blend/dispose, ALPH filter/compression, ICCP, EXIF, XMP, encoder
   quality/effort controls, and deterministic mode.
 - TIFF gates name FillOrder, Orientation, ExtraSamples, SampleFormat, signed and
-  IEEE-float samples, every predictor, YCbCr dependencies/siting, sparse strips,
+  IEEE-float samples, TIFF Predictor 2, the separately sourced Adobe
+  floating-point Predictor 3 profile, YCbCr dependencies/siting, sparse strips,
   and overlapping strip/tile policy. BigTIFF stays separate.
 - Netpbm gates define the exact header-to-raw-raster boundary, concatenated
-  images, trailing material, and unknown PAM tuple policy.
+  images, trailing material, and unknown PAM tuple policy. PFM is not an
+  official Netpbm format and remains unclaimed before 1.0.
 
 ## BMP dialect admission contract
 
@@ -415,23 +433,23 @@ API freeze:
 
 | Version | Stabilization responsibility |
 | --- | --- |
-| 0.94.6 | Establish the audited facade candidate and integration baseline after representative synchronous codec paths exercise it. |
+| 0.94.8 | Establish the audited facade candidate and integration baseline after representative synchronous codec paths exercise it. |
 | 0.95.0-0.95.1 | Exercise lifetimes, pinning, backpressure, cancellation, buffer ownership, and browser memory behavior through async and WASM adapters. |
 | 0.96.0-0.96.1 | Exercise scheduler ownership, budget partitioning, cancellation, and service integration through parallel adapters. |
 | 0.97.0-0.97.1 | Exercise descriptor stability, row alignment, synchronization, and device-boundary ownership through GPU-facing adapters. |
-| 0.98.0-0.98.2 | Exercise diagnostics, transactional output, batch limits, and service profiles through CLI integration. |
-| 0.98.3 | Resolve every cross-adapter facade issue, prohibit adapter-specific forks, rerun affected compatibility matrices, and establish the exact implementation admitted to assurance. |
-| 0.99.0-0.99.5 | Fuzz, prove, and audit the exact reconciled v0.98.3 implementation; any implementation or public-API correction invalidates affected evidence and returns to reconciliation. |
-| 0.99.6 | Verify and freeze the already-corrected facade, run the external pentest and reproducibility gates, and make no implementation or public-API correction. |
+| 0.98.0-0.98.7 | Exercise diagnostics, transactional output, command isolation, batch limits, and service profiles through CLI integration. |
+| 0.98.8 | Resolve every cross-adapter facade issue, prohibit adapter-specific forks, rerun affected compatibility matrices, and establish the exact implementation admitted to assurance. |
+| 0.99.0-0.99.17 | Fuzz, prove, and audit the exact reconciled v0.98.8 implementation; any implementation or public-API correction invalidates affected evidence and returns to reconciliation. |
+| 0.99.18 | Verify and freeze the already-corrected facade, run the external pentest, and make no implementation or public-API correction. |
 
-Every v0.95.x-v0.98.2 handoff records whether it exposed facade pressure. Any
+Every v0.95.x-v0.98.7 handoff records whether it exposed facade pressure. Any
 required correction is reviewed, documented, compatibility-tested, and
-pentested in that handoff or becomes a v0.98.3 release blocker. v0.98.3 exits
+pentested in that handoff or becomes a v0.98.8 release blocker. v0.98.8 exits
 only with zero unresolved implementation or public-API issues and no adapter
 forking or bypassing the shared facade. The v0.99.x assurance campaign applies
 to that exact reconciled implementation. A later implementation or public-API
 change invalidates affected evidence and requires reconciliation plus reruns;
-v0.99.6 only verifies and freezes the already-corrected facade.
+v0.99.18 only verifies and freezes the already-corrected facade.
 
 ## Metadata and selective decoding contract
 
@@ -456,10 +474,10 @@ Decoder traits receive a foundation candidate review with optional planning hook
 termination, region-of-interest, reduced-resolution output, strip/tile
 selection, progressive preview events, animation frame ranges, and
 scale-during-decode. Support is format-specific and claimed only when its later
-0.94.x handoff passes. v0.94.6 establishes the audited facade candidate;
-v0.95.x-v0.98.2 adapter evidence informs reviewed corrections, v0.98.3 closes
+0.94.x handoff passes. v0.94.8 establishes the audited facade candidate;
+v0.95.x-v0.98.7 adapter evidence informs reviewed corrections, v0.98.8 closes
 them before assurance begins, and the full public facade freezes only at
-v0.99.6.
+v0.99.18.
 
 Selective decode names coordinate spaces: encoded/native image,
 orientation-normalized image, animation canvas, and frame-local rectangle.
@@ -600,126 +618,208 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.30.0 | PGM P2/P5 decode/encode | MAXVAL scaling, 8/16-bit, truncation |
 | 0.31.0 | PPM P3/P6 decode/encode | Sample scaling, token bombs, binary boundaries |
 | 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, header termination, unknown fields |
-| 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images and official-tool differential tests |
+| 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images, official-tool differential tests, and explicit PFM exclusion |
 | 0.34.0 | farbfeld decode and encode | Exact-size arithmetic, RGBA16-BE, alpha semantics |
 | 0.35.0 | Simple-codec contract and security freeze | Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review |
-| 0.36.0 | PNG source map, signature, chunk state machine, CRC, ordering | Unknown-critical and CRC policy tests |
+| 0.36.0 | PNG signature and bounded probing | signature, ambiguity, prefix ownership, and every-byte truncation |
+| 0.36.1 | PNG chunk framing and CRC | length/type/data/CRC boundaries, overflow, and mutation fuzzing |
+| 0.36.2 | PNG chunk-order state machine | critical/ancillary transition matrix and unknown-critical rejection |
 | 0.37.0 | PNG IHDR and color-type/bit-depth validation | Full normative combination matrix |
-| 0.38.0 | Shared mynd-zlib plus stored/fixed mynd-deflate | RFC 1950/1951 vectors, Adler-32, fixed caller storage, transactional bits, and truncation |
+| 0.38.0 | Bounded mynd-zlib wrapper | RFC 1950 header/dictionary/trailer rules, Adler-32, and truncation |
+| 0.38.1 | Deflate stored blocks | RFC 1951 stored-block alignment/complement/output bounds and truncation |
+| 0.38.2 | Deflate fixed-Huffman blocks | fixed tables, distance/overlap bounds, transactional bits, and fuzzing |
 | 0.39.0 | Shared dynamic-Huffman and complete bounded mynd-deflate | Tree proofs, 32 KiB window, distance/overlap fuzzing, output bombs, and reusable crate audit |
-| 0.40.0 | PNG filters and noninterlaced core color decoding | Per-filter/sample golden vectors |
+| 0.40.0 | PNG row-filter reconstruction | all five filters at every admitted byte width with prior-row boundaries |
+| 0.40.1 | PNG noninterlaced 8-bit core color decoding | grayscale, truecolor, grayscale-alpha, and truecolor-alpha golden vectors |
 | 0.41.0 | Packed 1/2/4-bit and 16-bit PNG samples | Scaling, endian, tail-bit tests |
 | 0.42.0 | Adam7 decode and progressive row events | Pass geometry proofs and tiny-image corpus |
-| 0.43.0 | PNG palette, tRNS, bKGD, hIST, sBIT, sPLT | Palette/index/transparency conformance |
-| 0.44.0 | PNG cHRM/gAMA/sRGB/iCCP/cICP/mDCV/cLLI and precedence | ICC bombs, precedence matrix, HDR/WCG vectors |
-| 0.45.0 | PNG text, compressed text, eXIf, pHYs, tIME, unknown/private chunks | Metadata decompression and safe-to-copy tests |
-| 0.46.0 | APNG decoding | APNG state, frame, timing, disposal, blend, streaming, and animation-bomb tests |
-| 0.46.1 | PNG deterministic encoding | PNG Third Edition emission, round-trip, filter, Deflate, metadata, and determinism tests |
-| 0.46.2 | APNG deterministic encoding | Frame-sequence, rectangle, timing, disposal/blend, and decode/encode round trips |
-| 0.46.3 | Complete PNG/APNG conformance and security audit | Third Edition conformance, differential, streaming, fuzz review |
+| 0.43.0 | PNG PLTE and tRNS semantics | palette cardinality/index/transparency matrices and invalid combinations |
+| 0.43.1 | PNG bKGD, hIST, sBIT, and sPLT chunks | per-chunk length/value/order matrices and bounded suggested palettes |
+| 0.44.0 | PNG cHRM, gAMA, and sRGB declarations | PNG Third Edition value rules and declaration-precedence matrix |
+| 0.44.1 | PNG iCCP transport and ICC precedence | profile-name/Deflate limits, ICC bombs, and conflict precedence |
+| 0.44.2 | PNG cICP and HDR/WCG metadata | cICP, mDCV, and cLLI order/dependency/value rules with HDR vectors |
+| 0.45.0 | PNG bounded text chunks | tEXt, zTXt, and iTXt keyword/language/compression/UTF-8 limits |
+| 0.45.1 | PNG eXIf, pHYs, and tIME metadata | chunk-specific order, length, value, and metadata-transport tests |
+| 0.45.2 | PNG unknown and private chunk policy | critical rejection, ancillary preservation, and safe-to-copy editor matrix |
+| 0.46.0 | APNG control and frame-chunk sequencing | acTL/fcTL/fdAT order, sequence numbers, rectangles, timing, and limits |
+| 0.46.1 | APNG frame decoding and composition | default-image cases, source/source-over, disposal, streaming, and bombs |
+| 0.46.2 | PNG deterministic encoding | Third Edition emission, row filters, Deflate, metadata, and determinism |
+| 0.46.3 | APNG deterministic encoding | frame sequencing, rectangles, timing, disposal/blend, and round trips |
+| 0.46.4 | Complete PNG/APNG conformance and security audit | Third Edition mapping, conformance/differential corpus, and long fuzzing |
 | 0.47.0 | GIF87a/89a structure, palettes, sub-blocks, descriptors | Block termination and palette bounds |
 | 0.48.0 | GIF LZW | Dictionary/code-width proofs and fuzzing |
 | 0.49.0 | GIF single-frame decode and deinterlace | Exact pixels and four-pass geometry tests |
 | 0.50.0 | GIF GCE, transparency, frame composition, all disposal modes | Snapshot caps and animation bomb corpus |
-| 0.51.0 | GIF named extensions and compatibility policy | Comment/Plain Text/Application/unknown blocks plus loop, EOI, trailer, delay, and disposal policy |
-| 0.51.1 | GIF raw-frame and composited-frame APIs | Coordinate, palette, disposal sequencing, valid-prefix, snapshot, and frame-range tests |
-| 0.51.2 | Exact palettes and bounded histogram | Unique-color limits, palette-entry layout, deterministic ordering, overflow, and caller-palette tests |
-| 0.51.3 | Deterministic palette generation and remapping | Declared median-cut policy, palette remap, ordered/error-diffusion modes, budgets, and golden vectors |
-| 0.51.4 | GIF LZW encoder | Dictionary reset/growth/saturation, code-width emission, end code, fixed storage, proofs, and round trips |
-| 0.51.5 | Single-frame GIF encoder | Caller/generated palette, table sizing, transparency, sub-block framing, LZW integration, and determinism |
-| 0.51.6 | Animated GIF encoder | Canvas/frame totals, timing, loop extension, disposal, frame ranges, and animation round trips |
-| 0.51.7 | Complete GIF conformance and security audit | Normative/de-facto separation, termination policy, differential corpus, LZW encoder/decoder fuzzing, and animation bombs |
-| 0.52.0 | JPEG source map, marker/segment parser, frame/scan/table declarations | Marker mutation and segment-size fuzzing |
-| 0.53.0 | JPEG Huffman entropy, stuffing, restart, bounded coefficients | Canonical table proofs and MCU accounting |
+| 0.51.0 | GIF named-extension parsing | Comment, Plain Text, Application, and unknown extension boundaries |
+| 0.51.1 | GIF compatibility and termination policy | Netscape loop, EOI/trailer, extra pixels, delay, and disposal decisions |
+| 0.51.2 | GIF raw-frame and composited-frame APIs | coordinates, disposal sequencing, valid prefixes, and frame ranges |
+| 0.51.3 | GIF exact palettes and bounded histogram | unique-color limits, entry layout, ordering, overflow, and caller palettes |
+| 0.51.4 | GIF deterministic palette generation and remapping | median-cut policy, remap, bounded dithering, budgets, and goldens |
+| 0.51.5 | GIF LZW encoder | dictionary growth/reset/saturation, widths, end code, proofs, and round trips |
+| 0.51.6 | Single-frame GIF encoder | palette/table/transparency/sub-block integration and deterministic output |
+| 0.51.7 | Animated GIF encoder | canvas/frame limits, timing, loop, disposal, ranges, and round trips |
+| 0.51.8 | Complete GIF conformance and security audit | normative/de-facto matrix, differential corpus, fuzzing, and animation bombs |
+| 0.52.0 | JPEG marker and segment framing | standalone/length-bearing marker boundaries and size mutation fuzzing |
+| 0.52.1 | JPEG quantization and entropy-table declarations | DQT/DHT/DAC/DRI types, precision, counts, redefinition, and dependencies |
+| 0.52.2 | JPEG frame declarations | SOF process/precision/components/sampling/dimensions and DNL policy |
+| 0.52.3 | JPEG scan declarations and ordering | SOS selectors/ranges, multiscan/abbreviated-table state, and invalid transitions |
+| 0.53.0 | JPEG Huffman entropy and byte stuffing | canonical table proofs, marker boundaries, and every-bit truncation |
+| 0.53.1 | JPEG restart and bounded MCU coefficient accounting | restart reset/sequence, MCU geometry, coefficient bounds, and work budgets |
 | 0.54.0 | JPEG scalar IDCT and grayscale reconstruction | IDCT coefficient bounds, normative tolerance, grayscale blocks, restart corpus, and deterministic scalar vectors |
 | 0.54.1 | JPEG component sampling and bounded upsampling | Sampling factors, MCU geometry, edge extension, upsampling policy, limits, and reference vectors |
 | 0.54.2 | JPEG native YCbCr and rendered RGB output tiers | Native plane/coefficients versus shared-color rendering, JFIF declarations, tolerances, and error separation |
 | 0.55.0 | Extended sequential and 12-bit DCT processes | Precision and coefficient-range evidence |
-| 0.56.0 | Progressive DC/AC and successive approximation | Scan-order/state-machine fuzzing |
+| 0.56.0 | JPEG progressive DC scans | first/refinement DC scan state, predictors, restart, and malformed order |
+| 0.56.1 | JPEG progressive AC scans | spectral selection, EOB runs, coefficient bounds, and restart behavior |
+| 0.56.2 | JPEG successive-approximation integration audit | complete scan-script matrix, native coefficients, work limits, and fuzzing |
 | 0.57.0 | Lossless predictive JPEG process | Predictor, point transform, precision tests |
 | 0.58.0 | JPEG arithmetic coding | Conditioning-table and arithmetic-state proofs |
 | 0.59.0 | JPEG differential processes | Reference-frame dependencies, differential scan state, reconstruction bounds, and malformed graphs |
 | 0.59.1 | JPEG hierarchical processes | Frame hierarchy, expansion, dependencies, reconstruction limits, native output, and differential evidence |
-| 0.60.0 | JFIF, Exif, ICC APP2 assembly, Adobe RGB/CMYK/YCCK | Segment reassembly, precedence, and color vectors |
+| 0.60.0 | JPEG JFIF and Adobe color declarations | T.871 APP0 plus Adobe RGB/CMYK/YCCK interpretation and precedence |
+| 0.60.1 | JPEG Exif APP1 transport | identifier, length, nested offset, duplicate, and preservation policies |
+| 0.60.2 | JPEG ICC APP2 assembly and color precedence | chunk numbering/completeness/duplicates, profile limits, and color vectors |
 | 0.61.0 | Baseline JPEG encoder | Deterministic valid baseline emission, quality controls, coefficient limits, and round trips |
 | 0.61.1 | Progressive JPEG encoder | Scan scripts, successive approximation, deterministic tables, restart policy, and round trips |
-| 0.61.2 | Extended-sequential and lossless JPEG encoders | Precision/process-specific valid emission, predictor/point-transform policy, and differential tests |
-| 0.61.3 | Arithmetic, differential, and hierarchical JPEG encoder admission | Each process is either independently evidenced or explicitly unclaimed with no decoder-claim ambiguity |
+| 0.61.2 | Extended-sequential JPEG encoder | precision/process-valid emission, tables, restart, and differential tests |
+| 0.61.3 | Lossless JPEG encoder | predictor/point-transform emission, precision, restart, and round trips |
+| 0.61.4 | Arithmetic JPEG encoder admission | independent arithmetic evidence or an explicit unclaimed decision |
+| 0.61.5 | Differential JPEG encoder admission | independent differential-process evidence or an explicit unclaimed decision |
+| 0.61.6 | Hierarchical JPEG encoder admission | independent hierarchy evidence or an explicit unclaimed decision |
 | 0.62.0 | Complete declared T.81 conformance and security audit | Reference software, official material, long fuzz campaign |
-| 0.63.0 | WebP RIFF/VP8X container, chunk order, metadata | RFC 9649 conformance and size/padding fuzzing |
-| 0.64.0 | VP8 Boolean decoder, partitions, headers, probabilities | Partition limits and arithmetic-state fuzzing |
+| 0.63.0 | WebP RIFF framing and simple-file dispatch | RIFF/WEBP size, padding, VP8/VP8L simple payload, and trailing policy |
+| 0.63.1 | WebP VP8X feature and chunk-order state machine | feature bits, canvas, chunk multiplicity/order, and invalid combinations |
+| 0.63.2 | WebP ICCP, EXIF, XMP, and unknown chunks | bounded metadata, feature consistency, preservation, and unknown policy |
+| 0.64.0 | VP8 Boolean-decoder primitive | range/value normalization, refill, termination, and arithmetic-state fuzzing |
+| 0.64.1 | VP8 partition and frame-header parsing | partition sizes/counts, key/inter headers, segmentation, and bounds |
+| 0.64.2 | VP8 probability-update and token state | coefficient/mode probability updates, defaults, reset, and work accounting |
 | 0.65.0 | VP8 prediction and coefficient reconstruction | Macroblock/reference bounds, prediction modes, token reconstruction, partition limits, and scalar differential tests |
 | 0.65.1 | VP8 inverse transforms and reconstructed macroblocks | Transform arithmetic, coefficient ranges, clipping, prediction integration, and scalar reference vectors |
 | 0.65.2 | VP8 loop filtering and complete still reconstruction | Filter levels/edges, macroblock bounds, native YCbCr output, rendered output, and differential corpus |
-| 0.66.0 | VP8 alpha and Y′CbCr-to-RGB pipeline | ALPH preprocessing and color tests |
-| 0.67.0 | VP8L prefix coding, LZ77, color cache | Prefix/distance/cache proofs and bombs |
-| 0.68.0 | VP8L transform declarations and meta-prefix images | Transform order/count, recursion, dimensions, prefix images, cache limits, and malformed combinations |
-| 0.68.1 | VP8L predictor, subtract-green, color-index, and cache transforms | Per-transform bounds, order, recursion, cache access, work accounting, and golden vectors |
-| 0.68.2 | VP8L complete lossless reconstruction audit | All transforms plus LZ/prefix integration, exact pixels, native/rendered output, bombs, and long fuzzing |
+| 0.66.0 | WebP ALPH decoding | ALPH filter/compression/preprocessing modes, dimensions, and bombs |
+| 0.66.1 | VP8 native YCbCr and rendered RGB integration | matrix/range assumptions, alpha association, output tiers, and color vectors |
+| 0.67.0 | VP8L prefix-code parsing and decoding | simple/normal code validation, tables, symbols, and every-bit truncation |
+| 0.67.1 | VP8L LZ77 distance and copy engine | distance mapping, overlap, history/output bounds, progress, and bombs |
+| 0.67.2 | VP8L color-cache engine | cache-bit bounds, hashing, initialization, access, and deterministic vectors |
+| 0.68.0 | VP8L transform declarations and meta-prefix images | transform order/count, dimensions, recursion, prefix images, and limits |
+| 0.68.1 | VP8L predictor transform | all predictor modes, edge rules, modular arithmetic, and goldens |
+| 0.68.2 | VP8L color transform | transform-image geometry, delta arithmetic, bounds, and golden vectors |
+| 0.68.3 | VP8L subtract-green transform | modular channel arithmetic, order, and exact pixel vectors |
+| 0.68.4 | VP8L color-indexing transform | palette image, packing widths, dimension reduction, indexes, and bounds |
+| 0.68.5 | VP8L complete lossless reconstruction audit | all transforms plus prefix/LZ/cache integration, exact pixels, bombs, and fuzzing |
 | 0.69.0 | WebP animation decoding | ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing |
 | 0.69.1 | VP8L deterministic encoder | Prefix/LZ/cache/transform validity, quality-effort controls, bounded search, determinism, and round trips |
 | 0.69.2 | VP8 deterministic encoder | Prediction/partition/token validity, quality-effort controls, bounded heuristics, backend determinism, and differential tests |
 | 0.69.3 | Animated WebP encoder | ANMF ordering/rectangles, mixed frame modes, blend/dispose, metadata, and round trips |
 | 0.69.4 | Complete WebP conformance and security audit | RFC/VP8/VP8L mappings, still/animated split, ALPH/metadata, encoder modes, long fuzzing, and external review |
-| 0.70.0 | Shared bounded mynd-ifd engine and TIFF schema | Typed values, offset graphs, cycles, overlaps, entry/count arithmetic, schema separation, and fuzzing |
-| 0.71.0 | Baseline strips: bilevel, Gray, palette, RGB, uncompressed/PackBits | Strip-size and row-layout tests |
-| 0.72.0 | TIFF LZW, Deflate, and horizontal predictors | Dialect policy and decompression bombs |
-| 0.73.0 | TIFF CCITT RLE, Group 3, and Group 4 | Fax transition/run proofs and differential corpus |
-| 0.74.0 | Tiles, planar layouts, multipage/SubIFD traversal | Tile geometry, IFD cycles, aggregate limits |
+| 0.70.0 | Shared bounded mynd-ifd graph and typed-value engine | count/offset arithmetic, cycles, overlaps, typed values, and fuzzing |
+| 0.70.1 | TIFF 6.0 tag schema and dependency validation | required/defaulted tags, types/counts, duplicate policy, and dependencies |
+| 0.71.0 | TIFF baseline uncompressed strips | bilevel/Gray/palette/RGB strip geometry, FillOrder, and truncation |
+| 0.71.1 | TIFF PackBits strip decoding | packet boundaries, no-op bytes, row/strip output bounds, and bombs |
+| 0.72.0 | TIFF LZW decoding | TIFF code-width dialect, clear/end codes, dictionary limits, and bombs |
+| 0.72.1 | TIFF Deflate decoding | old/new compression-tag policy, zlib integration, and output limits |
+| 0.72.2 | TIFF horizontal Predictor 2 | integer sample widths, planar/contiguous rows, endian, and overflow |
+| 0.72.3 | TIFF floating-point Predictor 3 profile | Adobe Technical Note 3 byte reordering/differencing vectors and profile matrix |
+| 0.73.0 | TIFF CCITT modified-Huffman RLE | run tables, FillOrder, EOL policy, row bounds, and differential corpus |
+| 0.73.1 | TIFF CCITT Group 3 fax decoding | T4 options, 1D/2D transitions, EOL/RTC, damaged rows, and limits |
+| 0.73.2 | TIFF CCITT Group 4 fax decoding | T6 transitions, EOFB, reference-line bounds, and malformed streams |
+| 0.74.0 | TIFF tiled image layout | tile geometry, edge tiles, sparse/overlap policy, offsets, and byte counts |
+| 0.74.1 | TIFF planar image layout | plane ordering, per-plane strips/tiles, sample dependencies, and limits |
+| 0.74.2 | TIFF multipage and SubIFD traversal | next-IFD/SubIFD graphs, cycles, aggregate page limits, and valid prefixes |
 | 0.75.0 | TIFF YCbCr samples and tag dependencies | Coefficients, reference black/white, subsampling, positioning, strip/tile geometry, and color vectors |
 | 0.75.1 | TIFF CMYK and CIELab native samples | Photometric dependencies, signed/sample domains, planar layouts, declarations, and native golden vectors |
-| 0.75.2 | TIFF alpha, ICC, and rendered-color integration | ExtraSamples association, profile precedence, shared ICC/color rendering, tolerances, and invalid combinations |
-| 0.76.0 | Corrected JPEG-in-TIFF, Exif IFDs, admitted extensions | Old/new JPEG distinction and nested offsets |
-| 0.77.0 | TIFF baseline strip encoder | Big/little-endian uncompressed baseline strips, tags, exact sizes, and round trips |
-| 0.77.1 | TIFF PackBits encoder | Packet/run boundaries, row policy, exact lengths, determinism, and round trips |
-| 0.77.2 | TIFF LZW encoder | Early/late policy, dictionary/code-width transitions, clear/end behavior, proofs, and round trips |
-| 0.77.3 | TIFF Deflate and predictor encoders | Shared mynd-deflate integration, predictor values, output limits, zlib validity, and round trips |
-| 0.77.4 | TIFF CCITT fax encoders | RLE/Group 3/Group 4 run/transition validity, options, row termination, and differential corpus |
-| 0.77.5 | TIFF tile, planar, and multipage encoders | Tile geometry, plane offsets, IFD/SubIFD graph, aggregate limits, determinism, and round trips |
-| 0.77.6 | TIFF extended color and JPEG encoders | Photometric dependencies, ExtraSamples, SampleFormat, YCbCr/ICC, corrected JPEG rules, and claims |
-| 0.77.7 | Complete declared TIFF 6.0-profile audit | Compression/profile matrix, sparse/overlap policy, differential corpus, fuzzing, conformance, and external review |
+| 0.75.2 | TIFF alpha, ICC, and rendered-color integration | ExtraSamples association, ICC precedence, shared rendering, and tolerances |
+| 0.75.3 | TIFF signed-integer and IEEE floating sample domains | SampleFormat/depth combinations, endian, NaN/infinity policy, and native output |
+| 0.76.0 | Corrected JPEG-in-TIFF decoding | old/new JPEG distinction, table ownership, strip/tile boundaries, and corpus |
+| 0.76.1 | TIFF Exif IFD integration | Exif/GPS/Interop graph namespaces, nested offsets, cycles, and limits |
+| 0.76.2 | TIFF admitted-extension profile freeze | each extension has pinned provenance and an explicit support disposition |
+| 0.77.0 | TIFF baseline uncompressed-strip encoder | endian tags/strips/exact sizes/determinism and round trips |
+| 0.77.1 | TIFF PackBits encoder | packet/run/row boundaries, exact lengths, determinism, and round trips |
+| 0.77.2 | TIFF LZW encoder | dialect widths, clear/end behavior, proofs, determinism, and round trips |
+| 0.77.3 | TIFF Deflate encoder | mynd-deflate/zlib integration, output limits, validity, and round trips |
+| 0.77.4 | TIFF horizontal Predictor 2 encoder | integer widths, endian, planar/contiguous rows, and round trips |
+| 0.77.5 | TIFF floating-point Predictor 3 encoder admission | Adobe-profile widths and vectors or an explicit unclaimed decision |
+| 0.77.6 | TIFF CCITT RLE encoder | run-code validity, FillOrder, row termination, and differential tests |
+| 0.77.7 | TIFF CCITT Group 3 encoder | T4 options, 1D/2D transitions, EOL/RTC, and differential tests |
+| 0.77.8 | TIFF CCITT Group 4 encoder | T6 transitions, EOFB, reference rows, and differential tests |
+| 0.77.9 | TIFF tiled-image encoder | tile geometry, edge tiles, offsets/byte counts, and deterministic output |
+| 0.77.10 | TIFF planar-image encoder | plane ordering, per-plane storage, dependencies, and round trips |
+| 0.77.11 | TIFF multipage and SubIFD encoder | IFD graph, next/SubIFD links, aggregate limits, and deterministic output |
+| 0.77.12 | TIFF extended sample/color encoder | photometric/SampleFormat/ExtraSamples/YCbCr/ICC dependencies and claims |
+| 0.77.13 | Corrected JPEG-in-TIFF encoder | new-style table ownership, strip/tile boundaries, validity, and round trips |
+| 0.77.14 | Complete declared TIFF profile audit | compression/layout/sample/color/extension matrix, conformance, fuzzing, and review |
 | 0.78.0 | Cross-format native-sample and color-declaration integration | decode_native consistency, declaration precedence, preserved profiles, and no premature rendered-color claim |
 | 0.79.0 | Shared bounded TIFF/Exif IFD inspection | Offset graphs, entry counts, cycles, value bounds, MakerNote opacity, and fuzzing |
-| 0.80.0 | Selected Exif fields, thumbnails, and orientation policy | Dimensions/timestamps/strings/thumbnails are bounded and orientation is never silently applied |
-| 0.81.0 | XMP inspection and metadata conflict/rewrite policies | Raw-versus-bounded-XML decision, precedence, preserve/discard/rewrite, and decompression limits |
-| 0.81.1 | Transformation-aware metadata effects and rewrite planning | Preserved/rewritten/invalidated/caller-decision results for geometry, color, palette, thumbnails, hashes, and animation |
+| 0.80.0 | Selected bounded Exif field interpretation | dimensions, timestamps, strings, types/counts, encoding, and conflicts |
+| 0.80.1 | Bounded Exif thumbnail extraction | thumbnail offsets/lengths, nested format limits, overlap, and bomb resistance |
+| 0.80.2 | Explicit Exif orientation policy | all eight orientations, coordinate mapping, opt-in transform, and metadata effect |
+| 0.81.0 | XMP raw-packet transport and bounded RDF/XML inspection | packet/nesting/name/attribute/text limits and malicious XML corpus |
+| 0.81.1 | XMP and legacy-metadata conflict/rewrite policy | XMP Part 3 reconciliation, preserve/discard/rewrite, duplicates, and round trips |
+| 0.81.2 | Transformation-aware metadata effect planning | preserved/rewritten/invalidated/decision results for every operation |
 | 0.82.0 | YCbCr matrices, ranges, subsampling, and chroma siting | JPEG/WebP/TIFF reference vectors |
-| 0.83.0 | CMYK, YCCK, Gray, Lab, and wide-gamut conversion | Black-generation policy and gamut tests |
+| 0.83.0 | Gray, CMYK, and YCCK conversion | black-generation/Adobe policy, native-to-rendered vectors, and gamut limits |
+| 0.83.1 | CIELab and declared wide-gamut conversion | white-point/adaptation/range rules, out-of-gamut policy, and reference vectors |
 | 0.84.0 | Straight/premultiplied alpha conversion | Zero-alpha, rounding, and invariant tests |
-| 0.85.0 | Conversion planning, sample-depth changes, and advanced dithering | Declared information loss, numeric tier, scratch/work plan, and deterministic output |
-| 0.85.1 | Final cross-format rendered-color conformance audit | PNG/JPEG/WebP/TIFF rendered output after all shared conversion work, reference tolerances, profiles, and no implicit assumptions |
+| 0.85.0 | Explicit color-conversion planning | information-loss declaration, numeric tier, stages, scratch, and work plan |
+| 0.85.1 | Sample-depth conversion | all admitted integer/float depths, scaling, rounding, saturation, and alpha |
+| 0.85.2 | Deterministic advanced dithering | ordered/error-diffusion kernels, edge/error bounds, budgets, and goldens |
+| 0.85.3 | Final cross-format rendered-color conformance audit | PNG/JPEG/WebP/TIFF profiles, precedence, tolerances, and differential results |
 | 0.86.0 | Crop, flip, rotate, transpose | In-place overlap and rectangle proofs |
 | 0.87.0 | Checked affine geometry and border modes | Finite-matrix and coordinate-overflow proofs |
 | 0.88.0 | Nearest and bilinear resampling | Pixel-center and edge-policy golden tests |
 | 0.89.0 | Bicubic resampling | Coefficient normalization and overshoot policy |
 | 0.90.0 | Lanczos3 resampling | Tap planning, ring-buffer limits, reference vectors |
 | 0.91.0 | Remaining Porter-Duff compositing operators | Shared source/source-over compatibility, remaining operators, linear domain, alpha, overlap, and invariants |
-| 0.92.0 | Declared artistic blend modes | Formula, clamping, NaN, and interoperability tests |
+| 0.92.0 | Declared artistic blend modes | formula/domain/clamping/NaN/alpha matrices and interoperability vectors |
+| 0.92.1 | Clipped pixel, span, and fill primitives | signed/overflowing coordinates, clipping, layout, alpha, and work budgets |
+| 0.92.2 | Rectangle and overlap-safe blit primitives | empty/degenerate rectangles, clipping, overlap directions, and alias policy |
+| 0.92.3 | Deterministic integer line primitives | octants, endpoints, degenerates, clipping symmetry, and golden rasters |
+| 0.92.4 | Deterministic integer circle and ellipse primitives | quadrants, degenerates, clipping symmetry, overflow, and golden rasters |
+| 0.92.5 | Bounded raster-drawing contract and security audit | layout/color/alpha/overlap/work tests and explicit support matrix |
 | 0.93.0 | Optional safe SIMD or audited external backends | Scalar differential, tail/alignment, dependency/unsafe-boundary, Miri, and sanitizer evidence |
 | 0.94.0 | Streaming and tiled processing graph | Scratch bounds, fusion equivalence, cancellation, and honest random-access disclosure |
-| 0.94.1 | Metadata/header-only, region, and frame-range decoding | Coordinate spaces, chroma/halo/crop planning, committed regions, raw/composited selection, budgets, and support matrix |
-| 0.94.2 | Reduced-resolution and progressive-preview decoding | JPEG reduced IDCT, TIFF strip/tile selection, progressive events, scale-during-decode policy, and numeric evidence |
-| 0.94.3 | Processing and selective-decoding contract freeze | Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and processing/selective contract freeze |
-| 0.94.4 | Unified borrowed inspection and decode_into facade | Hints/mismatch, static dispatch, native/rendered and raw/composited selection, limits/scratch/warnings, and disabled features |
-| 0.94.5 | Unified encoder and transcoding facade | encode_from, capability planning, conversion orchestration, MetadataEffect, transactional policy, and format selection |
-| 0.94.6 | Fallible owned convenience APIs and facade candidate integration audit | Allocation failure, owned decode/encode/transcode, all-feature combinations, representative codecs, and an audited candidate baseline |
+| 0.94.1 | Metadata- and header-only decoding | no-pixel paths, source-position policy, metadata budgets, and format matrix |
+| 0.94.2 | Region-selective decoding | coordinate spaces, chroma/halo planning, committed regions, and fallbacks |
+| 0.94.3 | Frame-range selective decoding | raw/composited selection, dependency closure, disposal state, and bombs |
+| 0.94.4 | Reduced-resolution and progressive-preview decoding | JPEG reduced IDCT, TIFF selection, progressive events, and numeric evidence |
+| 0.94.5 | Processing and selective-decoding contract freeze | fusion equivalence, peak limits, cancellation, DoS, and support matrix |
+| 0.94.6 | Unified borrowed inspection and decode_into facade | hints/mismatch, static dispatch, output tiers, limits, and disabled features |
+| 0.94.7 | Unified encoder and transcoding facade | capability plans, conversion orchestration, metadata effects, and transactions |
+| 0.94.8 | Fallible owned APIs and facade-candidate integration audit | allocation failure, representative codecs, feature matrix, and candidate baseline |
 | 0.95.0 | Runtime-neutral async source/sink adapters | Backpressure, cancellation, partial-I/O tests |
 | 0.95.1 | WASM/browser streaming adapters | wasm32-unknown-unknown, JS-size, memory-growth tests |
 | 0.96.0 | Caller-provided parallel scheduling interface | Determinism, budget partition, cancellation |
 | 0.96.1 | Optional Rayon/service adapter | No core dependency or automatic global pool |
 | 0.97.0 | GPU-compatible descriptors and upload-layout hooks | Stable layout contract; no device ownership in core |
 | 0.97.1 | Optional backend adapters | CPU/GPU differential results and synchronization policy |
-| 0.98.0 | mynd-cli inspect and validate | Escaped metadata, bounded defaults, exit-code contract |
-| 0.98.1 | CLI decode/encode/convert/frame operations | Transactional files and color-policy disclosure |
-| 0.98.2 | CLI batch/service profiles | Aggregate budgets, cancellation, hostile filename tests |
-| 0.98.3 | Cross-adapter facade reconciliation | Every adapter issue resolved, no facade forks, affected compatibility matrices rerun, and exact assurance input fixed |
-| 0.99.0 | cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher | Coverage report and minimized persistent corpus |
-| 0.99.1 | Long-running fuzz and every-byte/bit truncation campaigns | No stalls, panics, or inconsistent terminal states |
-| 0.99.2 | Kani math/view/bit/geometry proofs | Published assumptions and unwind bounds |
-| 0.99.3 | Kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs | Output, dictionary, table, and progress invariants |
-| 0.99.4 | Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit | All supported configurations pass |
-| 0.99.5 | Official conformance, differential, color, performance, and DoS freeze | Every claim linked to evidence; no unexplained disagreement |
-| 0.99.6 | Reproducible SBOM/package/provenance, external pentest, and final public API freeze | Already-corrected facade verified unchanged; no critical/high finding; clean retest |
+| 0.98.0 | mynd-cli inspect command | escaped bounded metadata, stable schema, hostile terminals, and exit codes |
+| 0.98.1 | mynd-cli validate command | strict/compatibility modes, bounded diagnostics, exit codes, and no output mutation |
+| 0.98.2 | mynd-cli decode command | transactional files, output-tier/color disclosure, limits, and cancellation |
+| 0.98.3 | mynd-cli encode command | format capability validation, metadata policy, transactions, and determinism |
+| 0.98.4 | mynd-cli convert command | explicit conversion plan, information-loss confirmation, and atomic replacement |
+| 0.98.5 | mynd-cli frame command | raw/composited selection, frame/range limits, filenames, and animation bombs |
+| 0.98.6 | mynd-cli bounded batch profile | aggregate budgets, hostile filenames, collision policy, and cancellation |
+| 0.98.7 | mynd-cli bounded service profile | request isolation, aggregate/live budgets, cancellation, and no ambient authority |
+| 0.98.8 | Cross-adapter facade reconciliation | Zero unresolved implementation or public-API issues and one exact assurance input |
+| 0.99.0 | cargo-fuzz harness and corpus integration | every parser/entropy/metadata/dispatcher target builds with provenance |
+| 0.99.1 | Long-running fuzz and truncation campaign | coverage report, minimized persistent corpus, and no stalls/panics |
+| 0.99.2 | Kani checked-arithmetic and geometry proofs | conversion/size/stride/rectangle assumptions and unwind bounds |
+| 0.99.3 | Kani view and buffer-state proofs | bounds, alias policy, commit visibility, and state invariants |
+| 0.99.4 | Kani byte- and bit-I/O proofs | cursor/refill/shift/rollback/progress invariants |
+| 0.99.5 | Kani Deflate and zlib state proofs | table/distance/window/checksum/output/progress invariants |
+| 0.99.6 | Kani GIF and TIFF LZW state proofs | dialect dictionary/width/reset/end/output/progress invariants |
+| 0.99.7 | Kani JPEG entropy state proofs | Huffman/arithmetic/stuffing/restart/coefficient/progress invariants |
+| 0.99.8 | Kani WebP entropy state proofs | VP8 Boolean and VP8L prefix/LZ/cache/output/progress invariants |
+| 0.99.9 | Kani TIFF fax and IFD state proofs | run/transition/reference-row and graph/count/progress invariants |
+| 0.99.10 | Miri audit | all supported feature sets and mutation/view/adapter paths pass Miri |
+| 0.99.11 | Sanitizer audit | address, leak, memory, and undefined-behavior sanitizer matrix |
+| 0.99.12 | Supported-Rust, target, and feature audit | Rust 1.90.0-1.97.1, targets, no-default, alloc/std, WASM, and combinations |
+| 0.99.13 | Stack and code-size audit | per-target stack ceilings, recursion absence, and binary-size budgets |
+| 0.99.14 | Official conformance and differential freeze | every format claim mapped with no unexplained reference disagreement |
+| 0.99.15 | Cross-format color conformance freeze | native/rendered profiles, precedence, tolerances, and reference vectors |
+| 0.99.16 | Performance and denial-of-service freeze | valid throughput plus hostile rejection-time/work/memory regression limits |
+| 0.99.17 | Reproducible package, SBOM, and provenance freeze | byte-reproducible archives, dependency identity, signatures, and attestations |
+| 0.99.18 | External pentest and final public API freeze | unchanged v0.98.8 input, complete evidence, no critical/high, and clean retest |
 
 ## Phase: Foundations
 
@@ -2582,7 +2682,7 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- This is a candidate review, not a permanent public API freeze. Representative real codecs may still drive compatible redesign before v0.94.6.
+- This is a candidate review, not a permanent public API freeze. Representative real codecs may still drive compatible redesign before v0.94.8.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
@@ -3757,12 +3857,16 @@ Deliverables:
   corpus provenance, numeric tolerances, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
+- Freeze “Netpbm” to the official PNM plus PAM family. PFM has incompatible
+  floating-point/endian/row-order semantics, is not an official Netpbm format,
+  and remains explicitly unsupported before 1.0.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
   pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Concatenated images and official-tool differential tests.
+- Required release evidence: Concatenated images, official-tool differential
+  tests, and a support matrix that explicitly excludes PFM.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3893,57 +3997,113 @@ Exit criteria:
 
 Implement PNG, GIF, JPEG, WebP, and TIFF with native/rendered separation, shared animation/Deflate/IFD foundations, and smaller entropy/color/encoder review units.
 
-### v0.36.0 - PNG source map, signature, chunk state machine, CRC, ordering
+### v0.36.0 - PNG signature and bounded probing
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png source map, signature, chunk state machine, crc, ordering. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG signature and bounded probing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete png source map, signature, chunk state machine, crc, ordering with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG signature and bounded probing with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: PNG source map, signature, chunk state machine, CRC, ordering.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: PNG signature and bounded probing.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Unknown-critical and CRC policy tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: signature, ambiguity, prefix ownership, and every-byte truncation.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.36.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.36.1 - PNG chunk framing and CRC
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG chunk framing and CRC. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete PNG chunk framing and CRC with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG chunk framing and CRC.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: length/type/data/CRC boundaries, overflow, and mutation fuzzing.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.36.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.36.2 - PNG chunk-order state machine
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG chunk-order state machine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete PNG chunk-order state machine with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG chunk-order state machine.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: critical/ancillary transition matrix and unknown-critical rejection.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.36.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.37.0 - PNG IHDR and color-type/bit-depth validation
 
@@ -3997,58 +4157,113 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.37.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.38.0 - Shared mynd-zlib plus stored/fixed mynd-deflate
+### v0.38.0 - Bounded mynd-zlib wrapper
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-shared mynd-zlib plus stored/fixed mynd-deflate. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for Bounded mynd-zlib wrapper. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete shared mynd-zlib plus stored/fixed mynd-deflate with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete Bounded mynd-zlib wrapper with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Shared mynd-zlib plus stored/fixed mynd-deflate.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- mynd-zlib owns RFC 1950 framing while mynd-deflate owns RFC 1951; PNG and TIFF consume the same audited Deflate implementation.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: Bounded mynd-zlib wrapper.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: RFC 1950/1951 vectors, Adler-32, fixed caller storage, transactional bits, and truncation.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: RFC 1950 header/dictionary/trailer rules, Adler-32, and truncation.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.38.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.38.1 - Deflate stored blocks
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for Deflate stored blocks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Deflate stored blocks with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Deflate stored blocks.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: RFC 1951 stored-block alignment/complement/output bounds and truncation.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.38.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.38.2 - Deflate fixed-Huffman blocks
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for Deflate fixed-Huffman blocks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Deflate fixed-Huffman blocks with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Deflate fixed-Huffman blocks.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: fixed tables, distance/overlap bounds, transactional bits, and fuzzing.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.38.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.39.0 - Shared dynamic-Huffman and complete bounded mynd-deflate
 
@@ -4103,57 +4318,105 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.39.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.40.0 - PNG filters and noninterlaced core color decoding
+### v0.40.0 - PNG row-filter reconstruction
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png filters and noninterlaced core color decoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG row-filter reconstruction. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete png filters and noninterlaced core color decoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG row-filter reconstruction with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: PNG filters and noninterlaced core color decoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: PNG row-filter reconstruction.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Per-filter/sample golden vectors.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: all five filters at every admitted byte width with prior-row boundaries.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.40.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.40.1 - PNG noninterlaced 8-bit core color decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG noninterlaced 8-bit core color decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete PNG noninterlaced 8-bit core color decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG noninterlaced 8-bit core color decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: grayscale, truecolor, grayscale-alpha, and truecolor-alpha golden vectors.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.40.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.41.0 - Packed 1/2/4-bit and 16-bit PNG samples
 
@@ -4259,370 +4522,655 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.42.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.43.0 - PNG palette, tRNS, bKGD, hIST, sBIT, sPLT
+### v0.43.0 - PNG PLTE and tRNS semantics
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png palette, trns, bkgd, hist, sbit, splt. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG PLTE and tRNS semantics. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete png palette, trns, bkgd, hist, sbit, splt with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG PLTE and tRNS semantics with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: PNG palette, tRNS, bKGD, hIST, sBIT, sPLT.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: PNG PLTE and tRNS semantics.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Palette/index/transparency conformance.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: palette cardinality/index/transparency matrices and invalid combinations.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.43.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.44.0 - PNG cHRM/gAMA/sRGB/iCCP/cICP/mDCV/cLLI and precedence
+### v0.43.1 - PNG bKGD, hIST, sBIT, and sPLT chunks
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png chrm/gama/srgb/iccp/cicp/mdcv/clli and precedence. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG bKGD, hIST, sBIT, and sPLT chunks. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete png chrm/gama/srgb/iccp/cicp/mdcv/clli and precedence with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG bKGD, hIST, sBIT, and sPLT chunks with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: PNG cHRM/gAMA/sRGB/iCCP/cICP/mDCV/cLLI and precedence.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: PNG bKGD, hIST, sBIT, and sPLT chunks.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: ICC bombs, precedence matrix, HDR/WCG vectors.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: per-chunk length/value/order matrices and bounded suggested palettes.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.43.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.44.0 - PNG cHRM, gAMA, and sRGB declarations
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG cHRM, gAMA, and sRGB declarations. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete PNG cHRM, gAMA, and sRGB declarations with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG cHRM, gAMA, and sRGB declarations.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: PNG Third Edition value rules and declaration-precedence matrix.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.44.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.45.0 - PNG text, compressed text, eXIf, pHYs, tIME, unknown/private chunks
+### v0.44.1 - PNG iCCP transport and ICC precedence
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png text, compressed text, exif, phys, time, unknown/private chunks. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG iCCP transport and ICC precedence. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete png text, compressed text, exif, phys, time, unknown/private chunks with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG iCCP transport and ICC precedence with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: PNG text, compressed text, eXIf, pHYs, tIME, unknown/private chunks.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: PNG iCCP transport and ICC precedence.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Metadata decompression and safe-to-copy tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: profile-name/Deflate limits, ICC bombs, and conflict precedence.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.44.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.44.2 - PNG cICP and HDR/WCG metadata
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG cICP and HDR/WCG metadata. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete PNG cICP and HDR/WCG metadata with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG cICP and HDR/WCG metadata.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: cICP, mDCV, and cLLI order/dependency/value rules with HDR vectors.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.44.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.45.0 - PNG bounded text chunks
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG bounded text chunks. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete PNG bounded text chunks with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG bounded text chunks.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: tEXt, zTXt, and iTXt keyword/language/compression/UTF-8 limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.45.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.46.0 - APNG decoding
+### v0.45.1 - PNG eXIf, pHYs, and tIME metadata
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-apng decoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG eXIf, pHYs, and tIME metadata. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete apng decoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG eXIf, pHYs, and tIME metadata with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: APNG decoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: PNG eXIf, pHYs, and tIME metadata.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- APNG blend/disposal mapping reuses the shared v0.5.4 animation kernel.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: APNG state, frame, timing, disposal, blend, streaming, and animation-bomb tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: chunk-specific order, length, value, and metadata-transport tests.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.46.0 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.45.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.46.1 - PNG deterministic encoding
+### v0.45.2 - PNG unknown and private chunk policy
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-png deterministic encoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG unknown and private chunk policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete png deterministic encoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete PNG unknown and private chunk policy with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: PNG unknown and private chunk policy.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: critical rejection, ancillary preservation, and safe-to-copy editor matrix.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.45.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.46.0 - APNG control and frame-chunk sequencing
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for APNG control and frame-chunk sequencing. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete APNG control and frame-chunk sequencing with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: APNG control and frame-chunk sequencing.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: acTL/fcTL/fdAT order, sequence numbers, rectangles, timing, and limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.46.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.46.1 - APNG frame decoding and composition
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for APNG frame decoding and composition. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete APNG frame decoding and composition with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: APNG frame decoding and composition.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: default-image cases, source/source-over, disposal, streaming, and bombs.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.46.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.46.2 - PNG deterministic encoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive PNG/APNG handoff for PNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete PNG deterministic encoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: PNG deterministic encoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: PNG Third Edition emission, round-trip, filter, Deflate, metadata, and determinism tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: Third Edition emission, row filters, Deflate, metadata, and determinism.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.46.1 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.46.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.46.2 - APNG deterministic encoding
+### v0.46.3 - APNG deterministic encoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-apng deterministic encoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for APNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete apng deterministic encoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete APNG deterministic encoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: APNG deterministic encoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Frame-sequence, rectangle, timing, disposal/blend, and decode/encode round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: frame sequencing, rectangles, timing, disposal/blend, and round trips.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.46.2 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.46.3 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.46.3 - Complete PNG/APNG conformance and security audit
+### v0.46.4 - Complete PNG/APNG conformance and security audit
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-complete png/apng conformance and security audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for complete PNG/APNG conformance and security audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete complete png/apng conformance and security audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete complete PNG/APNG conformance and security audit with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Complete PNG/APNG conformance and security audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Third Edition conformance, differential, streaming, fuzz review.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: Third Edition mapping, conformance/differential corpus, and long fuzzing.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.46.3 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.46.4 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.47.0 - GIF87a/89a structure, palettes, sub-blocks, descriptors
 
@@ -4832,526 +5380,573 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.50.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.0 - GIF named extensions and compatibility policy
+### v0.51.0 - GIF named-extension parsing
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-gif named extensions and compatibility policy. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for GIF named-extension parsing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete gif named extensions and compatibility policy with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete GIF named-extension parsing with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: GIF named extensions and compatibility policy.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: GIF named-extension parsing.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Comment/Plain Text/Application/unknown blocks plus loop, EOI, trailer, delay, and disposal policy.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: Comment, Plain Text, Application, and unknown extension boundaries.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.51.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.1 - GIF raw-frame and composited-frame APIs
+### v0.51.1 - GIF compatibility and termination policy
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-gif raw-frame and composited-frame apis. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for GIF compatibility and termination policy. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete gif raw-frame and composited-frame apis with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete GIF compatibility and termination policy with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: GIF compatibility and termination policy.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: Netscape loop, EOI/trailer, extra pixels, delay, and disposal decisions.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.51.2 - GIF raw-frame and composited-frame APIs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive GIF handoff for GIF raw-frame and composited-frame APIs. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete GIF raw-frame and composited-frame APIs with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: GIF raw-frame and composited-frame APIs.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Coordinate, palette, disposal sequencing, valid-prefix, snapshot, and frame-range tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: coordinates, disposal sequencing, valid prefixes, and frame ranges.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.51.1 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.51.2 - Exact palettes and bounded histogram
-
-Status: Planned.
-
-Context:
-
-This is the exclusive complex formats handoff for
-exact palettes and bounded histogram. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
-
-Goal:
-
-Complete exact palettes and bounded histogram with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Exact palettes and bounded histogram.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Unique-color limits, palette-entry layout, deterministic ordering, overflow, and caller-palette tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.51.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.3 - Deterministic palette generation and remapping
+### v0.51.3 - GIF exact palettes and bounded histogram
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-deterministic palette generation and remapping. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for GIF exact palettes and bounded histogram. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete deterministic palette generation and remapping with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete GIF exact palettes and bounded histogram with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Deterministic palette generation and remapping.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: GIF exact palettes and bounded histogram.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Declared median-cut policy, palette remap, ordered/error-diffusion modes, budgets, and golden vectors.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: unique-color limits, entry layout, ordering, overflow, and caller palettes.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.51.3 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.4 - GIF LZW encoder
+### v0.51.4 - GIF deterministic palette generation and remapping
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-gif lzw encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for GIF deterministic palette generation and remapping. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete gif lzw encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete GIF deterministic palette generation and remapping with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: GIF deterministic palette generation and remapping.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: median-cut policy, remap, bounded dithering, budgets, and goldens.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.51.5 - GIF LZW encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive GIF handoff for GIF LZW encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete GIF LZW encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: GIF LZW encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Prove LZW emission independently before single-frame GIF packaging.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Dictionary reset/growth/saturation, code-width emission, end code, fixed storage, proofs, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: dictionary growth/reset/saturation, widths, end code, proofs, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.51.4 implementation stop reached. Run pentest for this exact commit.`
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.5 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.5 - Single-frame GIF encoder
+### v0.51.6 - Single-frame GIF encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-single-frame gif encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for Single-frame GIF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete single-frame gif encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete Single-frame GIF encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Single-frame GIF encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Caller/generated palette, table sizing, transparency, sub-block framing, LZW integration, and determinism.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: palette/table/transparency/sub-block integration and deterministic output.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.51.5 implementation stop reached. Run pentest for this exact commit.`
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.6 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.6 - Animated GIF encoder
+### v0.51.7 - Animated GIF encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-animated gif encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for Animated GIF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete animated gif encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete Animated GIF encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Animated GIF encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Canvas/frame totals, timing, loop extension, disposal, frame ranges, and animation round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: canvas/frame limits, timing, loop, disposal, ranges, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.51.6 implementation stop reached. Run pentest for this exact commit.`
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.7 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.51.7 - Complete GIF conformance and security audit
+### v0.51.8 - Complete GIF conformance and security audit
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-complete gif conformance and security audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive GIF handoff for Complete GIF conformance and security audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete complete gif conformance and security audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete Complete GIF conformance and security audit with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Complete GIF conformance and security audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Normative/de-facto separation, termination policy, differential corpus, LZW encoder/decoder fuzzing, and animation bombs.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: normative/de-facto matrix, differential corpus, fuzzing, and animation bombs.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.51.7 implementation stop reached. Run pentest for this exact commit.`
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.51.8 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.52.0 - JPEG source map, marker/segment parser, frame/scan/table declarations
+### v0.52.0 - JPEG marker and segment framing
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-jpeg source map, marker/segment parser, frame/scan/table declarations. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG marker and segment framing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete jpeg source map, marker/segment parser, frame/scan/table declarations with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete JPEG marker and segment framing with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: JPEG source map, marker/segment parser, frame/scan/table declarations.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: JPEG marker and segment framing.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Marker mutation and segment-size fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: standalone/length-bearing marker boundaries and size mutation fuzzing.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.52.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.53.0 - JPEG Huffman entropy, stuffing, restart, bounded coefficients
+### v0.52.1 - JPEG quantization and entropy-table declarations
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-jpeg huffman entropy, stuffing, restart, bounded coefficients. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG quantization and entropy-table declarations. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete jpeg huffman entropy, stuffing, restart, bounded coefficients with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete JPEG quantization and entropy-table declarations with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: JPEG Huffman entropy, stuffing, restart, bounded coefficients.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: JPEG quantization and entropy-table declarations.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Canonical table proofs and MCU accounting.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: DQT/DHT/DAC/DRI types, precision, counts, redefinition, and dependencies.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.52.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.52.2 - JPEG frame declarations
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG frame declarations. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete JPEG frame declarations with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG frame declarations.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: SOF process/precision/components/sampling/dimensions and DNL policy.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.52.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.52.3 - JPEG scan declarations and ordering
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG scan declarations and ordering. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete JPEG scan declarations and ordering with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG scan declarations and ordering.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: SOS selectors/ranges, multiscan/abbreviated-table state, and invalid transitions.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.52.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.53.0 - JPEG Huffman entropy and byte stuffing
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG Huffman entropy and byte stuffing. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG Huffman entropy and byte stuffing with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG Huffman entropy and byte stuffing.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: canonical table proofs, marker boundaries, and every-bit truncation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.53.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.53.1 - JPEG restart and bounded MCU coefficient accounting
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG restart and bounded MCU coefficient accounting. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG restart and bounded MCU coefficient accounting with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG restart and bounded MCU coefficient accounting.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: restart reset/sequence, MCU geometry, coefficient bounds, and work budgets.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.53.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.54.0 - JPEG scalar IDCT and grayscale reconstruction
 
@@ -5562,57 +6157,155 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.55.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.56.0 - Progressive DC/AC and successive approximation
+### v0.56.0 - JPEG progressive DC scans
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-progressive dc/ac and successive approximation. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG progressive DC scans. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete progressive dc/ac and successive approximation with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete JPEG progressive DC scans with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Progressive DC/AC and successive approximation.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: JPEG progressive DC scans.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Scan-order/state-machine fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: first/refinement DC scan state, predictors, restart, and malformed order.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.56.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.56.1 - JPEG progressive AC scans
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG progressive AC scans. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG progressive AC scans with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG progressive AC scans.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: spectral selection, EOB runs, coefficient bounds, and restart behavior.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.56.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.56.2 - JPEG successive-approximation integration audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG successive-approximation integration audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG successive-approximation integration audit with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG successive-approximation integration audit.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: complete scan-script matrix, native coefficients, work limits, and fuzzing.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.56.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.57.0 - Lossless predictive JPEG process
 
@@ -5822,58 +6515,155 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.59.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.60.0 - JFIF, Exif, ICC APP2 assembly, Adobe RGB/CMYK/YCCK
+### v0.60.0 - JPEG JFIF and Adobe color declarations
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-jfif, exif, icc app2 assembly, adobe rgb/cmyk/ycck. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG JFIF and Adobe color declarations. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete jfif, exif, icc app2 assembly, adobe rgb/cmyk/ycck with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete JPEG JFIF and Adobe color declarations with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: JFIF, Exif, ICC APP2 assembly, Adobe RGB/CMYK/YCCK.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: JPEG JFIF and Adobe color declarations.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- JFIF/Adobe interpretation decorates native JPEG output rather than replacing it.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Segment reassembly, precedence, and color vectors.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: T.871 APP0 plus Adobe RGB/CMYK/YCCK interpretation and precedence.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.60.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.60.1 - JPEG Exif APP1 transport
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG Exif APP1 transport. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG Exif APP1 transport with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG Exif APP1 transport.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: identifier, length, nested offset, duplicate, and preservation policies.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.60.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.60.2 - JPEG ICC APP2 assembly and color precedence
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for JPEG ICC APP2 assembly and color precedence. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete JPEG ICC APP2 assembly and color precedence with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: JPEG ICC APP2 assembly and color precedence.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: chunk numbering/completeness/duplicates, profile limits, and color vectors.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.60.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.61.0 - Baseline JPEG encoder
 
@@ -5979,109 +6769,255 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.61.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.61.2 - Extended-sequential and lossless JPEG encoders
+### v0.61.2 - Extended-sequential JPEG encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-extended-sequential and lossless jpeg encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for extended-sequential JPEG encoder. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete extended-sequential and lossless jpeg encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete extended-sequential JPEG encoder with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Extended-sequential and lossless JPEG encoders.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Extended-sequential JPEG encoder.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Precision/process-specific valid emission, predictor/point-transform policy, and differential tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: precision/process-valid emission, tables, restart, and differential tests.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.61.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.61.3 - Arithmetic, differential, and hierarchical JPEG encoder admission
+### v0.61.3 - Lossless JPEG encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-arithmetic, differential, and hierarchical jpeg encoder admission. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for lossless JPEG encoder. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete arithmetic, differential, and hierarchical jpeg encoder admission with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete lossless JPEG encoder with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Arithmetic, differential, and hierarchical JPEG encoder admission.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Lossless JPEG encoder.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Each process is either independently evidenced or explicitly unclaimed with no decoder-claim ambiguity.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: predictor/point-transform emission, precision, restart, and round trips.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.61.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.61.4 - Arithmetic JPEG encoder admission
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for arithmetic JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete arithmetic JPEG encoder admission with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Arithmetic JPEG encoder admission.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: independent arithmetic evidence or an explicit unclaimed decision.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.61.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.61.5 - Differential JPEG encoder admission
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for differential JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete differential JPEG encoder admission with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Differential JPEG encoder admission.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: independent differential-process evidence or an explicit unclaimed decision.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.61.5 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.61.6 - Hierarchical JPEG encoder admission
+
+Status: Planned.
+
+Context:
+
+This is the exclusive classic-JPEG handoff for hierarchical JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete hierarchical JPEG encoder admission with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Hierarchical JPEG encoder admission.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: independent hierarchy evidence or an explicit unclaimed decision.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.61.6 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.62.0 - Complete declared T.81 conformance and security audit
 
@@ -6135,109 +7071,221 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.62.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.63.0 - WebP RIFF/VP8X container, chunk order, metadata
+### v0.63.0 - WebP RIFF framing and simple-file dispatch
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-webp riff/vp8x container, chunk order, metadata. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for WebP RIFF framing and simple-file dispatch. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete webp riff/vp8x container, chunk order, metadata with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete WebP RIFF framing and simple-file dispatch with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: WebP RIFF/VP8X container, chunk order, metadata.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: WebP RIFF framing and simple-file dispatch.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: RFC 9649 conformance and size/padding fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: RIFF/WEBP size, padding, VP8/VP8L simple payload, and trailing policy.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.63.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.64.0 - VP8 Boolean decoder, partitions, headers, probabilities
+### v0.63.1 - WebP VP8X feature and chunk-order state machine
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8 boolean decoder, partitions, headers, probabilities. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for WebP VP8X feature and chunk-order state machine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8 boolean decoder, partitions, headers, probabilities with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete WebP VP8X feature and chunk-order state machine with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: VP8 Boolean decoder, partitions, headers, probabilities.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: WebP VP8X feature and chunk-order state machine.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Partition limits and arithmetic-state fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: feature bits, canvas, chunk multiplicity/order, and invalid combinations.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.63.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.63.2 - WebP ICCP, EXIF, XMP, and unknown chunks
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for WebP ICCP, EXIF, XMP, and unknown chunks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete WebP ICCP, EXIF, XMP, and unknown chunks with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: WebP ICCP, EXIF, XMP, and unknown chunks.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: bounded metadata, feature consistency, preservation, and unknown policy.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.63.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.64.0 - VP8 Boolean-decoder primitive
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8 Boolean-decoder primitive. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8 Boolean-decoder primitive with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8 Boolean-decoder primitive.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: range/value normalization, refill, termination, and arithmetic-state fuzzing.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.64.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.64.1 - VP8 partition and frame-header parsing
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8 partition and frame-header parsing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8 partition and frame-header parsing with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8 partition and frame-header parsing.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: partition sizes/counts, key/inter headers, segmentation, and bounds.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.64.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.64.2 - VP8 probability-update and token state
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8 probability-update and token state. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8 probability-update and token state with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8 probability-update and token state.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: coefficient/mode probability updates, defaults, reset, and work accounting.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.64.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.65.0 - VP8 prediction and coefficient reconstruction
 
@@ -6396,109 +7444,185 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.65.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.66.0 - VP8 alpha and Y′CbCr-to-RGB pipeline
+### v0.66.0 - WebP ALPH decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8 alpha and y′cbcr-to-rgb pipeline. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for WebP ALPH decoding. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8 alpha and y′cbcr-to-rgb pipeline with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete WebP ALPH decoding with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: VP8 alpha and Y′CbCr-to-RGB pipeline.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: WebP ALPH decoding.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: ALPH preprocessing and color tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: ALPH filter/compression/preprocessing modes, dimensions, and bombs.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.66.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.67.0 - VP8L prefix coding, LZ77, color cache
+### v0.66.1 - VP8 native YCbCr and rendered RGB integration
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8l prefix coding, lz77, color cache. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for VP8 native YCbCr and rendered RGB integration. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8l prefix coding, lz77, color cache with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete VP8 native YCbCr and rendered RGB integration with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: VP8L prefix coding, LZ77, color cache.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: VP8 native YCbCr and rendered RGB integration.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Prefix/distance/cache proofs and bombs.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: matrix/range assumptions, alpha association, output tiers, and color vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.66.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.67.0 - VP8L prefix-code parsing and decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L prefix-code parsing and decoding. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L prefix-code parsing and decoding with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L prefix-code parsing and decoding.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: simple/normal code validation, tables, symbols, and every-bit truncation.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.67.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.67.1 - VP8L LZ77 distance and copy engine
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L LZ77 distance and copy engine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L LZ77 distance and copy engine with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L LZ77 distance and copy engine.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: distance mapping, overlap, history/output bounds, progress, and bombs.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.67.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.67.2 - VP8L color-cache engine
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L color-cache engine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L color-cache engine with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L color-cache engine.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: cache-bit bounds, hashing, initialization, access, and deterministic vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.67.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.68.0 - VP8L transform declarations and meta-prefix images
 
@@ -6506,156 +7630,217 @@ Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8l transform declarations and meta-prefix images. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for VP8L transform declarations and meta-prefix images. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8l transform declarations and meta-prefix images with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete VP8L transform declarations and meta-prefix images with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: VP8L transform declarations and meta-prefix images.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Transform order/count, recursion, dimensions, prefix images, cache limits, and malformed combinations.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: transform order/count, dimensions, recursion, prefix images, and limits.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.68.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.68.1 - VP8L predictor, subtract-green, color-index, and cache transforms
+### v0.68.1 - VP8L predictor transform
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8l predictor, subtract-green, color-index, and cache transforms. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for VP8L predictor transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8l predictor, subtract-green, color-index, and cache transforms with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete VP8L predictor transform with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: VP8L predictor, subtract-green, color-index, and cache transforms.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: VP8L predictor transform.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Per-transform bounds, order, recursion, cache access, work accounting, and golden vectors.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: all predictor modes, edge rules, modular arithmetic, and goldens.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.68.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.68.2 - VP8L complete lossless reconstruction audit
+### v0.68.2 - VP8L color transform
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-vp8l complete lossless reconstruction audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive WebP handoff for VP8L color transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete vp8l complete lossless reconstruction audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete VP8L color transform with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L color transform.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Map the normative VP8L color transform explicitly; it is distinct
+  from the entropy color cache.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: transform-image geometry, delta arithmetic, bounds, and golden vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.68.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.68.3 - VP8L subtract-green transform
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L subtract-green transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L subtract-green transform with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L subtract-green transform.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: modular channel arithmetic, order, and exact pixel vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.68.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.68.4 - VP8L color-indexing transform
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L color-indexing transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L color-indexing transform with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: VP8L color-indexing transform.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: palette image, packing widths, dimension reduction, indexes, and bounds.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.68.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.68.5 - VP8L complete lossless reconstruction audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive WebP handoff for VP8L complete lossless reconstruction audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete VP8L complete lossless reconstruction audit with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: VP8L complete lossless reconstruction audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Expose native lossless samples/declarations independently from shared rendered conversion.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: All transforms plus LZ/prefix integration, exact pixels, native/rendered output, bombs, and long fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: all transforms plus prefix/LZ/cache integration, exact pixels, bombs, and fuzzing.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.68.2 implementation stop reached. Run pentest for this exact commit.`
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.68.5 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.69.0 - WebP animation decoding
 
@@ -6918,266 +8103,707 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.69.4 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.70.0 - Shared bounded mynd-ifd engine and TIFF schema
+### v0.70.0 - Shared bounded mynd-ifd graph and typed-value engine
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-shared bounded mynd-ifd engine and tiff schema. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for shared bounded mynd-ifd graph and typed-value engine. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete shared bounded mynd-ifd engine and tiff schema with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete shared bounded mynd-ifd graph and typed-value engine with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Shared bounded mynd-ifd engine and TIFF schema.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Shared bounded mynd-ifd graph and typed-value engine.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- mynd-ifd owns graph/value mechanics; mynd-tiff owns TIFF tags and image semantics, preventing a later extraction.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Typed values, offset graphs, cycles, overlaps, entry/count arithmetic, schema separation, and fuzzing.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: count/offset arithmetic, cycles, overlaps, typed values, and fuzzing.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.70.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.71.0 - Baseline strips: bilevel, Gray, palette, RGB, uncompressed/PackBits
+### v0.70.1 - TIFF 6.0 tag schema and dependency validation
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-baseline strips: bilevel, gray, palette, rgb, uncompressed/packbits. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF 6.0 tag schema and dependency validation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete baseline strips: bilevel, gray, palette, rgb, uncompressed/packbits with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF 6.0 tag schema and dependency validation with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Baseline strips: bilevel, Gray, palette, RGB, uncompressed/PackBits.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF 6.0 tag schema and dependency validation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Strip-size and row-layout tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: required/defaulted tags, types/counts, duplicate policy, and dependencies.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.70.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.71.0 - TIFF baseline uncompressed strips
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF baseline uncompressed strips. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF baseline uncompressed strips with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF baseline uncompressed strips.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: bilevel/Gray/palette/RGB strip geometry, FillOrder, and truncation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.71.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.72.0 - TIFF LZW, Deflate, and horizontal predictors
+### v0.71.1 - TIFF PackBits strip decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff lzw, deflate, and horizontal predictors. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF PackBits strip decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete tiff lzw, deflate, and horizontal predictors with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF PackBits strip decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF LZW, Deflate, and horizontal predictors.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF PackBits strip decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Dialect policy and decompression bombs.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: packet boundaries, no-op bytes, row/strip output bounds, and bombs.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.71.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.72.0 - TIFF LZW decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF LZW decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF LZW decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF LZW decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: TIFF code-width dialect, clear/end codes, dictionary limits, and bombs.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.72.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.73.0 - TIFF CCITT RLE, Group 3, and Group 4
+### v0.72.1 - TIFF Deflate decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff ccitt rle, group 3, and group 4. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF Deflate decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete tiff ccitt rle, group 3, and group 4 with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF Deflate decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF CCITT RLE, Group 3, and Group 4.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF Deflate decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Fax transition/run proofs and differential corpus.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: old/new compression-tag policy, zlib integration, and output limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.72.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.72.2 - TIFF horizontal Predictor 2
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF horizontal Predictor 2. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF horizontal Predictor 2 with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF horizontal Predictor 2.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: integer sample widths, planar/contiguous rows, endian, and overflow.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.72.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.72.3 - TIFF floating-point Predictor 3 profile
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF floating-point Predictor 3 profile with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF floating-point Predictor 3 profile.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Treat Predictor 3 as a separately sourced Adobe extension, not an
+  implicit TIFF 6.0 baseline claim; unsupported sample widths fail closed.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Adobe Technical Note 3 byte reordering/differencing vectors and profile matrix.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.72.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.73.0 - TIFF CCITT modified-Huffman RLE
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF CCITT modified-Huffman RLE. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF CCITT modified-Huffman RLE with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF CCITT modified-Huffman RLE.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: run tables, FillOrder, EOL policy, row bounds, and differential corpus.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.73.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.74.0 - Tiles, planar layouts, multipage/SubIFD traversal
+### v0.73.1 - TIFF CCITT Group 3 fax decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiles, planar layouts, multipage/subifd traversal. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT Group 3 fax decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete tiles, planar layouts, multipage/subifd traversal with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF CCITT Group 3 fax decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Tiles, planar layouts, multipage/SubIFD traversal.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF CCITT Group 3 fax decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Tile geometry, IFD cycles, aggregate limits.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: T4 options, 1D/2D transitions, EOL/RTC, damaged rows, and limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.73.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.73.2 - TIFF CCITT Group 4 fax decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF CCITT Group 4 fax decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF CCITT Group 4 fax decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF CCITT Group 4 fax decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: T6 transitions, EOFB, reference-line bounds, and malformed streams.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.73.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.74.0 - TIFF tiled image layout
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF tiled image layout. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF tiled image layout with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF tiled image layout.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: tile geometry, edge tiles, sparse/overlap policy, offsets, and byte counts.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.74.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.74.1 - TIFF planar image layout
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF planar image layout. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF planar image layout with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF planar image layout.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: plane ordering, per-plane strips/tiles, sample dependencies, and limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.74.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.74.2 - TIFF multipage and SubIFD traversal
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF multipage and SubIFD traversal. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF multipage and SubIFD traversal with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF multipage and SubIFD traversal.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: next-IFD/SubIFD graphs, cycles, aggregate page limits, and valid prefixes.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.74.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.75.0 - TIFF YCbCr samples and tag dependencies
 
@@ -7289,155 +8915,284 @@ Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff alpha, icc, and rendered-color integration. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF alpha, ICC, and rendered-color integration. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete tiff alpha, icc, and rendered-color integration with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF alpha, ICC, and rendered-color integration with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: TIFF alpha, ICC, and rendered-color integration.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Expose TIFF native planes independently from rendered RGB.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: ExtraSamples association, profile precedence, shared ICC/color rendering, tolerances, and invalid combinations.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: ExtraSamples association, ICC precedence, shared rendering, and tolerances.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.75.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.76.0 - Corrected JPEG-in-TIFF, Exif IFDs, admitted extensions
+### v0.75.3 - TIFF signed-integer and IEEE floating sample domains
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-corrected jpeg-in-tiff, exif ifds, admitted extensions. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF signed-integer and IEEE floating sample domains. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete corrected jpeg-in-tiff, exif ifds, admitted extensions with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF signed-integer and IEEE floating sample domains with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Corrected JPEG-in-TIFF, Exif IFDs, admitted extensions.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF signed-integer and IEEE floating sample domains.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Old/new JPEG distinction and nested offsets.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: SampleFormat/depth combinations, endian, NaN/infinity policy, and native output.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.75.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.76.0 - Corrected JPEG-in-TIFF decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for corrected JPEG-in-TIFF decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete corrected JPEG-in-TIFF decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Corrected JPEG-in-TIFF decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: old/new JPEG distinction, table ownership, strip/tile boundaries, and corpus.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.76.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.0 - TIFF baseline strip encoder
+### v0.76.1 - TIFF Exif IFD integration
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff baseline strip encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF Exif IFD integration. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete tiff baseline strip encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF Exif IFD integration with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF baseline strip encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: TIFF Exif IFD integration.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Big/little-endian uncompressed baseline strips, tags, exact sizes, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: Exif/GPS/Interop graph namespaces, nested offsets, cycles, and limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.76.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.76.2 - TIFF admitted-extension profile freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF admitted-extension profile freeze. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete TIFF admitted-extension profile freeze with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF admitted-extension profile freeze.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: each extension has pinned provenance and an explicit support disposition.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.76.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.0 - TIFF baseline uncompressed-strip encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF baseline uncompressed-strip encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF baseline uncompressed-strip encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF baseline uncompressed-strip encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: endian tags/strips/exact sizes/determinism and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.0 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.77.1 - TIFF PackBits encoder
@@ -7446,50 +9201,34 @@ Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff packbits encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF PackBits encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff packbits encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF PackBits encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: TIFF PackBits encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Packet/run boundaries, row policy, exact lengths, determinism, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: packet/run/row boundaries, exact lengths, determinism, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.77.2 - TIFF LZW encoder
@@ -7498,312 +9237,467 @@ Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff lzw encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF LZW encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff lzw encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF LZW encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: TIFF LZW encoder.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Early/late policy, dictionary/code-width transitions, clear/end behavior, proofs, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: dialect widths, clear/end behavior, proofs, determinism, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.3 - TIFF Deflate and predictor encoders
+### v0.77.3 - TIFF Deflate encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff deflate and predictor encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF Deflate encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff deflate and predictor encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF Deflate encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF Deflate and predictor encoders.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: TIFF Deflate encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Shared mynd-deflate integration, predictor values, output limits, zlib validity, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: mynd-deflate/zlib integration, output limits, validity, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.3 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.4 - TIFF CCITT fax encoders
+### v0.77.4 - TIFF horizontal Predictor 2 encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff ccitt fax encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF horizontal Predictor 2 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff ccitt fax encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF horizontal Predictor 2 encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF CCITT fax encoders.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: TIFF horizontal Predictor 2 encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: RLE/Group 3/Group 4 run/transition validity, options, row termination, and differential corpus.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: integer widths, endian, planar/contiguous rows, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.4 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.5 - TIFF tile, planar, and multipage encoders
+### v0.77.5 - TIFF floating-point Predictor 3 encoder admission
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff tile, planar, and multipage encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 encoder admission. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff tile, planar, and multipage encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF floating-point Predictor 3 encoder admission with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF tile, planar, and multipage encoders.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: TIFF floating-point Predictor 3 encoder admission.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Tile geometry, plane offsets, IFD/SubIFD graph, aggregate limits, determinism, and round trips.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: Adobe-profile widths and vectors or an explicit unclaimed decision.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.5 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.6 - TIFF extended color and JPEG encoders
+### v0.77.6 - TIFF CCITT RLE encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-tiff extended color and jpeg encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT RLE encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete tiff extended color and jpeg encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF CCITT RLE encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: TIFF extended color and JPEG encoders.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: TIFF CCITT RLE encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Photometric dependencies, ExtraSamples, SampleFormat, YCbCr/ICC, corrected JPEG rules, and claims.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: run-code validity, FillOrder, row termination, and differential tests.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.6 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.77.7 - Complete declared TIFF 6.0-profile audit
+### v0.77.7 - TIFF CCITT Group 3 encoder
 
 Status: Planned.
 
 Context:
 
-This is the exclusive complex formats handoff for
-complete declared tiff 6.0-profile audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT Group 3 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete complete declared tiff 6.0-profile audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete TIFF CCITT Group 3 encoder with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Complete declared TIFF 6.0-profile audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Complete only the release-scoped capability: TIFF CCITT Group 3 encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Compression/profile matrix, sparse/overlap policy, differential corpus, fuzzing, conformance, and external review.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: T4 options, 1D/2D transitions, EOL/RTC, and differential tests.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.77.7 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.77.8 - TIFF CCITT Group 4 encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF CCITT Group 4 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF CCITT Group 4 encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF CCITT Group 4 encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: T6 transitions, EOFB, reference rows, and differential tests.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.8 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.9 - TIFF tiled-image encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF tiled-image encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF tiled-image encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF tiled-image encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: tile geometry, edge tiles, offsets/byte counts, and deterministic output.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.9 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.10 - TIFF planar-image encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF planar-image encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF planar-image encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF planar-image encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: plane ordering, per-plane storage, dependencies, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.10 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.11 - TIFF multipage and SubIFD encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF multipage and SubIFD encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF multipage and SubIFD encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF multipage and SubIFD encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: IFD graph, next/SubIFD links, aggregate limits, and deterministic output.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.11 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.12 - TIFF extended sample/color encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for TIFF extended sample/color encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete TIFF extended sample/color encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: TIFF extended sample/color encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: photometric/SampleFormat/ExtraSamples/YCbCr/ICC dependencies and claims.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.12 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.13 - Corrected JPEG-in-TIFF encoder
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for Corrected JPEG-in-TIFF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Corrected JPEG-in-TIFF encoder with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Corrected JPEG-in-TIFF encoder.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: new-style table ownership, strip/tile boundaries, validity, and round trips.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.13 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.77.14 - Complete declared TIFF profile audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive TIFF handoff for Complete declared TIFF profile audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Complete declared TIFF profile audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Complete declared TIFF profile audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: compression/layout/sample/color/extension matrix, conformance, fuzzing, and review.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.77.14 implementation stop reached. Run pentest for this exact commit.`
 
 ## Phase: Color, metadata, processing, and facade
 
@@ -7916,162 +9810,307 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.79.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.80.0 - Selected Exif fields, thumbnails, and orientation policy
+### v0.80.0 - Selected bounded Exif field interpretation
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-selected exif fields, thumbnails, and orientation policy. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for selected bounded Exif field interpretation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete selected exif fields, thumbnails, and orientation policy with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete selected bounded Exif field interpretation with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Selected Exif fields, thumbnails, and orientation policy.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Selected bounded Exif field interpretation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Dimensions/timestamps/strings/thumbnails are bounded and orientation is never silently applied.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: dimensions, timestamps, strings, types/counts, encoding, and conflicts.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.80.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.81.0 - XMP inspection and metadata conflict/rewrite policies
+### v0.80.1 - Bounded Exif thumbnail extraction
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-xmp inspection and metadata conflict/rewrite policies. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for bounded Exif thumbnail extraction. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete xmp inspection and metadata conflict/rewrite policies with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete bounded Exif thumbnail extraction with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: XMP inspection and metadata conflict/rewrite policies.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Bounded Exif thumbnail extraction.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Raw-versus-bounded-XML decision, precedence, preserve/discard/rewrite, and decompression limits.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: thumbnail offsets/lengths, nested format limits, overlap, and bomb resistance.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.80.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.80.2 - Explicit Exif orientation policy
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for explicit Exif orientation policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete explicit Exif orientation policy with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Explicit Exif orientation policy.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: all eight orientations, coordinate mapping, opt-in transform, and metadata effect.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.80.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.81.0 - XMP raw-packet transport and bounded RDF/XML inspection
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for XMP raw-packet transport and bounded RDF/XML inspection. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete XMP raw-packet transport and bounded RDF/XML inspection with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: XMP raw-packet transport and bounded RDF/XML inspection.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Disable DTDs, entity expansion, external entities, XInclude, schema
+  retrieval, and every filesystem/network resolver; XMP is inert data.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: packet/nesting/name/attribute/text limits and malicious XML corpus.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.81.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.81.1 - Transformation-aware metadata effects and rewrite planning
+### v0.81.1 - XMP and legacy-metadata conflict/rewrite policy
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-transformation-aware metadata effects and rewrite planning. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for XMP and legacy-metadata conflict/rewrite policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete transformation-aware metadata effects and rewrite planning with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete XMP and legacy-metadata conflict/rewrite policy with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Transformation-aware metadata effects and rewrite planning.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: XMP and legacy-metadata conflict/rewrite policy.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Geometry, orientation, thumbnails, resolution, safe-to-copy chunks, profiles, histograms, hashes/previews, and animation metadata cannot be copied stale.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Preserved/rewritten/invalidated/caller-decision results for geometry, color, palette, thumbnails, hashes, and animation.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: XMP Part 3 reconciliation, preserve/discard/rewrite, duplicates, and round trips.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.81.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.81.2 - Transformation-aware metadata effect planning
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for transformation-aware metadata effect planning. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete transformation-aware metadata effect planning with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Transformation-aware metadata effect planning.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: preserved/rewritten/invalidated/decision results for every operation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.81.2 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.82.0 - YCbCr matrices, ranges, subsampling, and chroma siting
 
@@ -8125,57 +10164,105 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.82.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.83.0 - CMYK, YCCK, Gray, Lab, and wide-gamut conversion
+### v0.83.0 - Gray, CMYK, and YCCK conversion
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-cmyk, ycck, gray, lab, and wide-gamut conversion. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for gray, CMYK, and YCCK conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete cmyk, ycck, gray, lab, and wide-gamut conversion with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete gray, CMYK, and YCCK conversion with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: CMYK, YCCK, Gray, Lab, and wide-gamut conversion.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Gray, CMYK, and YCCK conversion.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Black-generation policy and gamut tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: black-generation/Adobe policy, native-to-rendered vectors, and gamut limits.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.83.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.83.1 - CIELab and declared wide-gamut conversion
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for CIELab and declared wide-gamut conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete CIELab and declared wide-gamut conversion with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: CIELab and declared wide-gamut conversion.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: white-point/adaptation/range rules, out-of-gamut policy, and reference vectors.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.83.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.84.0 - Straight/premultiplied alpha conversion
 
@@ -8229,110 +10316,205 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.84.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.85.0 - Conversion planning, sample-depth changes, and advanced dithering
+### v0.85.0 - Explicit color-conversion planning
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-conversion planning, sample-depth changes, and advanced dithering. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for explicit color-conversion planning. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete conversion planning, sample-depth changes, and advanced dithering with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete explicit color-conversion planning with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Conversion planning, sample-depth changes, and advanced dithering.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Explicit color-conversion planning.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Declared information loss, numeric tier, scratch/work plan, and deterministic output.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: information-loss declaration, numeric tier, stages, scratch, and work plan.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.85.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.85.1 - Final cross-format rendered-color conformance audit
+### v0.85.1 - Sample-depth conversion
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-final cross-format rendered-color conformance audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for sample-depth conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete final cross-format rendered-color conformance audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete sample-depth conversion with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Sample-depth conversion.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: all admitted integer/float depths, scaling, rounding, saturation, and alpha.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.85.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.85.2 - Deterministic advanced dithering
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for deterministic advanced dithering. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete deterministic advanced dithering with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Deterministic advanced dithering.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: ordered/error-diffusion kernels, edge/error bounds, budgets, and goldens.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.85.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.85.3 - Final cross-format rendered-color conformance audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for final cross-format rendered-color conformance audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete final cross-format rendered-color conformance audit with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Final cross-format rendered-color conformance audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- This is the first release allowed to claim cross-format rendered-color conformance.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: PNG/JPEG/WebP/TIFF rendered output after all shared conversion work, reference tolerances, profiles, and no implicit assumptions.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: PNG/JPEG/WebP/TIFF profiles, precedence, tolerances, and differential results.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.85.1 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.85.3 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.86.0 - Crop, flip, rotate, transpose
 
@@ -8653,51 +10835,217 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-declared artistic blend modes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for Declared artistic blend modes. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
 
 Goal:
 
-Complete declared artistic blend modes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete Declared artistic blend modes with bounded behavior, explicit claims, and exact-commit evidence.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Declared artistic blend modes.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
 
 Verification:
 
-- Required release evidence: Formula, clamping, NaN, and interoperability tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+- Required release evidence: formula/domain/clamping/NaN/alpha matrices and interoperability vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.92.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.92.1 - Clipped pixel, span, and fill primitives
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for Clipped pixel, span, and fill primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Clipped pixel, span, and fill primitives with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Clipped pixel, span, and fill primitives.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: signed/overflowing coordinates, clipping, layout, alpha, and work budgets.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.92.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.92.2 - Rectangle and overlap-safe blit primitives
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for Rectangle and overlap-safe blit primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Rectangle and overlap-safe blit primitives with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Rectangle and overlap-safe blit primitives.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: empty/degenerate rectangles, clipping, overlap directions, and alias policy.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.92.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.92.3 - Deterministic integer line primitives
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer line primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Deterministic integer line primitives with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Deterministic integer line primitives.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: octants, endpoints, degenerates, clipping symmetry, and golden rasters.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.92.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.92.4 - Deterministic integer circle and ellipse primitives
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer circle and ellipse primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Deterministic integer circle and ellipse primitives with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Deterministic integer circle and ellipse primitives.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: quadrants, degenerates, clipping symmetry, overflow, and golden rasters.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.92.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.92.5 - Bounded raster-drawing contract and security audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for Bounded raster-drawing contract and security audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+
+Goal:
+
+Complete Bounded raster-drawing contract and security audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Bounded raster-drawing contract and security audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Freeze 1.0 drawing to the named raster primitives; fonts, text
+  shaping, vector paths, strokes, and antialiasing remain unclaimed.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: layout/color/alpha/overlap/work tests and explicit support matrix.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.92.5 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.93.0 - Optional safe SIMD or audited external backends
 
@@ -8809,342 +11157,413 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.94.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.1 - Metadata/header-only, region, and frame-range decoding
+### v0.94.1 - Metadata- and header-only decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-metadata/header-only, region, and frame-range decoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for metadata- and header-only decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete metadata/header-only, region, and frame-range decoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete metadata- and header-only decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Metadata/header-only, region, and frame-range decoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Metadata- and header-only decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Define encoded/native, orientation-normalized, animation-canvas, and
-  frame-local coordinates; distinguish raw/composited frames and specify chroma
-  expansion, resampling halos, final cropping, and committed-region tokens.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Coordinate spaces, chroma/halo/crop planning, committed regions, raw/composited selection, budgets, and support matrix.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: no-pixel paths, source-position policy, metadata budgets, and format matrix.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.94.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.2 - Reduced-resolution and progressive-preview decoding
+### v0.94.2 - Region-selective decoding
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-reduced-resolution and progressive-preview decoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for region-selective decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete reduced-resolution and progressive-preview decoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete region-selective decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Region-selective decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: coordinate spaces, chroma/halo planning, committed regions, and fallbacks.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.94.3 - Frame-range selective decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for frame-range selective decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete frame-range selective decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Frame-range selective decoding.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: raw/composited selection, dependency closure, disposal state, and bombs.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.94.4 - Reduced-resolution and progressive-preview decoding
+
+Status: Planned.
+
+Context:
+
+This is the exclusive color, metadata, processing, and facade handoff for reduced-resolution and progressive-preview decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete reduced-resolution and progressive-preview decoding with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Reduced-resolution and progressive-preview decoding.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: JPEG reduced IDCT, TIFF strip/tile selection, progressive events, scale-during-decode policy, and numeric evidence.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: JPEG reduced IDCT, TIFF selection, progressive events, and numeric evidence.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.2 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.4 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.3 - Processing and selective-decoding contract freeze
+### v0.94.5 - Processing and selective-decoding contract freeze
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-processing and selective-decoding contract freeze. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for processing and selective-decoding contract freeze. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete processing and selective-decoding contract freeze with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete processing and selective-decoding contract freeze with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Processing and selective-decoding contract freeze.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Fusion equivalence, scratch/peak limits, cancellation, DoS benchmarks, differential results, and processing/selective contract freeze.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: fusion equivalence, peak limits, cancellation, DoS, and support matrix.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.3 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.5 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.4 - Unified borrowed inspection and decode_into facade
+### v0.94.6 - Unified borrowed inspection and decode_into facade
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-unified borrowed inspection and decode_into facade. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for unified borrowed inspection and decode_into facade. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete unified borrowed inspection and decode_into facade with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete unified borrowed inspection and decode_into facade with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Unified borrowed inspection and decode_into facade.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Static any-format dispatch reports hint mismatches, ambiguous probes, and feature-disabled formats explicitly.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Hints/mismatch, static dispatch, native/rendered and raw/composited selection, limits/scratch/warnings, and disabled features.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: hints/mismatch, static dispatch, output tiers, limits, and disabled features.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.4 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.6 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.5 - Unified encoder and transcoding facade
+### v0.94.7 - Unified encoder and transcoding facade
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-unified encoder and transcoding facade. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for unified encoder and transcoding facade. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete unified encoder and transcoding facade with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+Complete unified encoder and transcoding facade with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
 - Complete only the release-scoped capability: Unified encoder and transcoding facade.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Transcoding propagates source/sink requirements, limits, scratch, warnings, native/rendered selection, and MetadataEffect.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: encode_from, capability planning, conversion orchestration, MetadataEffect, transactional policy, and format selection.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: capability plans, conversion orchestration, metadata effects, and transactions.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.5 implementation stop reached. Run pentest for this exact commit.`
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.7 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.94.6 - Fallible owned convenience APIs and facade candidate integration audit
+### v0.94.8 - Fallible owned APIs and facade-candidate integration audit
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for
-fallible owned convenience APIs and the facade candidate integration audit. It
-establishes an audited candidate baseline, not the final public API freeze;
-async, WASM, parallel, GPU, service, and CLI adapters may expose requirements
-that drive reviewed corrections through v0.98.3. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for fallible owned APIs and facade-candidate integration audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete fallible owned convenience APIs and the facade candidate integration
-audit with bounded behavior, explicit claims, and evidence sufficient for an
-exact-commit security decision.
+Complete fallible owned APIs and facade-candidate integration audit with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Fallible owned convenience APIs and facade candidate integration audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: Fallible owned APIs and facade-candidate integration audit.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Establish the audited facade candidate and integration baseline only after
-  BMP/QOI, streaming PNG/GIF/JPEG/WebP, random-access TIFF, animation, and
-  selective-decode paths exercise it; defer the final public API freeze until
-  v0.99.6 after every adapter domain has exercised the candidate.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Establish the audited candidate baseline exercised by synchronous codecs;
+  adapter-driven corrections remain open only through v0.98.8.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Allocation failure, owned decode/encode/transcode,
-  all-feature combinations, representative codecs, and an audited facade
-  candidate baseline with explicit post-v0.94.6 correction policy.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: allocation failure, representative codecs, feature matrix, and candidate baseline.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- The candidate facade is audited and integration-ready, but remains explicitly
-  open to reviewed adapter-driven corrections until the v0.98.3 reconciliation
-  gate closes.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.6 implementation stop reached. Run pentest for this exact commit.`
-
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.94.8 implementation stop reached. Run pentest for this exact commit.`
 
 ## Phase: Integration and assurance
 
 Exercise the audited facade candidate through async, WASM, parallel, GPU,
 service, and CLI adapters; review and pentest any resulting facade corrections;
-close all implementation and public-API issues at v0.98.3; then run fuzzing,
+close all implementation and public-API issues at v0.98.8; then run fuzzing,
 proofs, and audits against that exact reconciled implementation before the
 verification-only final API freeze.
 
@@ -9460,626 +11879,1145 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.97.1 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.98.0 - mynd-cli inspect and validate
+### v0.98.0 - mynd-cli inspect command
 
 Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for
-mynd-cli inspect and validate. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli inspect command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
-Complete mynd-cli inspect and validate with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: mynd-cli inspect and validate.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Escaped metadata, bounded defaults, exit-code contract.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.98.0 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.98.1 - CLI decode/encode/convert/frame operations
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-cli decode/encode/convert/frame operations. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
-
-Goal:
-
-Complete cli decode/encode/convert/frame operations with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: CLI decode/encode/convert/frame operations.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Transactional files and color-policy disclosure.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.98.1 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.98.2 - CLI batch/service profiles
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-cli batch/service profiles. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
-unavailable or explicitly fail closed.
-
-Goal:
-
-Complete cli batch/service profiles with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: CLI batch/service profiles.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Aggregate budgets, cancellation, hostile filename tests.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.98.2 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.98.3 - Cross-adapter facade reconciliation
-
-Status: Planned.
-
-Context:
-
-This is the final implementation-changing integration handoff. It follows
-async, WASM, parallel, GPU, service, and CLI execution against the v0.94.6
-candidate and precedes every v0.99.x assurance campaign. Assurance is
-unavailable until this handoff closes every adapter-discovered implementation
-and public-API issue on one shared facade.
-
-Goal:
-
-Reconcile all execution-domain feedback into one exact, reviewed, tested, and
-pentested implementation that can enter assurance without known API debt or
-adapter-specific behavior forks.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Cross-adapter facade reconciliation.
-- Resolve the issue registers produced by v0.95.0-v0.98.2 for lifetimes,
-  pinning, backpressure, cancellation, buffer ownership, scheduling, budget
-  partitioning, GPU row alignment and synchronization, diagnostics,
-  transactional output, batch limits, and service integration.
-- Prohibit adapter-specific facade forks, bypasses, shadow contracts, and
-  unreviewed compatibility shims; every execution domain uses the same public
-  contract and shared semantics.
-- Review and document each correction, its compatibility impact, migration
-  path, security impact, and affected evidence. Add a regression test linked to
-  every closed issue.
-- Rerun every affected cross-domain compatibility matrix and the complete
-  async, WASM, parallel, GPU, service, CLI, no_std, alloc/std, feature, and
-  supported-Rust integration matrix against the corrected facade.
-- Record the exact reconciled source commit, dependency lock, generated
-  artifacts, support claims, and test manifests that v0.99.0-v0.99.6 must use.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, security documentation, changelog,
-  release notes, crate versions, packages, SBOM, and exact-version pentest
-  report scaffold.
-
-Verification:
-
-- Required release evidence: Every adapter issue resolved, zero facade forks,
-  linked correction regressions, affected compatibility matrices rerun, and
-  one exact assurance-input implementation recorded.
-- Independently audit the closed-issue register against every adapter release;
-  unexplained, deferred, or unowned implementation/API findings fail the gate.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, work,
-  lifetimes, ownership, cancellation, and synchronization boundaries.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- Zero unresolved implementation or public-API issues remain from any adapter
-  domain, and no adapter-specific facade fork or bypass exists.
-- Every correction has review, documentation, compatibility evidence,
-  regression coverage, and a clean security retest.
-- The exact reconciled commit and artifacts are the only admitted inputs to
-  v0.99.0-v0.99.6. Any later implementation or public-API change invalidates
-  affected assurance evidence and returns the project to this reconciliation
-  gate before assurance resumes.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the reconciled surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.98.3 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.0 - cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-cargo-fuzz suites for every parser, entropy engine, metadata path, and
-dispatcher. Its harness and evidence delta must be implemented and reviewed
-independently against the exact v0.98.3 input; product implementation and
-public API changes are prohibited and return to reconciliation.
-
-Goal:
-
-Complete cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: cargo-fuzz suites for every parser, entropy engine, metadata path, and dispatcher.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Coverage report and minimized persistent corpus.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.0 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.1 - Long-running fuzz and every-byte/bit truncation campaigns
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-long-running fuzz and every-byte/bit truncation campaigns. Its corpus and
-evidence delta must be implemented and reviewed independently against the exact
-v0.98.3 input; product implementation and public API changes are prohibited
-and return to reconciliation.
-
-Goal:
-
-Complete long-running fuzz and every-byte/bit truncation campaigns with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Long-running fuzz and every-byte/bit truncation campaigns.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: No stalls, panics, or inconsistent terminal states.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.1 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.2 - Kani math/view/bit/geometry proofs
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-kani math/view/bit/geometry proofs. Its proof-harness and evidence delta must be
-implemented and reviewed independently against the exact v0.98.3 input;
-product implementation and public API changes are prohibited and return to
-reconciliation.
-
-Goal:
-
-Complete kani math/view/bit/geometry proofs with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Kani math/view/bit/geometry proofs.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Published assumptions and unwind bounds.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.2 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.3 - Kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs. Its proof-harness and
-evidence delta must be implemented and reviewed independently against the exact
-v0.98.3 input; product implementation and public API changes are prohibited
-and return to reconciliation.
-
-Goal:
-
-Complete kani deflate/lzw/huffman/jpeg/webp/tiff state proofs with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Kani Deflate/LZW/Huffman/JPEG/WebP/TIFF state proofs.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Output, dictionary, table, and progress invariants.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.3 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.4 - Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit. Its
-configuration and evidence delta must be implemented and reviewed independently
-against the exact v0.98.3 input; product implementation and public API changes
-are prohibited and return to reconciliation.
-
-Goal:
-
-Complete miri, sanitizers, 32-bit, wasm, feature-combination, and stack audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Miri, sanitizers, 32-bit, WASM, feature-combination, and stack audit.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: All supported configurations pass.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.4 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.5 - Official conformance, differential, color, performance, and DoS freeze
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-official conformance, differential, color, performance, and DoS freeze. Its
-fixture and evidence delta must be implemented and reviewed independently
-against the exact v0.98.3 input; product implementation and public API changes
-are prohibited and return to reconciliation.
-
-Goal:
-
-Complete official conformance, differential, color, performance, and dos freeze with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
-
-Deliverables:
-
-- Complete only the release-scoped capability: Official conformance, differential, color, performance, and DoS freeze.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
-- Add positive, boundary, malformed, truncation, mutation, regression,
-  determinism, lifecycle, and resource-accounting fixtures.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
-
-Verification:
-
-- Required release evidence: Every claim linked to evidence; no unexplained disagreement.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
-- Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
-
-Exit criteria:
-
-- The capability is complete, documented, and the only new capability.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.99.5 implementation stop reached. Run pentest for this exact commit.`
-
-### v0.99.6 - Reproducible SBOM/package/provenance, external pentest, and final public API freeze
-
-Status: Planned.
-
-Context:
-
-This is the exclusive integration and assurance handoff for
-reproducible SBOM/package/provenance, external pentest, and the final public API
-freeze. It follows execution-domain validation of the v0.94.6 candidate and
-the complete v0.99.0-v0.99.5 assurance campaign over the exact v0.98.3
-reconciled implementation. It verifies and freezes existing bytes and public
-contracts; it does not resolve findings or change implementation/API behavior.
-Any such change returns to v0.98.3 and invalidates affected assurance evidence.
-Its API and attack-surface delta must be reviewed and pentested independently.
-Later capabilities remain unavailable or explicitly fail closed.
-
-Goal:
-
-Complete reproducible SBOM/package/provenance, the external pentest, and the
-final public API freeze with bounded behavior, explicit claims, and evidence
+Complete mynd-cli inspect command with bounded behavior, explicit claims, and evidence
 sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: Reproducible SBOM/package/provenance, external pentest, and final public API freeze.
-- Define contracts, invariants, limits, capabilities, terminal states, errors,
-  output commits, compatibility, native/rendered behavior, and unsupported cases.
-- Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
-  corpus provenance, numeric tolerances, and security documentation.
+- Complete only the release-scoped capability: mynd-cli inspect command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Verify that the closed v0.98.3 adapter-issue register, source commit,
-  dependency lock, generated artifacts, support claims, and test manifests are
-  exactly those exercised by v0.99.0-v0.99.5, then freeze that already-corrected
-  public API without implementation or API changes.
-- Treat every pentest or reproducibility finding that requires implementation
-  or public-API correction as a mandatory return to v0.98.3 followed by reruns
-  of all affected v0.99.x evidence; v0.99.6 may resume only on a clean candidate.
-- Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: Byte-for-byte and contract-level identity with the
-  v0.98.3 assurance input, complete v0.99.0-v0.99.5 evidence for that identity,
-  verification-only final public API freeze, no critical/high finding, and
-  clean retest.
-- Audit arithmetic, offsets, terminal transitions, capability negotiation,
-  cumulative/live/peak budgets, typed scratch, output, metadata, and work.
+- Required release evidence: escaped bounded metadata, stable schema, hostile terminals, and exit codes.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
-  differential, conformance, fuzz, Kani, Miri, sanitizer, stack, code-size,
-  numeric-tolerance, performance, and denial-of-service checks.
-- Run repository, cargo-deny, cargo-audit, latest-crate/tool, and SBOM gates.
-- Run supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
 
 Exit criteria:
 
 - The capability is complete, documented, and the only new capability.
-- The final public API is frozen only after every execution domain and assurance
-  gate passes against the unchanged v0.98.3 reconciled facade; no
-  adapter-specific fork remains and v0.99.6 made no implementation/API change.
-- Claims link to passing evidence; capabilities, output tier, limitations,
-  numeric tolerance, metadata effects, and compatibility are explicit.
-- Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
-  candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.1 - mynd-cli validate command
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli validate command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli validate command with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli validate command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: strict/compatibility modes, bounded diagnostics, exit codes, and no output mutation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.2 - mynd-cli decode command
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli decode command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli decode command with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli decode command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: transactional files, output-tier/color disclosure, limits, and cancellation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.3 - mynd-cli encode command
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli encode command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli encode command with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli encode command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: format capability validation, metadata policy, transactions, and determinism.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.4 - mynd-cli convert command
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli convert command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli convert command with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli convert command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: explicit conversion plan, information-loss confirmation, and atomic replacement.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.5 - mynd-cli frame command
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli frame command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli frame command with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli frame command.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: raw/composited selection, frame/range limits, filenames, and animation bombs.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.5 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.6 - mynd-cli bounded batch profile
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli bounded batch profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli bounded batch profile with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli bounded batch profile.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: aggregate budgets, hostile filenames, collision policy, and cancellation.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.6 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.7 - mynd-cli bounded service profile
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for mynd-cli bounded service profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete mynd-cli bounded service profile with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: mynd-cli bounded service profile.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: request isolation, aggregate/live budgets, cancellation, and no ambient authority.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.7 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.98.8 - Cross-adapter facade reconciliation
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for cross-adapter facade reconciliation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+
+Goal:
+
+Complete cross-adapter facade reconciliation with bounded behavior, explicit claims, and evidence
+sufficient for an exact-commit security decision.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Cross-adapter facade reconciliation.
+- Define contracts, invariants, limits, terminal states, errors, output
+  commits, compatibility behavior, and unsupported cases before code.
+- Update SPEC_MAPPING, support/source/architecture records, crate
+  boundaries, corpus provenance, security documentation, and claims.
+- Add positive, boundary, malformed, truncation, mutation, regression,
+  determinism, lifecycle, and resource-accounting fixtures.
+- Resolve the complete async/WASM/parallel/GPU/CLI issue register on
+  one facade; prohibit adapter-specific forks, bypasses, and shadow APIs.
+- Record the exact source identity, dependencies, packages, claims, and
+  test manifests that every v0.99.x campaign must use.
+- Update changelog, notes, crate versions, packages, SBOM, and the
+  exact-version pentest-report scaffold.
+
+Verification:
+
+- Required release evidence: Zero unresolved implementation or public-API issues and one exact assurance input.
+- Audit arithmetic, offsets, terminal transitions, capability
+  negotiation, cumulative/live/peak budgets, scratch, output,
+  metadata, and work accounting.
+- Run applicable unit, property, every-byte/bit truncation, round-trip,
+  differential, conformance, fuzz, Kani, Miri, sanitizer, stack,
+  code-size, numeric-tolerance, performance, and denial-of-service checks.
+- Run repository, cargo-deny, cargo-audit, latest-crate/tool, SBOM,
+  supported-Rust, feature, no-default, 32-bit, WASM, and platform gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Claims link to passing evidence; supported, unsupported, and
+  limit-exceeded behavior is explicit.
+- Packages, dependencies, SBOM, mappings, fixtures, and notes match the
+  exact candidate commit.
+- Pentest covers the new surface and inherited invariants; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records
+  PASS, and the version release gate accepts the exact reviewed commit.
+- `v0.98.8 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.0 - cargo-fuzz harness and corpus integration
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for cargo-fuzz harness and corpus integration. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete cargo-fuzz harness and corpus integration with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: cargo-fuzz harness and corpus integration.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: every parser/entropy/metadata/dispatcher target builds with provenance.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.1 - Long-running fuzz and truncation campaign
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Long-running fuzz and truncation campaign. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Long-running fuzz and truncation campaign with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Long-running fuzz and truncation campaign.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: coverage report, minimized persistent corpus, and no stalls/panics.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.2 - Kani checked-arithmetic and geometry proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani checked-arithmetic and geometry proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani checked-arithmetic and geometry proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani checked-arithmetic and geometry proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: conversion/size/stride/rectangle assumptions and unwind bounds.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.3 - Kani view and buffer-state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani view and buffer-state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani view and buffer-state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani view and buffer-state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: bounds, alias policy, commit visibility, and state invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.4 - Kani byte- and bit-I/O proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani byte- and bit-I/O proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani byte- and bit-I/O proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani byte- and bit-I/O proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: cursor/refill/shift/rollback/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.5 - Kani Deflate and zlib state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani Deflate and zlib state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani Deflate and zlib state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani Deflate and zlib state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: table/distance/window/checksum/output/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.5 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.6 - Kani GIF and TIFF LZW state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani GIF and TIFF LZW state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani GIF and TIFF LZW state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani GIF and TIFF LZW state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: dialect dictionary/width/reset/end/output/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
 - `v0.99.6 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.99.7 - Kani JPEG entropy state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani JPEG entropy state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani JPEG entropy state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani JPEG entropy state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: Huffman/arithmetic/stuffing/restart/coefficient/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.7 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.8 - Kani WebP entropy state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani WebP entropy state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani WebP entropy state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani WebP entropy state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: VP8 Boolean and VP8L prefix/LZ/cache/output/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.8 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.9 - Kani TIFF fax and IFD state proofs
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Kani TIFF fax and IFD state proofs. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Kani TIFF fax and IFD state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Kani TIFF fax and IFD state proofs.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: run/transition/reference-row and graph/count/progress invariants.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.9 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.10 - Miri audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Miri audit. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Miri audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Miri audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: all supported feature sets and mutation/view/adapter paths pass Miri.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.10 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.11 - Sanitizer audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Sanitizer audit. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Sanitizer audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Sanitizer audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: address, leak, memory, and undefined-behavior sanitizer matrix.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.11 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.12 - Supported-Rust, target, and feature audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Supported-Rust, target, and feature audit. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Supported-Rust, target, and feature audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Supported-Rust, target, and feature audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: Rust 1.90.0-1.97.1, targets, no-default, alloc/std, WASM, and combinations.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.12 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.13 - Stack and code-size audit
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Stack and code-size audit. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Stack and code-size audit with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Stack and code-size audit.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: per-target stack ceilings, recursion absence, and binary-size budgets.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.13 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.14 - Official conformance and differential freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Official conformance and differential freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Official conformance and differential freeze with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Official conformance and differential freeze.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: every format claim mapped with no unexplained reference disagreement.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.14 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.15 - Cross-format color conformance freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Cross-format color conformance freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Cross-format color conformance freeze with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Cross-format color conformance freeze.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: native/rendered profiles, precedence, tolerances, and reference vectors.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.15 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.16 - Performance and denial-of-service freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Performance and denial-of-service freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Performance and denial-of-service freeze with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Performance and denial-of-service freeze.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: valid throughput plus hostile rejection-time/work/memory regression limits.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.16 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.17 - Reproducible package, SBOM, and provenance freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for Reproducible package, SBOM, and provenance freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete Reproducible package, SBOM, and provenance freeze with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: Reproducible package, SBOM, and provenance freeze.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: byte-reproducible archives, dependency identity, signatures, and attestations.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.17 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.99.18 - External pentest and final public API freeze
+
+Status: Planned.
+
+Context:
+
+This is the exclusive integration and assurance handoff for External pentest and final public API freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+
+Goal:
+
+Complete External pentest and final public API freeze with bounded behavior, explicit claims, and exact-commit evidence.
+
+Deliverables:
+
+- Complete only the release-scoped capability: External pentest and final public API freeze.
+- Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
+- Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
+- Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
+- This is the verification-only final public API freeze; any product
+  or API defect returns to v0.98.8 and invalidates affected evidence.
+- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+
+Verification:
+
+- Required release evidence: unchanged v0.98.8 input, complete evidence, no critical/high, and clean retest.
+- Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
+- Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
+- Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
+
+Exit criteria:
+
+- The capability is complete, documented, and the only new capability.
+- Supported, unsupported, and limit-exceeded claims link to passing evidence.
+- Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
+- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; the permanent report records PASS.
+- `v0.99.18 implementation stop reached. Run pentest for this exact commit.`
 
 ## Phase: Production admission
 

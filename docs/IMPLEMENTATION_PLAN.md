@@ -20,22 +20,21 @@ Priority order:
 5. performance;
 6. advanced encoding quality.
 
-The initial 1.0 scope includes BMP, TGA, GIF, and farbfeld. The normative
-release sequence may admit additional formats before 1.0; farbfeld is
-explicitly required and is not a post-1.0 candidate. PNG, classic JPEG, and
-JPEG XL remain governed by `docs/VERSION_PLAN.md`, whose current scope and
-version assignments take precedence over this architectural overview.
+The 1.0 scope includes BMP, QOI, official Netpbm PNM/PAM, farbfeld, PNG/APNG,
+GIF87a/89a, the declared classic-JPEG profiles, WebP, and the declared TIFF
+6.0 plus admitted-extension profiles. TGA, PFM, BigTIFF, JPEG XL, and every
+format not expressly admitted by `docs/VERSION_PLAN.md` remain outside 1.0.
 
 ## 2. Architecture
 
 ```text
-mynd-cli -> mynd facade -> mynd-bmp / mynd-tga / mynd-gif / mynd-farbfeld
-                         -> mynd-codec
-                            |-> mynd-core -> mynd-math
-                            |-> mynd-io
-                            |-> mynd-metadata
-                            |-> mynd-color
-                            |-> mynd-processing -> mynd-quantize
+mynd-cli -> mynd facade -> one mynd-* crate per admitted format family
+                         -> mynd-processing
+format/processing crates -> focused shared crates:
+  mynd-codec | mynd-core | mynd-math | mynd-budget | mynd-io
+  mynd-zlib -> mynd-deflate
+  mynd-exif -> mynd-ifd -> mynd-metadata
+  mynd-color -> mynd-icc
 ```
 
 Crates are created only when their first release begins. This keeps package
@@ -49,6 +48,10 @@ claims and audit scope aligned with delivered capability.
 | `mynd-io` | minimal byte/bit traits and bounded adapters | filesystem policy in core APIs |
 | `mynd-codec` | limits, budgets, errors, probe/codec contracts | format implementations |
 | `mynd-metadata` | bounded transport-neutral metadata | full Exif/ICC/XMP parsing initially |
+| `mynd-ifd` | bounded typed IFD graph/value mechanics | TIFF or Exif schema policy |
+| `mynd-exif` | selected Exif schema and inspection | general TIFF image decoding |
+| `mynd-icc` | bounded ICC parsing and color pipelines | container parsing |
+| `mynd-deflate` / `mynd-zlib` | RFC 1951 engine and RFC 1950 wrapper | GIF/TIFF LZW or container policy |
 | `mynd-color` | explicit deterministic conversions | silent lossy conversion |
 | `mynd-processing` | budgeted image operations | automatic threads/runtime coupling |
 | `mynd-quantize` | deterministic bounded palettes | hidden randomness or float requirement |
@@ -87,7 +90,8 @@ std = ["alloc"]
 - `std`: I/O/error convenience adapters only; parser validation is unchanged.
 
 Codecs eventually default to `decode` without allocation. The facade's 1.0
-defaults are chosen only after the feature audit at versions 0.99-0.100.
+defaults are chosen only after the v0.99.x assurance campaign and v0.99.18
+final freeze.
 
 The target matrix is Linux, Windows, FreeBSD/BSD, macOS, Android, and iOS.
 Aesynx is an architecture constraint, not a current build claim: no core API may
@@ -137,86 +141,70 @@ security delta is reviewable.
 
 ## 6. Foundation phases
 
-### Phase A: governance and image model (0.1-0.12)
+### Phase A: governance, model, I/O, and codec contracts (0.1-0.19)
 
 Establish repository policy, checked math, validated dimensions/layouts/views,
-frames, timing, and fallible owned storage. `mynd-core` never parses formats.
+frames, timing, budgets, scratch, byte/bit I/O, incremental execution, metadata
+transport, ICC foundations, probing, adapters, and the common codec contract.
+`mynd-core` never parses formats.
 
 Acceptance emphasis: integer extrema, zero dimensions, stride/rectangle
 overflow, short buffers, failed reservation, and invalid type combinations.
 
-### Phase B: I/O and codec contracts (0.13-0.24)
+### Phase B: simple and lossless codecs (0.20-0.35)
 
-Build slice/fixed/bounded/subrange readers and writers, endian and bit I/O,
-probing, limits, work budget, errors/warnings, and incremental state-machine
-contracts. Freeze these contracts before the first format decoder.
+Implement the admitted BMP dialect matrix, QOI, official Netpbm PNM/PAM, and
+farbfeld in separate crates, then freeze the common simple-codec contract.
 
-Acceptance emphasis: truncation at every byte/bit, cursor overflow, nested
-bounds, transactional output, bit-width transitions, probe ambiguity, budget
-bypass, and zero-progress states.
+Acceptance emphasis: exact dialect dispatch, truncation at every byte/bit,
+checked output size, row/palette/mask boundaries, concatenated-image policy,
+PFM exclusion, deterministic encoders, and cross-codec probe ambiguity.
 
-## 7. Initial codec phases
+## 7. Codec phases
 
-### farbfeld (pre-1.0; normative handoff v0.34.0)
+Versions 0.20-0.35 implement BMP dialects, QOI, official Netpbm PNM/PAM, and
+farbfeld. BMP never uses nearest-header fallback; PFM is not included in the
+Netpbm claim. Every codec has checked exact output sizing, bounded probing,
+deterministic encoding, and a format-family audit.
 
-Implement the fixed 16-byte big-endian header and exact-width RGBA16 big-endian
-pixel stream as a small independent codec crate. Decode and encode use checked
-`width * height * 8` arithmetic, caller-owned buffers in the no-allocation
-path, explicit unassociated-alpha semantics, deterministic output, and an
-explicit trailing-data policy.
+Versions 0.36-0.46 implement PNG Third Edition and APNG. Chunk framing/order,
+Deflate block types, filters/color types, color metadata, ancillary policy,
+APNG sequencing/composition, encoders, and the final audit are separate
+handoffs.
 
-Security focus: dimension/product overflow, exact input/output length,
-truncation at every header and sample byte, endian correctness, alpha
-preservation, zero dimensions, trailing bytes, and allocation/work limits.
+Versions 0.47-0.51 implement GIF87a/89a plus explicitly named de-facto
+extensions. LZW, frame composition, palette generation, still/animated
+encoding, and the compatibility/security audit remain independently testable.
 
-### BMP (normative handoffs v0.20.0-v0.25.2)
+Versions 0.52-0.62 implement the declared ITU-T T.81 classic-JPEG profiles.
+Marker/declaration state, entropy/restart accounting, reconstruction processes,
+metadata/color conventions, and each encoder-process admission are separate.
+Decoder completeness never silently claims every encoder process.
 
-Treat BMP as a versioned dialect family, never one permissive parser. First pin
-the source and support matrix, file-envelope policy, and exact header-size
-dispatch. Then handle the 12-byte core family, Windows 40-byte
-`BITMAPINFOHEADER`, 108-byte `BITMAPV4HEADER`, 124-byte `BITMAPV5HEADER`,
-de-facto 52/56-byte compatibility headers only after provenance review, and
-each admitted OS/2 2.x header revision in the dedicated OS/2 handoff. Unknown
-sizes do not inherit the nearest known layout.
+Versions 0.63-0.69 implement RFC 9649 WebP, VP8, VP8L, alpha, animation, and
+encoders. Container, entropy, reconstruction, transforms, and animation each
+own bounded work and output evidence.
 
-After structural dispatch is fixed, add BI_RGB depths and palettes, bitfields
-and alpha masks, top-down rules, RLE4/RLE8, V4/V5 color/profile behavior, and
-encoders one bounded release at a time. OS/2 Huffman 1D, RLE24, bitmap arrays,
-icons/pointers, and embedded BI_JPEG/BI_PNG receive explicit supported or
-unsupported decisions; no broad “BMP supported” label hides those branches.
-
-Security focus: header-size confusion, pixel offsets, signed height minimum,
-row padding, palette underflow, mask overlap, RLE escapes/deltas, embedded
-payloads, profile ranges, and huge dimensions with tiny inputs.
-
-### TGA (0.46-0.60)
-
-Add header parsing, true-color/grayscale/indexed samples, origins, bounded RLE,
-ID/footer/extension/developer areas, and canonical raw/RLE encoding.
-
-Security focus: weak probing, packet output bounds, cross-scanline policy,
-color-map origins, footer offsets, thumbnail sizes, overlapping regions,
-orientation, and alpha interpretation.
-
-### GIF decoding (0.61-0.84)
-
-Build signatures, screen/palette/sub-block parsing, LZW as its own audit unit,
-deinterlacing, transparency, bounded frame composition/disposal, and extensions.
-
-Security focus: dictionary/code-width transitions, forward references, exact
-pixel count, endless sub-blocks, canvas rectangles, restore-to-previous memory,
-frame totals, timing, palette indexes, and animation decompression bombs.
+Versions 0.70-0.77 implement the declared TIFF 6.0 and extension profile.
+IFD mechanics and schema policy are separate. Compression dialects, predictors,
+layout modes, sample domains, corrected JPEG-in-TIFF, Exif integration,
+encoders, and the final profile audit have explicit support matrices. BigTIFF
+remains outside 1.0.
 
 ## 8. Encoding, facade, and stabilization
 
-Versions 0.85-0.90 add deterministic bounded quantization and GIF encoding.
-Versions 0.91-0.98 add the facade, static dispatch, owned convenience APIs,
-basic color conversion, processing, and CLI.
+Versions 0.78-0.94 add shared metadata/color interpretation, conversion,
+geometry, resampling, compositing, bounded raster-drawing primitives,
+processing graphs, selective decoding, and the audited facade candidate.
 
-Versions 0.99-0.111 are assurance releases: feature matrix, panic/arithmetic
-audits, limit calibration, truncation automation, conformance/differential
-coverage, extended fuzzing, Kani, Miri/sanitizers, performance/DoS regression,
-reproducible packaging, external review, and API freeze.
+Versions 0.95-0.98.7 exercise async, WASM, parallel, GPU, CLI, batch, and
+service boundaries. Version 0.98.8 resolves every adapter-driven facade issue
+and fixes the exact implementation admitted to assurance.
+
+Versions 0.99.0-0.99.18 are evidence-only campaigns over that unchanged input:
+fuzzing/truncation, focused Kani proof families, Miri/sanitizers/target/feature
+coverage, conformance/differential/color/performance/DoS freeze, reproducible
+packaging, external pentest, and the final public API freeze.
 
 The CLI is a separate `std` tool and never silently chooses unlimited budgets.
 It writes outputs transactionally so failed conversion does not leave a result
@@ -277,7 +265,8 @@ fuzz/proof additions, known unsupported features, and residual security limits.
 Version 1.0.0 is published only when:
 
 - core and no-allocation APIs are stable;
-- BMP, TGA, GIF, and farbfeld support matrices are honest and complete for claimed scope;
+- every admitted BMP, QOI, PNM/PAM, farbfeld, PNG/APNG, GIF, classic-JPEG,
+  WebP, and TIFF profile has an honest, complete support matrix;
 - every accepted input path is resource-bounded;
 - default code has no unsafe Rust and no known critical/high security issue;
 - meaningful parser states have fuzz and conformance coverage;
@@ -287,4 +276,6 @@ Version 1.0.0 is published only when:
 - at least one independent security review is complete;
 - maintainers accept normal semantic-versioning obligations.
 
-Existence of version 0.111.0 does not automatically authorize 1.0.0.
+Existence of v0.99.18 does not automatically authorize 1.0.0. The exact
+v1.0.0-rc.1 archives must pass their own pentest and reproducibility decision,
+and v1.0.0 is a byte-for-byte promotion only.
