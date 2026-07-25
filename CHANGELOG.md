@@ -36,6 +36,13 @@ a time.
 - Separated `mynd-core` from the facade version train so unchanged support
   crates are not republished; only `mynd` advances to 0.2.0.
 
+### Security
+
+- Completed the v0.2.0 pentest with no exploitable or unresolved
+  Critical/High/Medium/Low finding.
+- Recorded and accepted one Informational local check-then-open observation
+  within the maintainer-controlled specification-tool trust boundary.
+
 ## [0.1.0] - 2026-07-25
 
 ### Added

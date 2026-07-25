@@ -1,6 +1,6 @@
 # mynd 0.2.0 Release Notes
 
-Status: implementation candidate; pentest not yet run.
+Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
 
 This governance-only release reconciles the exact pre-1.0 image scope, public
 claim vocabulary, standards and errata ledger, corpus provenance schema, crate

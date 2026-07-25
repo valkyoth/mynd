@@ -899,7 +899,7 @@ Exit criteria:
 
 ### v0.2.0 - Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema
 
-Status: Implementation complete; awaiting pentest.
+Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
 
 Context:
 
