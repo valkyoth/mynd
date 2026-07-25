@@ -53,9 +53,9 @@ milestone may begin while those documents describe the former architecture or
 scope; until reconciliation passes, no codec support is claimed.
 
 Each .x family has one exclusive outcome. Every named patch version has its own
-artifacts, evidence, release notes, exact-commit pentest, clean retest, and tag
-decision. A failed format audit delays later work; it cannot be hidden in the
-next format.
+artifacts, evidence, release notes, evolving pentest report, clean retest, and
+tag decision. A failed format audit delays later work; it cannot be hidden in
+the next format.
 
 ## Conformance claims
 
@@ -529,24 +529,28 @@ filesystems, threads, wall clocks, or global allocation.
 Every release has one outcome and the Status, Context, Goal, Deliverables,
 Verification, and Exit criteria blocks below. Official/original sources,
 limits, unsupported behavior, compatibility, loss, local/adversarial evidence,
-release notes, crate metadata, package inspection, SBOM, exact-commit pentest,
-CI, and CodeQL are mandatory.
+release notes, crate metadata, package inspection, SBOM, pentest history, CI,
+and CodeQL are mandatory.
 
-Implementation completion is a stop, not tag authority. Before every milestone,
-patch, RC, or stable tag:
+Implementation completion starts one simple release loop:
 
-- scripts/checks.sh, latest-crate/tool checks, Rust/feature/platform gates,
-  cargo-deny, cargo-audit, and SBOM verification pass;
-- mappings, support claims, limits, corpus records, and release notes match;
-- security/pentest/vX.Y.Z.md records the exact reviewed 40-character commit,
-  tester, date, scope, findings, residual risk, and PASS;
-- root PENTEST.md findings are fixed and removed, then cleanly retested;
-- CI and CodeQL default setup are green;
-- strict release metadata and the version-specific gate pass;
-- the tag is absent and will point to the approved report commit.
+1. Commit the candidate and run the pentest.
+2. Keep `security/pentest/vX.Y.Z.md` in the repository throughout the release.
+   Record a clean result or every finding, remediation, and retest in that one
+   evolving report.
+3. Repeat remediation and retesting until the report reaches `Status: PASS`.
+4. Commit the complete candidate and PASS report, then wait for GitHub CI and
+   CodeQL on that commit.
+5. If GitHub finds a problem, fix it, record the change and resulting checks or
+   retest in the same report, commit again, and repeat.
+6. Tag the final commit only after its local release gate, GitHub CI, and CodeQL
+   are green. The tag points directly at that final commit.
 
-Any code, dependency, metadata, documentation, or package change invalidates
-affected approval. At each exit, print the exact stop line and do not tag.
+The report does not need a report-only commit, a direct-parent relationship, or
+an immutable first candidate. It must honestly describe the complete history
+that led to PASS. Security-relevant changes after a clean pentest require an
+appropriate retest; CI-only corrections still belong in the report. At each
+implementation exit, print the required pentest handoff line and do not tag.
 
 ## Crate versioning
 
@@ -569,7 +573,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 
 | Version | Exclusive capability | Mandatory evidence |
 | --- | --- | --- |
-| 0.1.0 | Existing workspace, licenses, feature boundaries, release policy | Current checks plus completed exact-commit pentest |
+| 0.1.0 | Existing workspace, licenses, feature boundaries, release policy | Current checks plus completed pentest cycle |
 | 0.2.0 | Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema | No contradictions across README, support matrix, and normative plans |
 | 0.2.1 | Reproducible specification corpus and legal-disposition gate | Every source classified public/offline/manual, immutable hashes, clean recreation, package exclusion, and legal review |
 | 0.3.0 | Checked conversion/add/multiply/align/range primitives | Exhaustive extrema tests and Kani arithmetic proofs |
@@ -855,7 +859,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete existing workspace, licenses, feature boundaries, release policy with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -871,7 +875,7 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Current checks plus completed exact-commit pentest.
+- Required release evidence: Current checks plus completed pentest cycle.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -890,8 +894,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.1.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.1.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.2.0 - Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema
 
@@ -907,7 +911,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -946,8 +950,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.2.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.2.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
@@ -996,7 +1000,7 @@ Exit criteria:
   is ignored; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
   the exact-version release gate accepts the reviewed corpus.
-- `v0.2.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.2.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
@@ -1012,7 +1016,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete checked conversion/add/multiply/align/range primitives with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1047,8 +1051,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.3.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.3.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
@@ -1064,7 +1068,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete validated dimensions, rectangles, strides, planes, and output lengths with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1099,8 +1103,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.4.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.4.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.0 - Explicit pixel layout and sample-storage domains
 
@@ -1116,7 +1120,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete explicit pixel layout and sample-storage domains with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1151,8 +1155,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.1 - Numeric determinism and floating-sample contract
 
@@ -1168,7 +1172,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete numeric determinism and floating-sample contract with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1203,8 +1207,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.2 - Shared color and blending specification ledger
 
@@ -1220,7 +1224,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete shared color and blending specification ledger with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1255,8 +1259,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.3 - Scalar transfer, matrix/range, and alpha foundation
 
@@ -1272,7 +1276,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete scalar transfer, matrix/range, and alpha foundation with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1307,8 +1311,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.3 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.4 - Minimal scalar animation composition kernel
 
@@ -1324,7 +1328,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete minimal scalar animation composition kernel with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1360,8 +1364,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.4 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.5.5 - Explicit no_std elementary-math backend
 
@@ -1376,7 +1380,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete explicit no_std elementary-math backend with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1414,8 +1418,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.5.5 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.5.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.6.0 - Immutable/mutable image and plane views
 
@@ -1431,7 +1435,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete immutable/mutable image and plane views with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1466,8 +1470,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.6.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.6.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.7.0 - Frames, timing, canvas, disposal, blend, and frame rectangles
 
@@ -1483,7 +1487,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete frames, timing, canvas, disposal, blend, and frame rectangles with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1518,8 +1522,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.7.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.7.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.8.0 - Allocation-free structured errors, warnings, reports, and offsets
 
@@ -1535,7 +1539,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete allocation-free structured errors, warnings, reports, and offsets with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1570,8 +1574,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.8.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.8.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.9.0 - DecodeLimits, EncodeLimits, monotonic work/memory ledger
 
@@ -1587,7 +1591,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete decodelimits, encodelimits, monotonic work/memory ledger with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1622,8 +1626,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.9.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.9.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.10.0 - Caller-owned scratch planner, arenas, buffer pools, and leases
 
@@ -1639,7 +1643,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete caller-owned scratch planner, arenas, buffer pools, and leases with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1674,8 +1678,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.10.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.10.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.11.0 - Slice reader/writer, exact reads, fixed output, checkpoints
 
@@ -1691,7 +1695,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete slice reader/writer, exact reads, fixed output, checkpoints with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1726,8 +1730,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.11.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.11.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.12.0 - Endian I/O, subranges, counting, seek/read-at
 
@@ -1743,7 +1747,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete endian i/o, subranges, counting, seek/read-at with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1778,8 +1782,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.12.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.12.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.12.1 - Source/sink capability negotiation and execution lifecycle
 
@@ -1795,7 +1799,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete source/sink capability negotiation and execution lifecycle with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1835,8 +1839,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.12.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.12.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.12.2 - General encoder sizing and commit planning
 
@@ -1851,7 +1855,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete general encoder sizing and commit planning with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1890,8 +1894,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.12.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.12.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.12.3 - Source-bound decode session planning
 
@@ -1906,7 +1910,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete source-bound decode session planning with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1946,8 +1950,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.12.3 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.12.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.13.0 - MSB/LSB bit readers and writers
 
@@ -1963,7 +1967,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete msb/lsb bit readers and writers with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -1998,8 +2002,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.13.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.13.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.14.0 - Incremental decoder/encoder progress contracts
 
@@ -2015,7 +2019,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete incremental decoder/encoder progress contracts with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2071,8 +2075,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.14.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.14.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.14.1 - Cooperative execution quantum and cancellation latency
 
@@ -2087,7 +2091,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete cooperative execution quantum and cancellation latency with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2128,8 +2132,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.14.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.14.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.14.2 - Physically enforceable incremental decode commit modes
 
@@ -2144,7 +2148,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete physically enforceable decode commit modes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2187,8 +2191,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.14.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.14.2 implementation stop reached. Run pentest and record the result.`
 
 
 ### v0.15.0 - Metadata envelopes and bounded Exif/ICC/XMP header transport
@@ -2205,7 +2209,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete metadata envelopes and bounded exif/icc/xmp header transport with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2240,8 +2244,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.1 - Bounded ICC v2/v4 structural parser
 
@@ -2257,7 +2261,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bounded icc v2/v4 structural parser with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2292,8 +2296,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.2 - ICC matrix/TRC and chromatic-adaptation engine
 
@@ -2309,7 +2313,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete icc matrix/trc and chromatic-adaptation engine with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2344,8 +2348,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.3 - ICC v2 LUT pipelines and deterministic interpolation
 
@@ -2361,7 +2365,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete icc v2 lut pipelines and deterministic interpolation with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2396,8 +2400,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.3 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.4 - ICC v4 mAB/mBA and processing-element pipelines
 
@@ -2413,7 +2417,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete icc v4 mab/mba and processing-element pipelines with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2448,8 +2452,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.4 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.5 - ICC PCS Lab/XYZ, intent selection, and core execution audit
 
@@ -2465,7 +2469,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete icc pcs lab/xyz, intent selection, and core execution audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2505,8 +2509,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.15.5 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.15.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.6 - ICC adaptive-gain tag and type structural parsing
 
@@ -2549,7 +2553,7 @@ Exit criteria:
 - The legal/IP decision and unsupported behavior are explicit; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green and the permanent report records PASS.
-- `v0.15.6 implementation stop reached. Run pentest for this exact commit.`
+- `v0.15.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.7 - ICC adaptive-gain execution admission
 
@@ -2591,7 +2595,7 @@ Exit criteria:
   never conflates preservation, parsing, and execution.
 - All critical/high findings are fixed and cleanly retested; CI and CodeQL
   default setup are green and the permanent report records PASS.
-- `v0.15.7 implementation stop reached. Run pentest for this exact commit.`
+- `v0.15.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.8 - Complete declared ICC profile audit
 
@@ -2628,7 +2632,7 @@ Exit criteria:
   preservable Unsupported.
 - All critical/high findings are fixed and cleanly retested; CI and CodeQL
   default setup are green and the permanent report records PASS.
-- `v0.15.8 implementation stop reached. Run pentest for this exact commit.`
+- `v0.15.8 implementation stop reached. Run pentest and record the result.`
 
 ### v0.15.9 - Bounded BCP 47 language-tag profile
 
@@ -2668,7 +2672,7 @@ Exit criteria:
   that a syntactically valid tag is currently registered.
 - Pentest covers the exact parser; all critical/high findings are fixed and
   cleanly retested, and CI/CodeQL are green.
-- `v0.15.9 implementation stop reached. Run pentest for this exact commit.`
+- `v0.15.9 implementation stop reached. Run pentest and record the result.`
 
 ### v0.16.0 - Format IDs, media types, bounded probing, static registry
 
@@ -2684,7 +2688,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete format ids, media types, bounded probing, static registry with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2719,8 +2723,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.16.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.16.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.16.1 - Non-destructive forward-only and seekable probing
 
@@ -2735,7 +2739,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete non-destructive forward-only and seekable probing with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2774,8 +2778,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.16.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.16.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.17.0 - Fallible owned storage and std::io adapters
 
@@ -2791,7 +2795,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete fallible owned storage and std::io adapters with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2826,8 +2830,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.17.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.17.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.17.1 - Reentrancy, concurrency, and auto-trait contract
 
@@ -2842,7 +2846,7 @@ independently. Later capabilities remain unavailable or explicitly fail closed.
 Goal:
 
 Complete reentrancy, concurrency, and auto-trait contract with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2880,8 +2884,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.17.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.17.1 implementation stop reached. Run pentest and record the result.`
 
 
 ### v0.18.0 - Foundation candidate review and representative-codec readiness
@@ -2898,7 +2902,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete foundation candidate review and representative-codec readiness with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2934,8 +2938,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.18.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.18.0 implementation stop reached. Run pentest and record the result.`
 
 
 ## Phase: Simple and lossless codecs
@@ -2956,7 +2960,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete common codec crate template and decode-plan contract with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -2992,8 +2996,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.19.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.19.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.20.0 - BMP source ledger, file envelope, and dialect-matrix freeze
 
@@ -3011,8 +3015,8 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete the BMP source ledger, file envelope, and dialect-matrix freeze with
-bounded behavior, explicit claims, and evidence sufficient for an exact-commit
-security decision.
+bounded behavior, explicit claims, and evidence sufficient for an iterative
+pentest and release decision.
 
 Deliverables:
 
@@ -3065,8 +3069,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.20.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.20.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.20.1 - BMP 12-byte core-family headers and RGBTRIPLE palettes
 
@@ -3082,8 +3086,8 @@ semantics. Later BMP families remain unavailable or explicitly fail closed.
 Goal:
 
 Complete bounded structural parsing for the 12-byte core family with an exact
-layout, explicit capabilities, and evidence sufficient for an exact-commit
-security decision.
+layout, explicit capabilities, and evidence sufficient for an iterative
+pentest and release decision.
 
 Deliverables:
 
@@ -3127,8 +3131,8 @@ Exit criteria:
 - Pentest covers header confusion, palette sizing, offsets, truncation, and
   inherited invariants; all critical/high findings are fixed and retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.20.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.20.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.20.2 - BMP Windows INFO/V4/V5 and V2/V3 compatibility headers
 
@@ -3192,8 +3196,8 @@ Exit criteria:
 - Pentest covers size confusion, mask placement, signed extrema, overlaps, and
   inherited invariants; all critical/high findings are fixed and retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.20.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.20.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.20.3 - BMP OS/2 2.x extended headers and container decision
 
@@ -3257,8 +3261,8 @@ Exit criteria:
   truncation, and inherited invariants; all critical/high findings are fixed
   and retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.20.3 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.20.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.21.0 - BMP BI_RGB depths, palettes, padding, row orientation
 
@@ -3274,7 +3278,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp bi_rgb depths, palettes, padding, row orientation with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3320,8 +3324,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.21.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.21.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.22.0 - BMP bitfields, alpha masks, top-down rules
 
@@ -3337,7 +3341,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp bitfields, alpha masks, top-down rules with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3383,8 +3387,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.22.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.22.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.23.0 - BMP RLE4/RLE8
 
@@ -3400,7 +3404,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp rle4/rle8 with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3444,8 +3448,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.23.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.23.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.24.0 - BMP V4/V5 color declarations and embedded-profile transport
 
@@ -3461,7 +3465,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp v4/v5 color declarations and embedded-profile transport with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3505,8 +3509,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.24.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.24.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.25.0 - BMP deterministic uncompressed encoders
 
@@ -3522,7 +3526,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp deterministic uncompressed encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3565,8 +3569,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.25.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.25.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.25.1 - BMP deterministic RLE4/RLE8 encoders
 
@@ -3582,7 +3586,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bmp deterministic rle4/rle8 encoders with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3624,8 +3628,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.25.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.25.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.25.2 - Complete declared BMP dialect audit
 
@@ -3641,7 +3645,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete complete declared bmp dialect audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3692,8 +3696,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.25.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.25.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.26.0 - QOI structural parse and bounded decoder
 
@@ -3709,7 +3713,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete qoi structural parse and bounded decoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3745,8 +3749,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.26.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.26.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.27.0 - QOI deterministic encoder
 
@@ -3762,7 +3766,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete qoi deterministic encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3797,8 +3801,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.27.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.27.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.28.0 - Bounded Netpbm tokenizer
 
@@ -3814,7 +3818,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bounded netpbm tokenizer with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3849,8 +3853,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.28.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.28.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.29.0 - PBM P1/P4 decode/encode
 
@@ -3866,7 +3870,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete pbm p1/p4 decode/encode with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3901,8 +3905,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.29.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.29.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.30.0 - PGM P2/P5 decode/encode
 
@@ -3918,7 +3922,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete pgm p2/p5 decode/encode with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -3955,8 +3959,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.30.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.30.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.31.0 - PPM P3/P6 decode/encode
 
@@ -3972,7 +3976,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete ppm p3/p6 decode/encode with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4008,8 +4012,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.31.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.31.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.32.0 - PAM P7, if the public claim is “Netpbm”
 
@@ -4025,7 +4029,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete pam p7, if the public claim is “netpbm” with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4061,8 +4065,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.32.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.32.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.33.0 - Combined PNM/PAM stream and conformance audit
 
@@ -4078,7 +4082,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete combined pnm/pam stream and conformance audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4117,8 +4121,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.33.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.33.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.34.0 - farbfeld decode and encode
 
@@ -4134,7 +4138,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete farbfeld decode and encode with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4169,8 +4173,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.34.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.34.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.35.0 - Simple-codec contract and security freeze
 
@@ -4186,7 +4190,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete simple-codec contract and security freeze with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4221,8 +4225,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.35.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.35.0 implementation stop reached. Run pentest and record the result.`
 
 
 ## Phase: Complex formats
@@ -4239,7 +4243,7 @@ This is the exclusive PNG/APNG handoff for PNG signature and bounded probing. It
 
 Goal:
 
-Complete PNG signature and bounded probing with bounded behavior, explicit claims, and exact-commit evidence.
+Complete PNG signature and bounded probing with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4263,7 +4267,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.36.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.36.1 - PNG chunk framing and CRC
 
@@ -4275,7 +4279,7 @@ This is the exclusive PNG/APNG handoff for PNG chunk framing and CRC. Its indepe
 
 Goal:
 
-Complete PNG chunk framing and CRC with bounded behavior, explicit claims, and exact-commit evidence.
+Complete PNG chunk framing and CRC with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4299,7 +4303,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.36.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.36.2 - PNG chunk-order state machine
 
@@ -4311,7 +4315,7 @@ This is the exclusive PNG/APNG handoff for PNG chunk-order state machine. Its in
 
 Goal:
 
-Complete PNG chunk-order state machine with bounded behavior, explicit claims, and exact-commit evidence.
+Complete PNG chunk-order state machine with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4335,7 +4339,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.36.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.37.0 - PNG IHDR and color-type/bit-depth validation
 
@@ -4351,7 +4355,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete png ihdr and color-type/bit-depth validation with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4386,8 +4390,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.37.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.37.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.38.0 - Bounded mynd-zlib wrapper
 
@@ -4399,7 +4403,7 @@ This is the exclusive PNG/APNG handoff for Bounded mynd-zlib wrapper. Its indepe
 
 Goal:
 
-Complete Bounded mynd-zlib wrapper with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Bounded mynd-zlib wrapper with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4423,7 +4427,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.38.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.38.1 - Deflate stored blocks
 
@@ -4435,7 +4439,7 @@ This is the exclusive PNG/APNG handoff for Deflate stored blocks. Its independen
 
 Goal:
 
-Complete Deflate stored blocks with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Deflate stored blocks with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4459,7 +4463,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.38.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.38.2 - Deflate fixed-Huffman blocks
 
@@ -4471,7 +4475,7 @@ This is the exclusive PNG/APNG handoff for Deflate fixed-Huffman blocks. Its ind
 
 Goal:
 
-Complete Deflate fixed-Huffman blocks with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Deflate fixed-Huffman blocks with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -4495,7 +4499,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.38.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.39.0 - Shared dynamic-Huffman and complete bounded mynd-deflate
 
@@ -4511,7 +4515,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete shared dynamic-huffman and complete bounded mynd-deflate with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4547,8 +4551,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.39.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.39.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.40.0 - PNG row-filter reconstruction
 
@@ -4561,7 +4565,7 @@ This is the exclusive PNG/APNG handoff for PNG row-filter reconstruction. Its AP
 Goal:
 
 Complete PNG row-filter reconstruction with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4597,8 +4601,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.40.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.40.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.40.1 - PNG noninterlaced 8-bit core color decoding
 
@@ -4611,7 +4615,7 @@ This is the exclusive PNG/APNG handoff for PNG noninterlaced 8-bit core color de
 Goal:
 
 Complete PNG noninterlaced 8-bit core color decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4647,8 +4651,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.40.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.40.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.41.0 - Packed 1/2/4-bit and 16-bit PNG samples
 
@@ -4664,7 +4668,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete packed 1/2/4-bit and 16-bit png samples with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4699,8 +4703,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.41.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.41.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.42.0 - Adam7 decode and progressive row events
 
@@ -4716,7 +4720,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete adam7 decode and progressive row events with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -4751,8 +4755,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.42.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.42.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.43.0 - PNG PLTE and tRNS semantics
 
@@ -4765,7 +4769,7 @@ This is the exclusive PNG/APNG handoff for PNG PLTE and tRNS semantics. Its API 
 Goal:
 
 Complete PNG PLTE and tRNS semantics with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4801,8 +4805,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.43.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.43.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.43.1 - PNG bKGD, hIST, sBIT, and sPLT chunks
 
@@ -4815,7 +4819,7 @@ This is the exclusive PNG/APNG handoff for PNG bKGD, hIST, sBIT, and sPLT chunks
 Goal:
 
 Complete PNG bKGD, hIST, sBIT, and sPLT chunks with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4851,8 +4855,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.43.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.43.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.44.0 - PNG cHRM, gAMA, and sRGB declarations
 
@@ -4865,7 +4869,7 @@ This is the exclusive PNG/APNG handoff for PNG cHRM, gAMA, and sRGB declarations
 Goal:
 
 Complete PNG cHRM, gAMA, and sRGB declarations with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4901,8 +4905,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.44.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.44.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.44.1 - PNG iCCP transport and ICC precedence
 
@@ -4915,7 +4919,7 @@ This is the exclusive PNG/APNG handoff for PNG iCCP transport and ICC precedence
 Goal:
 
 Complete PNG iCCP transport and ICC precedence with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -4951,8 +4955,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.44.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.44.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.44.2 - PNG cICP and HDR/WCG metadata
 
@@ -4965,7 +4969,7 @@ This is the exclusive PNG/APNG handoff for PNG cICP and HDR/WCG metadata. Its AP
 Goal:
 
 Complete PNG cICP and HDR/WCG metadata with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5001,8 +5005,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.44.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.44.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.45.0 - PNG bounded text chunks
 
@@ -5015,7 +5019,7 @@ This is the exclusive PNG/APNG handoff for PNG bounded text chunks. Its API and 
 Goal:
 
 Complete PNG bounded text chunks with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5051,8 +5055,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.45.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.45.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.45.1 - PNG eXIf, pHYs, and tIME metadata
 
@@ -5065,7 +5069,7 @@ This is the exclusive PNG/APNG handoff for PNG eXIf, pHYs, and tIME metadata. It
 Goal:
 
 Complete PNG eXIf, pHYs, and tIME metadata with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5101,8 +5105,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.45.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.45.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.45.2 - PNG unknown and private chunk policy
 
@@ -5115,7 +5119,7 @@ This is the exclusive PNG/APNG handoff for PNG unknown and private chunk policy.
 Goal:
 
 Complete PNG unknown and private chunk policy with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5151,8 +5155,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.45.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.45.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.46.0 - APNG control and frame-chunk sequencing
 
@@ -5165,7 +5169,7 @@ This is the exclusive PNG/APNG handoff for APNG control and frame-chunk sequenci
 Goal:
 
 Complete APNG control and frame-chunk sequencing with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5201,8 +5205,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.46.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.46.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.46.1 - APNG frame decoding and composition
 
@@ -5215,7 +5219,7 @@ This is the exclusive PNG/APNG handoff for APNG frame decoding and composition. 
 Goal:
 
 Complete APNG frame decoding and composition with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5251,8 +5255,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.46.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.46.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.46.2 - PNG deterministic encoding
 
@@ -5265,7 +5269,7 @@ This is the exclusive PNG/APNG handoff for PNG deterministic encoding. Its API a
 Goal:
 
 Complete PNG deterministic encoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5301,8 +5305,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.46.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.46.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.46.3 - APNG deterministic encoding
 
@@ -5315,7 +5319,7 @@ This is the exclusive PNG/APNG handoff for APNG deterministic encoding. Its API 
 Goal:
 
 Complete APNG deterministic encoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5351,8 +5355,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.46.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.46.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.46.4 - Complete PNG/APNG conformance and security audit
 
@@ -5365,7 +5369,7 @@ This is the exclusive PNG/APNG handoff for complete PNG/APNG conformance and sec
 Goal:
 
 Complete complete PNG/APNG conformance and security audit with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -5401,8 +5405,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.46.4 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.46.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.47.0 - GIF87a/89a structure, palettes, sub-blocks, descriptors
 
@@ -5418,7 +5422,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete gif87a/89a structure, palettes, sub-blocks, descriptors with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -5454,8 +5458,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.47.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.47.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.48.0 - GIF LZW
 
@@ -5471,7 +5475,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete gif lzw with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -5506,8 +5510,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.48.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.48.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.49.0 - GIF single-frame decode and deinterlace
 
@@ -5523,7 +5527,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete gif single-frame decode and deinterlace with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -5558,8 +5562,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.49.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.49.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.50.0 - GIF GCE, transparency, frame composition, all disposal modes
 
@@ -5575,7 +5579,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete gif gce, transparency, frame composition, all disposal modes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -5610,8 +5614,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.50.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.50.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.0 - GIF named-extension parsing
 
@@ -5623,7 +5627,7 @@ This is the exclusive GIF handoff for GIF named-extension parsing. Its independe
 
 Goal:
 
-Complete GIF named-extension parsing with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF named-extension parsing with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5647,7 +5651,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.1 - GIF compatibility and termination policy
 
@@ -5659,7 +5663,7 @@ This is the exclusive GIF handoff for GIF compatibility and termination policy. 
 
 Goal:
 
-Complete GIF compatibility and termination policy with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF compatibility and termination policy with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5683,7 +5687,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.2 - GIF raw-frame and composited-frame APIs
 
@@ -5695,7 +5699,7 @@ This is the exclusive GIF handoff for GIF raw-frame and composited-frame APIs. I
 
 Goal:
 
-Complete GIF raw-frame and composited-frame APIs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF raw-frame and composited-frame APIs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5719,7 +5723,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.3 - GIF exact palettes and bounded histogram
 
@@ -5731,7 +5735,7 @@ This is the exclusive GIF handoff for GIF exact palettes and bounded histogram. 
 
 Goal:
 
-Complete GIF exact palettes and bounded histogram with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF exact palettes and bounded histogram with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5755,7 +5759,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.4 - GIF deterministic palette generation and remapping
 
@@ -5767,7 +5771,7 @@ This is the exclusive GIF handoff for GIF deterministic palette generation and r
 
 Goal:
 
-Complete GIF deterministic palette generation and remapping with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF deterministic palette generation and remapping with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5791,7 +5795,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.5 - GIF LZW encoder
 
@@ -5803,7 +5807,7 @@ This is the exclusive GIF handoff for GIF LZW encoder. Its independently reviewa
 
 Goal:
 
-Complete GIF LZW encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete GIF LZW encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5827,7 +5831,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.6 - Single-frame GIF encoder
 
@@ -5839,7 +5843,7 @@ This is the exclusive GIF handoff for Single-frame GIF encoder. Its independentl
 
 Goal:
 
-Complete Single-frame GIF encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Single-frame GIF encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5863,7 +5867,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.6 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.7 - Animated GIF encoder
 
@@ -5875,7 +5879,7 @@ This is the exclusive GIF handoff for Animated GIF encoder. Its independently re
 
 Goal:
 
-Complete Animated GIF encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Animated GIF encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5899,7 +5903,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.7 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.51.8 - Complete GIF conformance and security audit
 
@@ -5911,7 +5915,7 @@ This is the exclusive GIF handoff for Complete GIF conformance and security audi
 
 Goal:
 
-Complete Complete GIF conformance and security audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Complete GIF conformance and security audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5935,7 +5939,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.8 implementation stop reached. Run pentest for this exact commit.`
+- `v0.51.8 implementation stop reached. Run pentest and record the result.`
 
 ### v0.52.0 - JPEG marker and segment framing
 
@@ -5947,7 +5951,7 @@ This is the exclusive classic-JPEG handoff for JPEG marker and segment framing. 
 
 Goal:
 
-Complete JPEG marker and segment framing with bounded behavior, explicit claims, and exact-commit evidence.
+Complete JPEG marker and segment framing with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -5971,7 +5975,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.52.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.52.1 - JPEG quantization and entropy-table declarations
 
@@ -5983,7 +5987,7 @@ This is the exclusive classic-JPEG handoff for JPEG quantization and entropy-tab
 
 Goal:
 
-Complete JPEG quantization and entropy-table declarations with bounded behavior, explicit claims, and exact-commit evidence.
+Complete JPEG quantization and entropy-table declarations with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -6007,7 +6011,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.52.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.52.2 - JPEG frame declarations
 
@@ -6019,7 +6023,7 @@ This is the exclusive classic-JPEG handoff for JPEG frame declarations. Its inde
 
 Goal:
 
-Complete JPEG frame declarations with bounded behavior, explicit claims, and exact-commit evidence.
+Complete JPEG frame declarations with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -6043,7 +6047,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.52.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.52.3 - JPEG scan declarations and ordering
 
@@ -6055,7 +6059,7 @@ This is the exclusive classic-JPEG handoff for JPEG scan declarations and orderi
 
 Goal:
 
-Complete JPEG scan declarations and ordering with bounded behavior, explicit claims, and exact-commit evidence.
+Complete JPEG scan declarations and ordering with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -6079,7 +6083,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.52.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.53.0 - JPEG Huffman entropy and byte stuffing
 
@@ -6092,7 +6096,7 @@ This is the exclusive classic-JPEG handoff for JPEG Huffman entropy and byte stu
 Goal:
 
 Complete JPEG Huffman entropy and byte stuffing with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6128,8 +6132,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.53.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.53.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.53.1 - JPEG restart and bounded MCU coefficient accounting
 
@@ -6142,7 +6146,7 @@ This is the exclusive classic-JPEG handoff for JPEG restart and bounded MCU coef
 Goal:
 
 Complete JPEG restart and bounded MCU coefficient accounting with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6178,8 +6182,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.53.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.53.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.54.0 - JPEG scalar IDCT and grayscale reconstruction
 
@@ -6195,7 +6199,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg scalar idct and grayscale reconstruction with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6230,8 +6234,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.54.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.54.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.54.1 - JPEG component sampling and bounded upsampling
 
@@ -6247,7 +6251,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg component sampling and bounded upsampling with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6282,8 +6286,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.54.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.54.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.54.2 - JPEG native YCbCr and rendered RGB output tiers
 
@@ -6299,7 +6303,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg native ycbcr and rendered rgb output tiers with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6335,8 +6339,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.54.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.54.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.55.0 - Extended sequential and 12-bit DCT processes
 
@@ -6352,7 +6356,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete extended sequential and 12-bit dct processes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6387,8 +6391,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.55.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.55.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.56.0 - JPEG progressive DC scans
 
@@ -6401,7 +6405,7 @@ This is the exclusive classic-JPEG handoff for JPEG progressive DC scans. Its AP
 Goal:
 
 Complete JPEG progressive DC scans with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6437,8 +6441,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.56.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.56.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.56.1 - JPEG progressive AC scans
 
@@ -6451,7 +6455,7 @@ This is the exclusive classic-JPEG handoff for JPEG progressive AC scans. Its AP
 Goal:
 
 Complete JPEG progressive AC scans with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6487,8 +6491,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.56.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.56.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.56.2 - JPEG successive-approximation integration audit
 
@@ -6501,7 +6505,7 @@ This is the exclusive classic-JPEG handoff for JPEG successive-approximation int
 Goal:
 
 Complete JPEG successive-approximation integration audit with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6537,8 +6541,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.56.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.56.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.57.0 - Lossless predictive JPEG process
 
@@ -6554,7 +6558,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete lossless predictive jpeg process with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6589,8 +6593,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.57.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.57.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.58.0 - JPEG arithmetic coding
 
@@ -6606,7 +6610,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg arithmetic coding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6641,8 +6645,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.58.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.58.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.59.0 - JPEG differential processes
 
@@ -6658,7 +6662,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg differential processes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6693,8 +6697,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.59.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.59.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.59.1 - JPEG hierarchical processes
 
@@ -6710,7 +6714,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete jpeg hierarchical processes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6745,8 +6749,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.59.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.59.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.60.0 - JPEG JFIF and Adobe color declarations
 
@@ -6759,7 +6763,7 @@ This is the exclusive classic-JPEG handoff for JPEG JFIF and Adobe color declara
 Goal:
 
 Complete JPEG JFIF and Adobe color declarations with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6795,8 +6799,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.60.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.60.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.60.1 - JPEG Exif APP1 transport
 
@@ -6809,7 +6813,7 @@ This is the exclusive classic-JPEG handoff for JPEG Exif APP1 transport. Its API
 Goal:
 
 Complete JPEG Exif APP1 transport with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6845,8 +6849,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.60.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.60.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.60.2 - JPEG ICC APP2 assembly and color precedence
 
@@ -6859,7 +6863,7 @@ This is the exclusive classic-JPEG handoff for JPEG ICC APP2 assembly and color 
 Goal:
 
 Complete JPEG ICC APP2 assembly and color precedence with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -6895,8 +6899,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.60.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.60.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.60.3 - JPEG COM and registered/unknown APPn policy
 
@@ -6934,7 +6938,7 @@ Exit criteria:
   wildcard claim remains.
 - Pentest covers the exact metadata surface; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.60.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.60.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.0 - Baseline JPEG encoder
 
@@ -6950,7 +6954,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete baseline jpeg encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -6985,8 +6989,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.61.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.61.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.1 - Progressive JPEG encoder
 
@@ -7002,7 +7006,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete progressive jpeg encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -7037,8 +7041,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.61.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.61.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.2 - Extended-sequential JPEG encoder
 
@@ -7051,7 +7055,7 @@ This is the exclusive classic-JPEG handoff for extended-sequential JPEG encoder.
 Goal:
 
 Complete extended-sequential JPEG encoder with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -7087,8 +7091,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.61.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.61.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.3 - Lossless JPEG encoder
 
@@ -7101,7 +7105,7 @@ This is the exclusive classic-JPEG handoff for lossless JPEG encoder. Its API an
 Goal:
 
 Complete lossless JPEG encoder with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -7137,8 +7141,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.61.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.61.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.4 - Arithmetic JPEG encoder admission
 
@@ -7151,7 +7155,7 @@ This is the exclusive classic-JPEG handoff for arithmetic JPEG encoder admission
 Goal:
 
 Complete arithmetic JPEG encoder admission with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -7187,8 +7191,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.61.4 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.61.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.5 - Differential JPEG encoder admission
 
@@ -7201,7 +7205,7 @@ This is the exclusive classic-JPEG handoff for differential JPEG encoder admissi
 Goal:
 
 Complete differential JPEG encoder admission with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -7237,8 +7241,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.61.5 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.61.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.61.6 - Hierarchical JPEG encoder admission
 
@@ -7251,7 +7255,7 @@ This is the exclusive classic-JPEG handoff for hierarchical JPEG encoder admissi
 Goal:
 
 Complete hierarchical JPEG encoder admission with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -7287,8 +7291,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.61.6 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.61.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.62.0 - Complete declared T.81 conformance and security audit
 
@@ -7304,7 +7308,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete complete declared t.81 conformance and security audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -7339,8 +7343,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.62.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.62.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.63.0 - WebP RIFF framing and simple-file dispatch
 
@@ -7352,7 +7356,7 @@ This is the exclusive WebP handoff for WebP RIFF framing and simple-file dispatc
 
 Goal:
 
-Complete WebP RIFF framing and simple-file dispatch with bounded behavior, explicit claims, and exact-commit evidence.
+Complete WebP RIFF framing and simple-file dispatch with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7376,7 +7380,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.63.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.63.1 - WebP VP8X feature and chunk-order state machine
 
@@ -7388,7 +7392,7 @@ This is the exclusive WebP handoff for WebP VP8X feature and chunk-order state m
 
 Goal:
 
-Complete WebP VP8X feature and chunk-order state machine with bounded behavior, explicit claims, and exact-commit evidence.
+Complete WebP VP8X feature and chunk-order state machine with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7412,7 +7416,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.63.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.63.2 - WebP ICCP, EXIF, XMP, and unknown chunks
 
@@ -7424,7 +7428,7 @@ This is the exclusive WebP handoff for WebP ICCP, EXIF, XMP, and unknown chunks.
 
 Goal:
 
-Complete WebP ICCP, EXIF, XMP, and unknown chunks with bounded behavior, explicit claims, and exact-commit evidence.
+Complete WebP ICCP, EXIF, XMP, and unknown chunks with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7448,7 +7452,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.63.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.64.0 - VP8 Boolean-decoder primitive
 
@@ -7460,7 +7464,7 @@ This is the exclusive WebP handoff for VP8 Boolean-decoder primitive. Its indepe
 
 Goal:
 
-Complete VP8 Boolean-decoder primitive with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8 Boolean-decoder primitive with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7484,7 +7488,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.64.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.64.1 - VP8 partition and frame-header parsing
 
@@ -7496,7 +7500,7 @@ This is the exclusive WebP handoff for VP8 partition and frame-header parsing. I
 
 Goal:
 
-Complete VP8 partition and frame-header parsing with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8 partition and frame-header parsing with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7520,7 +7524,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.64.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.64.2 - VP8 probability-update and token state
 
@@ -7532,7 +7536,7 @@ This is the exclusive WebP handoff for VP8 probability-update and token state. I
 
 Goal:
 
-Complete VP8 probability-update and token state with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8 probability-update and token state with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7556,7 +7560,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.64.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.65.0 - VP8 prediction and coefficient reconstruction
 
@@ -7572,7 +7576,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete vp8 prediction and coefficient reconstruction with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -7607,8 +7611,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.65.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.65.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.65.1 - VP8 inverse transforms and reconstructed macroblocks
 
@@ -7624,7 +7628,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete vp8 inverse transforms and reconstructed macroblocks with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -7659,8 +7663,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.65.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.65.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.65.2 - VP8 loop filtering and complete still reconstruction
 
@@ -7676,7 +7680,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete vp8 loop filtering and complete still reconstruction with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -7712,8 +7716,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.65.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.65.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.66.0 - WebP ALPH decoding
 
@@ -7725,7 +7729,7 @@ This is the exclusive WebP handoff for WebP ALPH decoding. Its independently rev
 
 Goal:
 
-Complete WebP ALPH decoding with bounded behavior, explicit claims, and exact-commit evidence.
+Complete WebP ALPH decoding with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7749,7 +7753,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.66.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.66.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.66.1 - VP8 native YCbCr and rendered RGB integration
 
@@ -7761,7 +7765,7 @@ This is the exclusive WebP handoff for VP8 native YCbCr and rendered RGB integra
 
 Goal:
 
-Complete VP8 native YCbCr and rendered RGB integration with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8 native YCbCr and rendered RGB integration with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7785,7 +7789,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.66.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.66.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.67.0 - VP8L prefix-code parsing and decoding
 
@@ -7797,7 +7801,7 @@ This is the exclusive WebP handoff for VP8L prefix-code parsing and decoding. It
 
 Goal:
 
-Complete VP8L prefix-code parsing and decoding with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L prefix-code parsing and decoding with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7821,7 +7825,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.67.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.67.1 - VP8L LZ77 distance and copy engine
 
@@ -7833,7 +7837,7 @@ This is the exclusive WebP handoff for VP8L LZ77 distance and copy engine. Its i
 
 Goal:
 
-Complete VP8L LZ77 distance and copy engine with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L LZ77 distance and copy engine with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7857,7 +7861,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.67.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.67.2 - VP8L color-cache engine
 
@@ -7869,7 +7873,7 @@ This is the exclusive WebP handoff for VP8L color-cache engine. Its independentl
 
 Goal:
 
-Complete VP8L color-cache engine with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L color-cache engine with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7893,7 +7897,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.67.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.0 - VP8L transform declarations and meta-prefix images
 
@@ -7905,7 +7909,7 @@ This is the exclusive WebP handoff for VP8L transform declarations and meta-pref
 
 Goal:
 
-Complete VP8L transform declarations and meta-prefix images with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L transform declarations and meta-prefix images with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7929,7 +7933,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.1 - VP8L predictor transform
 
@@ -7941,7 +7945,7 @@ This is the exclusive WebP handoff for VP8L predictor transform. Its independent
 
 Goal:
 
-Complete VP8L predictor transform with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L predictor transform with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -7965,7 +7969,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.2 - VP8L color transform
 
@@ -7977,7 +7981,7 @@ This is the exclusive WebP handoff for VP8L color transform. Its independently r
 
 Goal:
 
-Complete VP8L color transform with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L color transform with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -8003,7 +8007,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.3 - VP8L subtract-green transform
 
@@ -8015,7 +8019,7 @@ This is the exclusive WebP handoff for VP8L subtract-green transform. Its indepe
 
 Goal:
 
-Complete VP8L subtract-green transform with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L subtract-green transform with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -8039,7 +8043,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.4 - VP8L color-indexing transform
 
@@ -8051,7 +8055,7 @@ This is the exclusive WebP handoff for VP8L color-indexing transform. Its indepe
 
 Goal:
 
-Complete VP8L color-indexing transform with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L color-indexing transform with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -8075,7 +8079,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.68.5 - VP8L complete lossless reconstruction audit
 
@@ -8087,7 +8091,7 @@ This is the exclusive WebP handoff for VP8L complete lossless reconstruction aud
 
 Goal:
 
-Complete VP8L complete lossless reconstruction audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete VP8L complete lossless reconstruction audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -8111,7 +8115,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.68.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.69.0 - WebP animation decoding
 
@@ -8127,7 +8131,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete webp animation decoding with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -8164,8 +8168,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.69.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.69.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.69.1 - VP8L deterministic encoder
 
@@ -8181,7 +8185,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete vp8l deterministic encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -8216,8 +8220,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.69.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.69.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.69.2 - VP8 deterministic encoder
 
@@ -8233,7 +8237,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete vp8 deterministic encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -8268,8 +8272,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.69.2 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.69.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.69.3 - Animated WebP encoder
 
@@ -8285,7 +8289,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete animated webp encoder with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -8320,8 +8324,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.69.3 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.69.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.69.4 - Complete WebP conformance and security audit
 
@@ -8337,7 +8341,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete complete webp conformance and security audit with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -8372,8 +8376,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.69.4 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.69.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.70.0 - Shared bounded mynd-ifd graph and typed-value engine
 
@@ -8386,7 +8390,7 @@ This is the exclusive TIFF handoff for shared bounded mynd-ifd graph and typed-v
 Goal:
 
 Complete shared bounded mynd-ifd graph and typed-value engine with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8422,8 +8426,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.70.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.70.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.70.1 - TIFF 6.0 tag schema and dependency validation
 
@@ -8436,7 +8440,7 @@ This is the exclusive TIFF handoff for TIFF 6.0 tag schema and dependency valida
 Goal:
 
 Complete TIFF 6.0 tag schema and dependency validation with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8472,8 +8476,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.70.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.70.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.71.0 - TIFF baseline uncompressed strips
 
@@ -8486,7 +8490,7 @@ This is the exclusive TIFF handoff for TIFF baseline uncompressed strips. Its AP
 Goal:
 
 Complete TIFF baseline uncompressed strips with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8522,8 +8526,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.71.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.71.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.71.1 - TIFF PackBits strip decoding
 
@@ -8536,7 +8540,7 @@ This is the exclusive TIFF handoff for TIFF PackBits strip decoding. Its API and
 Goal:
 
 Complete TIFF PackBits strip decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8572,8 +8576,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.71.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.71.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.72.0 - TIFF LZW decoding
 
@@ -8586,7 +8590,7 @@ This is the exclusive TIFF handoff for TIFF LZW decoding. Its API and attack-sur
 Goal:
 
 Complete TIFF LZW decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8622,8 +8626,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.72.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.72.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.72.1 - TIFF Deflate decoding
 
@@ -8636,7 +8640,7 @@ This is the exclusive TIFF handoff for TIFF Deflate decoding. Its API and attack
 Goal:
 
 Complete TIFF Deflate decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8672,8 +8676,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.72.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.72.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.72.2 - TIFF horizontal Predictor 2
 
@@ -8686,7 +8690,7 @@ This is the exclusive TIFF handoff for TIFF horizontal Predictor 2. Its API and 
 Goal:
 
 Complete TIFF horizontal Predictor 2 with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8722,8 +8726,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.72.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.72.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.72.3 - TIFF floating-point Predictor 3 profile
 
@@ -8736,7 +8740,7 @@ This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 profile. 
 Goal:
 
 Complete TIFF floating-point Predictor 3 profile with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8774,8 +8778,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.72.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.72.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.73.0 - TIFF CCITT modified-Huffman RLE
 
@@ -8788,7 +8792,7 @@ This is the exclusive TIFF handoff for TIFF CCITT modified-Huffman RLE. Its API 
 Goal:
 
 Complete TIFF CCITT modified-Huffman RLE with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8824,8 +8828,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.73.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.73.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.73.1 - TIFF CCITT Group 3 fax decoding
 
@@ -8838,7 +8842,7 @@ This is the exclusive TIFF handoff for TIFF CCITT Group 3 fax decoding. Its API 
 Goal:
 
 Complete TIFF CCITT Group 3 fax decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8874,8 +8878,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.73.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.73.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.73.2 - TIFF CCITT Group 4 fax decoding
 
@@ -8888,7 +8892,7 @@ This is the exclusive TIFF handoff for TIFF CCITT Group 4 fax decoding. Its API 
 Goal:
 
 Complete TIFF CCITT Group 4 fax decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8924,8 +8928,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.73.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.73.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.74.0 - TIFF tiled image layout
 
@@ -8938,7 +8942,7 @@ This is the exclusive TIFF handoff for TIFF tiled image layout. Its API and atta
 Goal:
 
 Complete TIFF tiled image layout with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -8974,8 +8978,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.74.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.74.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.74.1 - TIFF planar image layout
 
@@ -8988,7 +8992,7 @@ This is the exclusive TIFF handoff for TIFF planar image layout. Its API and att
 Goal:
 
 Complete TIFF planar image layout with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9024,8 +9028,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.74.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.74.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.74.2 - TIFF multipage and SubIFD traversal
 
@@ -9038,7 +9042,7 @@ This is the exclusive TIFF handoff for TIFF multipage and SubIFD traversal. Its 
 Goal:
 
 Complete TIFF multipage and SubIFD traversal with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9074,8 +9078,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.74.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.74.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.0 - TIFF YCbCr samples and tag dependencies
 
@@ -9091,7 +9095,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete tiff ycbcr samples and tag dependencies with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -9126,8 +9130,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.75.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.75.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.1 - TIFF CMYK and CIELab native samples
 
@@ -9143,7 +9147,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete tiff cmyk and cielab native samples with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -9178,8 +9182,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.75.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.75.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.2 - TIFF alpha, ICC, and rendered-color integration
 
@@ -9192,7 +9196,7 @@ This is the exclusive TIFF handoff for TIFF alpha, ICC, and rendered-color integ
 Goal:
 
 Complete TIFF alpha, ICC, and rendered-color integration with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9228,8 +9232,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.75.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.75.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.3 - TIFF signed-integer and IEEE floating sample domains
 
@@ -9242,7 +9246,7 @@ This is the exclusive TIFF handoff for TIFF signed-integer and IEEE floating sam
 Goal:
 
 Complete TIFF signed-integer and IEEE floating sample domains with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9278,8 +9282,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.75.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.75.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.4 - TIFF Orientation presentation policy
 
@@ -9317,7 +9321,7 @@ Exit criteria:
   coordinate space.
 - Pentest covers the exact presentation surface; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.75.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.75.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.75.5 - TIFF calibrated color declarations
 
@@ -9356,7 +9360,7 @@ Exit criteria:
   no absent or contradictory declaration silently becomes sRGB.
 - Pentest covers the exact color surface; all critical/high findings are fixed
   and cleanly retested, and CI/CodeQL are green.
-- `v0.75.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.75.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.76.0 - Corrected JPEG-in-TIFF decoding
 
@@ -9369,7 +9373,7 @@ This is the exclusive TIFF handoff for corrected JPEG-in-TIFF decoding. Its API 
 Goal:
 
 Complete corrected JPEG-in-TIFF decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9405,8 +9409,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.76.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.76.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.76.1 - TIFF Exif IFD integration
 
@@ -9419,7 +9423,7 @@ This is the exclusive TIFF handoff for TIFF Exif IFD integration. Its API and at
 Goal:
 
 Complete TIFF Exif IFD integration with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9455,8 +9459,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.76.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.76.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.76.2 - TIFF admitted-extension profile freeze
 
@@ -9469,7 +9473,7 @@ This is the exclusive TIFF handoff for TIFF admitted-extension profile freeze. I
 Goal:
 
 Complete TIFF admitted-extension profile freeze with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -9505,8 +9509,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.76.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.76.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.0 - TIFF baseline uncompressed-strip encoder
 
@@ -9518,7 +9522,7 @@ This is the exclusive TIFF handoff for TIFF baseline uncompressed-strip encoder.
 
 Goal:
 
-Complete TIFF baseline uncompressed-strip encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF baseline uncompressed-strip encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9542,7 +9546,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.1 - TIFF PackBits encoder
 
@@ -9554,7 +9558,7 @@ This is the exclusive TIFF handoff for TIFF PackBits encoder. Its independently 
 
 Goal:
 
-Complete TIFF PackBits encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF PackBits encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9578,7 +9582,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.2 - TIFF LZW encoder
 
@@ -9590,7 +9594,7 @@ This is the exclusive TIFF handoff for TIFF LZW encoder. Its independently revie
 
 Goal:
 
-Complete TIFF LZW encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF LZW encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9614,7 +9618,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.3 - TIFF Deflate encoder
 
@@ -9626,7 +9630,7 @@ This is the exclusive TIFF handoff for TIFF Deflate encoder. Its independently r
 
 Goal:
 
-Complete TIFF Deflate encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF Deflate encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9650,7 +9654,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.4 - TIFF horizontal Predictor 2 encoder
 
@@ -9662,7 +9666,7 @@ This is the exclusive TIFF handoff for TIFF horizontal Predictor 2 encoder. Its 
 
 Goal:
 
-Complete TIFF horizontal Predictor 2 encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF horizontal Predictor 2 encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9686,7 +9690,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.5 - TIFF floating-point Predictor 3 encoder admission
 
@@ -9698,7 +9702,7 @@ This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 encoder a
 
 Goal:
 
-Complete TIFF floating-point Predictor 3 encoder admission with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF floating-point Predictor 3 encoder admission with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9722,7 +9726,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.6 - TIFF CCITT RLE encoder
 
@@ -9734,7 +9738,7 @@ This is the exclusive TIFF handoff for TIFF CCITT RLE encoder. Its independently
 
 Goal:
 
-Complete TIFF CCITT RLE encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF CCITT RLE encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9758,7 +9762,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.6 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.7 - TIFF CCITT Group 3 encoder
 
@@ -9770,7 +9774,7 @@ This is the exclusive TIFF handoff for TIFF CCITT Group 3 encoder. Its independe
 
 Goal:
 
-Complete TIFF CCITT Group 3 encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF CCITT Group 3 encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9794,7 +9798,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.7 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.8 - TIFF CCITT Group 4 encoder
 
@@ -9806,7 +9810,7 @@ This is the exclusive TIFF handoff for TIFF CCITT Group 4 encoder. Its independe
 
 Goal:
 
-Complete TIFF CCITT Group 4 encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF CCITT Group 4 encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9830,7 +9834,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.8 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.8 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.9 - TIFF tiled-image encoder
 
@@ -9842,7 +9846,7 @@ This is the exclusive TIFF handoff for TIFF tiled-image encoder. Its independent
 
 Goal:
 
-Complete TIFF tiled-image encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF tiled-image encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9866,7 +9870,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.9 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.9 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.10 - TIFF planar-image encoder
 
@@ -9878,7 +9882,7 @@ This is the exclusive TIFF handoff for TIFF planar-image encoder. Its independen
 
 Goal:
 
-Complete TIFF planar-image encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF planar-image encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9902,7 +9906,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.10 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.10 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.11 - TIFF multipage and SubIFD encoder
 
@@ -9914,7 +9918,7 @@ This is the exclusive TIFF handoff for TIFF multipage and SubIFD encoder. Its in
 
 Goal:
 
-Complete TIFF multipage and SubIFD encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF multipage and SubIFD encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9938,7 +9942,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.11 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.11 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.12 - TIFF extended sample/color encoder
 
@@ -9950,7 +9954,7 @@ This is the exclusive TIFF handoff for TIFF extended sample/color encoder. Its i
 
 Goal:
 
-Complete TIFF extended sample/color encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete TIFF extended sample/color encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -9974,7 +9978,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.12 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.12 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.13 - Corrected JPEG-in-TIFF encoder
 
@@ -9986,7 +9990,7 @@ This is the exclusive TIFF handoff for Corrected JPEG-in-TIFF encoder. Its indep
 
 Goal:
 
-Complete Corrected JPEG-in-TIFF encoder with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Corrected JPEG-in-TIFF encoder with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -10010,7 +10014,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.13 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.13 implementation stop reached. Run pentest and record the result.`
 
 ### v0.77.14 - Complete declared TIFF profile audit
 
@@ -10022,7 +10026,7 @@ This is the exclusive TIFF handoff for Complete declared TIFF profile audit. Its
 
 Goal:
 
-Complete Complete declared TIFF profile audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Complete declared TIFF profile audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -10046,7 +10050,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.14 implementation stop reached. Run pentest for this exact commit.`
+- `v0.77.14 implementation stop reached. Run pentest and record the result.`
 
 ## Phase: Color, metadata, processing, and facade
 
@@ -10068,7 +10072,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete cross-format native-sample and color-declaration integration with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -10104,8 +10108,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.78.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.78.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.79.0 - Shared bounded TIFF/Exif IFD inspection
 
@@ -10121,7 +10125,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete shared bounded tiff/exif ifd inspection with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -10156,8 +10160,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.79.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.79.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.80.0 - Selected bounded Exif field interpretation
 
@@ -10170,7 +10174,7 @@ This is the exclusive color, metadata, processing, and facade handoff for select
 Goal:
 
 Complete selected bounded Exif field interpretation with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10206,8 +10210,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.80.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.80.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.80.1 - Bounded Exif thumbnail extraction
 
@@ -10220,7 +10224,7 @@ This is the exclusive color, metadata, processing, and facade handoff for bounde
 Goal:
 
 Complete bounded Exif thumbnail extraction with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10256,8 +10260,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.80.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.80.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.80.2 - Explicit Exif orientation policy
 
@@ -10270,7 +10274,7 @@ This is the exclusive color, metadata, processing, and facade handoff for explic
 Goal:
 
 Complete explicit Exif orientation policy with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10306,8 +10310,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.80.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.80.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.80.3 - Exif 3.1 and Exif-for-XMP profile freeze
 
@@ -10347,7 +10351,7 @@ Exit criteria:
   Unsupported.
 - Pentest covers the exact profile; all critical/high findings are fixed and
   cleanly retested, and CI/CodeQL are green.
-- `v0.80.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.80.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.81.0 - XMP packet framing and bounded raw transport
 
@@ -10403,8 +10407,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.81.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.81.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.81.1 - Bounded XML 1.0 and Namespaces profile for XMP
 
@@ -10444,7 +10448,7 @@ Exit criteria:
   claim is forbidden.
 - Pentest covers the exact parser state machine; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.81.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.81.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.81.2 - Bounded RDF/XML and XMP data-model inspection
 
@@ -10485,7 +10489,7 @@ Exit criteria:
   RDF store or validating XML processor.
 - Pentest covers the exact graph surface; all critical/high findings are fixed
   and cleanly retested, and CI/CodeQL are green.
-- `v0.81.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.81.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.81.3 - XMP and legacy-metadata conflict/rewrite policy
 
@@ -10498,7 +10502,7 @@ This is the exclusive color, metadata, processing, and facade handoff for XMP an
 Goal:
 
 Complete XMP and legacy-metadata conflict/rewrite policy with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10534,8 +10538,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.81.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.81.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.81.4 - Transformation-aware metadata effect planning
 
@@ -10548,7 +10552,7 @@ This is the exclusive color, metadata, processing, and facade handoff for transf
 Goal:
 
 Complete transformation-aware metadata effect planning with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10584,8 +10588,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.81.4 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.81.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.82.0 - YCbCr matrices, ranges, subsampling, and chroma siting
 
@@ -10601,7 +10605,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete ycbcr matrices, ranges, subsampling, and chroma siting with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -10636,8 +10640,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.82.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.82.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.83.0 - Gray, CMYK, and YCCK conversion
 
@@ -10650,7 +10654,7 @@ This is the exclusive color, metadata, processing, and facade handoff for gray, 
 Goal:
 
 Complete gray, CMYK, and YCCK conversion with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10686,8 +10690,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.83.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.83.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.83.1 - CIELab and declared wide-gamut conversion
 
@@ -10700,7 +10704,7 @@ This is the exclusive color, metadata, processing, and facade handoff for CIELab
 Goal:
 
 Complete CIELab and declared wide-gamut conversion with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10736,8 +10740,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.83.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.83.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.84.0 - Straight/premultiplied alpha conversion
 
@@ -10753,7 +10757,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete straight/premultiplied alpha conversion with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -10788,8 +10792,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.84.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.84.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.85.0 - Explicit color-conversion planning
 
@@ -10802,7 +10806,7 @@ This is the exclusive color, metadata, processing, and facade handoff for explic
 Goal:
 
 Complete explicit color-conversion planning with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10838,8 +10842,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.85.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.85.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.85.1 - Sample-depth conversion
 
@@ -10852,7 +10856,7 @@ This is the exclusive color, metadata, processing, and facade handoff for sample
 Goal:
 
 Complete sample-depth conversion with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10888,8 +10892,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.85.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.85.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.85.2 - Deterministic advanced dithering
 
@@ -10902,7 +10906,7 @@ This is the exclusive color, metadata, processing, and facade handoff for determ
 Goal:
 
 Complete deterministic advanced dithering with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10938,8 +10942,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.85.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.85.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.85.3 - Final cross-format rendered-color conformance audit
 
@@ -10952,7 +10956,7 @@ This is the exclusive color, metadata, processing, and facade handoff for final 
 Goal:
 
 Complete final cross-format rendered-color conformance audit with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -10988,8 +10992,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.85.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.85.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.86.0 - Crop, flip, rotate, transpose
 
@@ -11005,7 +11009,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete crop, flip, rotate, transpose with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11040,8 +11044,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.86.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.86.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.87.0 - Checked affine geometry and border modes
 
@@ -11057,7 +11061,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete checked affine geometry and border modes with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11092,8 +11096,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.87.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.87.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.88.0 - Nearest and bilinear resampling
 
@@ -11109,7 +11113,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete nearest and bilinear resampling with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11144,8 +11148,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.88.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.88.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.89.0 - Bicubic resampling
 
@@ -11161,7 +11165,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete bicubic resampling with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11196,8 +11200,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.89.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.89.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.90.0 - Lanczos3 resampling
 
@@ -11213,7 +11217,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete lanczos3 resampling with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11248,8 +11252,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.90.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.90.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.91.0 - Remaining Porter-Duff compositing operators
 
@@ -11265,7 +11269,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete remaining porter-duff compositing operators with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11301,8 +11305,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.91.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.91.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.0 - Declared artistic blend modes
 
@@ -11314,7 +11318,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Declar
 
 Goal:
 
-Complete Declared artistic blend modes with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Declared artistic blend modes with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11338,7 +11342,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.1 - Clipped pixel, span, and fill primitives
 
@@ -11350,7 +11354,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Clippe
 
 Goal:
 
-Complete Clipped pixel, span, and fill primitives with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Clipped pixel, span, and fill primitives with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11374,7 +11378,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.2 - Rectangle and overlap-safe blit primitives
 
@@ -11386,7 +11390,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Rectan
 
 Goal:
 
-Complete Rectangle and overlap-safe blit primitives with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Rectangle and overlap-safe blit primitives with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11410,7 +11414,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.3 - Deterministic integer line primitives
 
@@ -11422,7 +11426,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Determ
 
 Goal:
 
-Complete Deterministic integer line primitives with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Deterministic integer line primitives with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11446,7 +11450,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.4 - Deterministic integer circle and ellipse primitives
 
@@ -11458,7 +11462,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Determ
 
 Goal:
 
-Complete Deterministic integer circle and ellipse primitives with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Deterministic integer circle and ellipse primitives with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11482,7 +11486,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.92.5 - Bounded raster-drawing contract and security audit
 
@@ -11494,7 +11498,7 @@ This is the exclusive color, metadata, processing, and facade handoff for Bounde
 
 Goal:
 
-Complete Bounded raster-drawing contract and security audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Bounded raster-drawing contract and security audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -11520,7 +11524,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.92.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.93.0 - Optional safe SIMD or audited external backends
 
@@ -11536,7 +11540,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete optional safe simd or audited external backends with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11574,8 +11578,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.93.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.93.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.0 - Streaming and tiled processing graph
 
@@ -11591,7 +11595,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete streaming and tiled processing graph with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -11629,8 +11633,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.94.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.94.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.1 - Metadata- and header-only decoding
 
@@ -11643,7 +11647,7 @@ This is the exclusive color, metadata, processing, and facade handoff for metada
 Goal:
 
 Complete metadata- and header-only decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11679,8 +11683,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.2 - Region-selective decoding
 
@@ -11693,7 +11697,7 @@ This is the exclusive color, metadata, processing, and facade handoff for region
 Goal:
 
 Complete region-selective decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11729,8 +11733,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.3 - Frame-range selective decoding
 
@@ -11743,7 +11747,7 @@ This is the exclusive color, metadata, processing, and facade handoff for frame-
 Goal:
 
 Complete frame-range selective decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11779,8 +11783,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.4 - Reduced-resolution and progressive-preview decoding
 
@@ -11793,7 +11797,7 @@ This is the exclusive color, metadata, processing, and facade handoff for reduce
 Goal:
 
 Complete reduced-resolution and progressive-preview decoding with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11829,8 +11833,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.4 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.5 - Processing and selective-decoding contract freeze
 
@@ -11843,7 +11847,7 @@ This is the exclusive color, metadata, processing, and facade handoff for proces
 Goal:
 
 Complete processing and selective-decoding contract freeze with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11879,8 +11883,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.5 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.6 - Unified borrowed inspection and decode_into facade
 
@@ -11893,7 +11897,7 @@ This is the exclusive color, metadata, processing, and facade handoff for unifie
 Goal:
 
 Complete unified borrowed inspection and decode_into facade with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11929,8 +11933,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.6 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.7 - Unified encoder and transcoding facade
 
@@ -11943,7 +11947,7 @@ This is the exclusive color, metadata, processing, and facade handoff for unifie
 Goal:
 
 Complete unified encoder and transcoding facade with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -11979,8 +11983,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.7 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.94.8 - Fallible owned APIs and facade-candidate integration audit
 
@@ -11993,7 +11997,7 @@ This is the exclusive color, metadata, processing, and facade handoff for fallib
 Goal:
 
 Complete fallible owned APIs and facade-candidate integration audit with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12031,8 +12035,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.94.8 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.94.8 implementation stop reached. Run pentest and record the result.`
 
 ## Phase: Integration and assurance
 
@@ -12056,7 +12060,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete runtime-neutral async source/sink adapters with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12091,8 +12095,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.95.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.95.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.95.1 - WASM/browser streaming adapters
 
@@ -12108,7 +12112,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete wasm/browser streaming adapters with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12143,8 +12147,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.95.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.95.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.96.0 - Caller-provided parallel scheduling interface
 
@@ -12160,7 +12164,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete caller-provided parallel scheduling interface with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12195,8 +12199,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.96.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.96.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.96.1 - Optional Rayon/service adapter
 
@@ -12212,7 +12216,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete optional rayon/service adapter with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12247,8 +12251,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.96.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.96.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.97.0 - GPU-compatible descriptors and upload-layout hooks
 
@@ -12264,7 +12268,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete gpu-compatible descriptors and upload-layout hooks with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12299,8 +12303,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.97.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.97.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.97.1 - Optional backend adapters
 
@@ -12316,7 +12320,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete optional backend adapters with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -12351,8 +12355,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v0.97.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v0.97.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.0 - mynd-cli inspect command
 
@@ -12365,7 +12369,7 @@ This is the exclusive integration and assurance handoff for mynd-cli inspect com
 Goal:
 
 Complete mynd-cli inspect command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12401,8 +12405,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.0 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.1 - mynd-cli validate command
 
@@ -12415,7 +12419,7 @@ This is the exclusive integration and assurance handoff for mynd-cli validate co
 Goal:
 
 Complete mynd-cli validate command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12451,8 +12455,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.1 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.2 - mynd-cli decode command
 
@@ -12465,7 +12469,7 @@ This is the exclusive integration and assurance handoff for mynd-cli decode comm
 Goal:
 
 Complete mynd-cli decode command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12501,8 +12505,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.2 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.3 - mynd-cli encode command
 
@@ -12515,7 +12519,7 @@ This is the exclusive integration and assurance handoff for mynd-cli encode comm
 Goal:
 
 Complete mynd-cli encode command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12551,8 +12555,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.3 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.4 - mynd-cli convert command
 
@@ -12565,7 +12569,7 @@ This is the exclusive integration and assurance handoff for mynd-cli convert com
 Goal:
 
 Complete mynd-cli convert command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12601,8 +12605,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.4 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.5 - mynd-cli frame command
 
@@ -12615,7 +12619,7 @@ This is the exclusive integration and assurance handoff for mynd-cli frame comma
 Goal:
 
 Complete mynd-cli frame command with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12651,8 +12655,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.5 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.6 - mynd-cli bounded batch profile
 
@@ -12665,7 +12669,7 @@ This is the exclusive integration and assurance handoff for mynd-cli bounded bat
 Goal:
 
 Complete mynd-cli bounded batch profile with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12701,8 +12705,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.6 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.7 - mynd-cli bounded service profile
 
@@ -12715,7 +12719,7 @@ This is the exclusive integration and assurance handoff for mynd-cli bounded ser
 Goal:
 
 Complete mynd-cli bounded service profile with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12751,8 +12755,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.7 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.98.8 - Cross-adapter facade reconciliation
 
@@ -12765,7 +12769,7 @@ This is the exclusive integration and assurance handoff for cross-adapter facade
 Goal:
 
 Complete cross-adapter facade reconciliation with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+sufficient for a release security decision.
 
 Deliverables:
 
@@ -12805,8 +12809,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
-  PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.98.8 implementation stop reached. Run pentest for this exact commit.`
+  PASS, and the version release gate accepts the final release candidate.
+- `v0.98.8 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.0 - cargo-fuzz harness and corpus integration
 
@@ -12818,7 +12822,7 @@ This is the exclusive integration and assurance handoff for cargo-fuzz harness a
 
 Goal:
 
-Complete cargo-fuzz harness and corpus integration with bounded behavior, explicit claims, and exact-commit evidence.
+Complete cargo-fuzz harness and corpus integration with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -12842,7 +12846,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.0 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.0 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.1 - Long-running fuzz and truncation campaign
 
@@ -12854,7 +12858,7 @@ This is the exclusive integration and assurance handoff for Long-running fuzz an
 
 Goal:
 
-Complete Long-running fuzz and truncation campaign with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Long-running fuzz and truncation campaign with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -12878,7 +12882,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.1 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.2 - Kani checked-arithmetic and geometry proofs
 
@@ -12890,7 +12894,7 @@ This is the exclusive integration and assurance handoff for Kani checked-arithme
 
 Goal:
 
-Complete Kani checked-arithmetic and geometry proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani checked-arithmetic and geometry proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -12914,7 +12918,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.2 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.3 - Kani view and buffer-state proofs
 
@@ -12926,7 +12930,7 @@ This is the exclusive integration and assurance handoff for Kani view and buffer
 
 Goal:
 
-Complete Kani view and buffer-state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani view and buffer-state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -12950,7 +12954,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.3 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.3 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.4 - Kani byte- and bit-I/O proofs
 
@@ -12962,7 +12966,7 @@ This is the exclusive integration and assurance handoff for Kani byte- and bit-I
 
 Goal:
 
-Complete Kani byte- and bit-I/O proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani byte- and bit-I/O proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -12986,7 +12990,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.4 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.4 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.5 - Kani Deflate and zlib state proofs
 
@@ -12998,7 +13002,7 @@ This is the exclusive integration and assurance handoff for Kani Deflate and zli
 
 Goal:
 
-Complete Kani Deflate and zlib state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani Deflate and zlib state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13022,7 +13026,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.5 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.5 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.6 - Kani GIF and TIFF LZW state proofs
 
@@ -13034,7 +13038,7 @@ This is the exclusive integration and assurance handoff for Kani GIF and TIFF LZ
 
 Goal:
 
-Complete Kani GIF and TIFF LZW state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani GIF and TIFF LZW state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13058,7 +13062,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.6 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.6 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.7 - Kani JPEG entropy state proofs
 
@@ -13070,7 +13074,7 @@ This is the exclusive integration and assurance handoff for Kani JPEG entropy st
 
 Goal:
 
-Complete Kani JPEG entropy state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani JPEG entropy state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13094,7 +13098,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.7 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.7 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.8 - Kani WebP entropy state proofs
 
@@ -13106,7 +13110,7 @@ This is the exclusive integration and assurance handoff for Kani WebP entropy st
 
 Goal:
 
-Complete Kani WebP entropy state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani WebP entropy state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13130,7 +13134,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.8 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.8 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.9 - Kani TIFF fax and IFD state proofs
 
@@ -13142,7 +13146,7 @@ This is the exclusive integration and assurance handoff for Kani TIFF fax and IF
 
 Goal:
 
-Complete Kani TIFF fax and IFD state proofs with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Kani TIFF fax and IFD state proofs with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13166,7 +13170,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.9 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.9 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.10 - Miri audit
 
@@ -13178,7 +13182,7 @@ This is the exclusive integration and assurance handoff for Miri audit. It runs 
 
 Goal:
 
-Complete Miri audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Miri audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13202,7 +13206,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.10 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.10 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.11 - Sanitizer audit
 
@@ -13214,7 +13218,7 @@ This is the exclusive integration and assurance handoff for Sanitizer audit. It 
 
 Goal:
 
-Complete Sanitizer audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Sanitizer audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13238,7 +13242,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.11 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.11 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.12 - Supported-Rust, target, and feature audit
 
@@ -13250,7 +13254,7 @@ This is the exclusive integration and assurance handoff for Supported-Rust, targ
 
 Goal:
 
-Complete Supported-Rust, target, and feature audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Supported-Rust, target, and feature audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13274,7 +13278,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.12 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.12 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.13 - Stack and code-size audit
 
@@ -13286,7 +13290,7 @@ This is the exclusive integration and assurance handoff for Stack and code-size 
 
 Goal:
 
-Complete Stack and code-size audit with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Stack and code-size audit with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13310,7 +13314,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.13 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.13 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.14 - Official conformance and differential freeze
 
@@ -13322,7 +13326,7 @@ This is the exclusive integration and assurance handoff for Official conformance
 
 Goal:
 
-Complete Official conformance and differential freeze with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Official conformance and differential freeze with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13346,7 +13350,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.14 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.14 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.15 - Cross-format color conformance freeze
 
@@ -13358,7 +13362,7 @@ This is the exclusive integration and assurance handoff for Cross-format color c
 
 Goal:
 
-Complete Cross-format color conformance freeze with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Cross-format color conformance freeze with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13382,7 +13386,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.15 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.15 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.16 - Performance and denial-of-service freeze
 
@@ -13394,7 +13398,7 @@ This is the exclusive integration and assurance handoff for Performance and deni
 
 Goal:
 
-Complete Performance and denial-of-service freeze with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Performance and denial-of-service freeze with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13418,7 +13422,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.16 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.16 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.17 - Reproducible package, SBOM, and provenance freeze
 
@@ -13430,7 +13434,7 @@ This is the exclusive integration and assurance handoff for Reproducible package
 
 Goal:
 
-Complete Reproducible package, SBOM, and provenance freeze with bounded behavior, explicit claims, and exact-commit evidence.
+Complete Reproducible package, SBOM, and provenance freeze with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13454,7 +13458,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.17 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.17 implementation stop reached. Run pentest and record the result.`
 
 ### v0.99.18 - External pentest and final public API freeze
 
@@ -13466,7 +13470,7 @@ This is the exclusive integration and assurance handoff for External pentest and
 
 Goal:
 
-Complete External pentest and final public API freeze with bounded behavior, explicit claims, and exact-commit evidence.
+Complete External pentest and final public API freeze with bounded behavior, explicit claims, and pentest and release evidence.
 
 Deliverables:
 
@@ -13492,7 +13496,7 @@ Exit criteria:
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
 - Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.18 implementation stop reached. Run pentest for this exact commit.`
+- `v0.99.18 implementation stop reached. Run pentest and record the result.`
 
 ## Phase: Production admission
 
@@ -13512,7 +13516,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete exact versioned production candidate with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -13553,8 +13557,8 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v1.0.0-rc.1 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v1.0.0-rc.1 implementation stop reached. Run pentest and record the result.`
 
 ### v1.0.0 - Byte-for-byte promotion of the approved candidate
 
@@ -13570,7 +13574,7 @@ unavailable or explicitly fail closed.
 Goal:
 
 Complete byte-for-byte promotion of the approved candidate with bounded behavior, explicit claims, and
-evidence sufficient for an exact-commit security decision.
+evidence sufficient for a release security decision.
 
 Deliverables:
 
@@ -13608,14 +13612,14 @@ Exit criteria:
 - Pentest covers the new surface and inherited invariants; all critical/high
   findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the exact reviewed commit.
-- `v1.0.0 implementation stop reached. Run pentest for this exact commit.`
+  the version release gate accepts the final release candidate.
+- `v1.0.0 implementation stop reached. Run pentest and record the result.`
 
 ## Post-1.0 admission
 
 Post-1.0 formats require their own threat-boundary review, official source
 ledger, granular versions, conformance profile, corpus provenance, resource
-model, and exact-commit pentest. They never enter a 1.0 patch merely because
+model, and iterative pentest. They never enter a 1.0 patch merely because
 they share an image category.
 
 The first later planning pass may separately evaluate TGA, AVIF/HEIF, JPEG XL,

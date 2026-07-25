@@ -1,9 +1,11 @@
 #!/usr/bin/env sh
 set -eu
 
+rustc --version | grep -q '^rustc 1\.97\.1 '
 scripts/checks.sh
 scripts/check-rust-version-matrix.sh
 scripts/check-platform-targets.sh
+scripts/check_latest_tools.sh
 cargo deny check
 cargo audit
 scripts/generate-sbom.sh --check

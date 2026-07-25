@@ -67,7 +67,10 @@ def test_manifest_and_locks(module) -> None:
         and source.download_url is not None
         for source in public
     )
-    module.verify(sources, require_offline=True, require_manual=False)
+    # A clean checkout intentionally lacks redistribution-restricted offline
+    # files. Validate every present file, while the checksum manifest proves
+    # the complete set remains reproducible for maintainers.
+    module.verify(sources, require_offline=False, require_manual=False)
 
 
 def test_malformed_lock_rejected(module) -> None:

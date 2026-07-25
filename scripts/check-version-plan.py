@@ -351,10 +351,10 @@ def main() -> int:
 
         stop = (
             f"`{version} implementation stop reached. "
-            "Run pentest for this exact commit.`"
+            "Run pentest and record the result.`"
         )
         if not any(stop in line for line in body_lines):
-            errors.append(f"{version} is missing the exact pentest stop line")
+            errors.append(f"{version} is missing the pentest handoff line")
 
     if errors:
         for error in errors:

@@ -7,12 +7,14 @@ scripts/lock-specs.sh
 scripts/verify-specs.sh
 python3 scripts/test-spec-sources.py
 scripts/check-readmes.sh
+scripts/check-package-licenses.sh
 scripts/check_doc_links.sh
 python3 scripts/check-version-plan.py
 scripts/validate-modularity-policy.sh check
 scripts/validate-security-policy.sh
 python3 scripts/check-runtime-dependencies.py
 python3 scripts/test_release_crates.py
+scripts/test-release-readiness.sh
 scripts/validate-release-metadata.sh
 cargo +1.90.0 check --workspace --no-default-features
 cargo +1.90.0 test --workspace --all-features

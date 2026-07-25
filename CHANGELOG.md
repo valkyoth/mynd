@@ -31,6 +31,9 @@ a time.
   ignored reproducible copies of redistribution-restricted documents.
 - Staged implementation and version plans through the 1.0 admission gate.
 - Adapted independent-crate release planner from the `eth` workflow.
+- Iterative pentest-report and green-CI release loop without a report-only
+  commit requirement.
+- MIT and Apache-2.0 license texts in every published crate archive.
 
 ### Security
 
@@ -38,6 +41,8 @@ a time.
 - Denied unknown registries, unknown git sources, wildcards, and duplicate
   dependency versions.
 - Source line limit and first-party dependency-boundary checks.
+- Clean-checkout specification tests that preserve the ignored offline-source
+  boundary without requiring private files in CI.
 
 [Unreleased]: https://github.com/valkyoth/mynd/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/valkyoth/mynd/releases/tag/v0.1.0

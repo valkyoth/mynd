@@ -44,10 +44,15 @@ an advanced CodeQL workflow while default setup is active. See
 
 ## Release gate
 
-Every release requires a matching release note and pentest report. A release
-tag must point at the final report commit, and the report must say `Status:
-PASS`. The implementation commit and report commit remain a linear pair; do
-not rewrite or squash between review and tagging.
+Every release keeps one matching pentest report in
+`security/pentest/vX.Y.Z.md`. The report starts before testing, accumulates
+findings, fixes, CI corrections, and retests, and must end at `Status: PASS`.
+There is no separate report-only commit requirement.
+
+After the report reaches PASS, commit the complete candidate and wait for
+GitHub CI and CodeQL. A failure returns to the same fix, document, commit, and
+verify loop. The release tag points at the final commit only after its local
+release gate, GitHub CI, and CodeQL are green.
 
 Required evidence grows with capability: formatting, lints, MSRV/current Rust,
 feature combinations, target builds, unit and documentation tests, package

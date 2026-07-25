@@ -8,12 +8,16 @@
 5. Update `CHANGELOG.md`, `release-notes/`, `release-crates.toml`, crate versions,
    and the crate version matrix.
 6. Inspect every `cargo package` archive and dependency tree.
-7. Freeze the reviewed implementation commit.
-8. Write `security/pentest/vX.Y.Z.md` as its direct linear child; unresolved
-   critical/high issues prevent `PASS`.
-9. Run `scripts/validate-release-metadata.sh vX.Y.Z` and the release gate.
-10. Tag the report commit, then use `scripts/release_crates.py --require-tag` to
-    publish in dependency order.
+7. Commit the candidate and run the pentest. Keep the existing
+   `security/pentest/vX.Y.Z.md` report updated with the result.
+8. If the pentest finds anything, record it, fix it, retest, and repeat in the
+   same report until the result is `Status: PASS`.
+9. Commit the complete candidate and PASS report, then wait for GitHub CI and
+   CodeQL. If either fails, fix the problem, record the correction and relevant
+   retest in the report, commit again, and wait for green results.
+10. Run the strict release gate against the final green commit, tag that commit,
+    then use `scripts/release_crates.py --require-tag` to publish in dependency
+    order.
 
 Patch releases contain only bug/security/documentation/test corrections. Minor
 pre-1.0 releases add one bounded capability. Never republish unchanged support

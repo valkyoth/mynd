@@ -11,7 +11,13 @@ homepage.workspace = true
 repository.workspace = true
 keywords = ["image", "codec", "no-std", "graphics"]
 categories = ["multimedia::images", "no-std"]
-include = ["Cargo.toml", "README.md", "src/**/*.rs"]
+include = [
+    "Cargo.toml",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "README.md",
+    "src/**/*.rs",
+]
 
 [features]
 default = []
