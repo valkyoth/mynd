@@ -43,6 +43,10 @@ a time.
 - Source line limit and first-party dependency-boundary checks.
 - Clean-checkout specification tests that preserve the ignored offline-source
   boundary without requiring private files in CI.
+- Correctly scoped workspace panic/overflow profiles and documented downstream
+  consumer control of Cargo profiles.
+- Explicit crates.io version-and-lockfile trust boundary for CI security-tool
+  installation.
 
 [Unreleased]: https://github.com/valkyoth/mynd/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/valkyoth/mynd/releases/tag/v0.1.0

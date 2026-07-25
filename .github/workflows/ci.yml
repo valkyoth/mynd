@@ -23,6 +23,8 @@ jobs:
       - name: Install supported Rust toolchains
         run: rustup toolchain install 1.90.0 1.97.1 --profile minimal --component clippy,rustfmt
       - name: Install security tools
+        # crates.io versions are immutable; --locked uses each release lockfile.
+        # See docs/supply-chain-security.md for the bootstrap trust boundary.
         run: |
           cargo install --locked cargo-deny --version 0.20.2
           cargo install --locked cargo-audit --version 0.22.2

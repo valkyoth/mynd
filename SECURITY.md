@@ -29,6 +29,17 @@ resource limits, a minimal reproducer, and expected impact when safe to do so.
 - Compatibility mode never disables bounds, arithmetic, state, or work checks.
 - Errors and logs never include unbounded input-derived text.
 
+## Consumer build profiles
+
+The workspace enables overflow checks in its own development, test, and
+release profiles and uses abort-on-panic for its own release builds. Cargo does
+not propagate those profile settings when `mynd` is embedded as a dependency;
+the downstream application controls its panic and overflow behavior.
+
+Mynd's library guarantee therefore comes from checked arithmetic, panic-free
+source, forbidden unsafe code, and the lint, test, review, and release gates.
+It does not depend on a consumer selecting `panic = "abort"`.
+
 ## Routine checks
 
 ```sh

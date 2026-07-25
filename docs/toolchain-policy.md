@@ -16,6 +16,9 @@ Rules:
 
 - `scripts/check_latest_tools.sh` compares the pin with the official stable
   distribution manifest and fails when stale.
+- Cargo security tools are installed from immutable crates.io versions with
+  `--locked`; unlike GitHub Actions, they are not represented by a Git commit
+  SHA or a repository-pinned binary checksum.
 - Keep `workspace.package.rust-version` at the supported MSRV.
 - Test every stable release and patch listed in the README before release.
 - Run the full release gate on the pinned stable toolchain.

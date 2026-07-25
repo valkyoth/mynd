@@ -22,6 +22,13 @@ and any CI corrections are recorded until the report reaches PASS. The final
 green commit containing that report is the tag target; a separate report-only
 commit is not required.
 
+Workspace builds enable overflow checks and workspace release builds abort on
+panic. Applications consuming Mynd choose their own Cargo profiles, so library
+claims rely on checked arithmetic, panic-free source, forbidden unsafe code,
+and release verification rather than profile propagation. CI security tools
+use immutable crates.io versions with their published lockfiles; GitHub Actions
+remain pinned by full commit SHA.
+
 Security evidence required before release:
 
 - all repository checks pass on Rust 1.90.0 and 1.97.1;

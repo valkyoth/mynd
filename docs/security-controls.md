@@ -4,13 +4,20 @@ Initial enforced controls:
 
 - `no_std` and empty default features;
 - `#![forbid(unsafe_code)]`;
-- checked release overflow and aborting panic strategy;
+- workspace development, test, and release profiles enable overflow checks,
+  and the workspace release profile aborts on panic;
 - panic, unwrap, expect, indexing, and arithmetic-side-effect Clippy policy;
 - denied unknown registries, unknown git sources, wildcard dependencies, and
   multiple dependency versions;
 - 500-line source ceiling and inward-only crate boundaries;
 - MSRV/current-stable and platform compilation matrices;
 - GitHub CodeQL default setup policy.
+
+Cargo profiles belong to the top-level build. Downstream consumers control
+their own overflow-check and panic strategies; Mynd does not claim that its
+workspace profiles propagate into applications. Library safety instead relies
+on checked arithmetic in source, panic-free APIs, unsafe-code prohibition, and
+the lint, test, review, and release gates applied to every published version.
 
 Controls activated with parser work:
 

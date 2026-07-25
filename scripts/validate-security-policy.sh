@@ -10,6 +10,8 @@ grep -q 'overflow-checks = true' Cargo.toml
 grep -q 'CodeQL default setup' SECURITY.md
 grep -q 'CodeQL default setup is required' docs/github-security-settings.md
 grep -q 'no third-party crates' docs/supply-chain-security.md
+grep -q 'Downstream consumers control' docs/security-controls.md
+grep -q 'immutable version with' docs/supply-chain-security.md
 test -f docs/threat-model.md
 test -f docs/unsafe-policy.md
 test -f SPEC_SOURCES.md
