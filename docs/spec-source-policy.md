@@ -36,8 +36,9 @@ Every source has exactly one disposition:
 - `offline`: an official direct download exists, but its copy is ignored
   because redistribution permission is absent, unclear, or narrower than the
   repository use;
-- `manual`: purchase, authentication, click-through acceptance, or unresolved
-  provenance requires a human acquisition step.
+- `manual`: purchase, authentication, click-through acceptance, publisher
+  blocking of unattended retrieval, or unresolved provenance requires a human
+  acquisition step.
 
 The project claims no ownership in third-party materials. They are not
 licensed under Mynd's MIT or Apache-2.0 terms. When uncertainty remains, the

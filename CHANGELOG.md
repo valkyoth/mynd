@@ -11,6 +11,12 @@ a time.
 - Checksum-locked specification corpus with a legally reviewed tracked/offline
   split, secure reproducible fetcher, manual acquisition ledger, and CI
   integrity tests.
+- Release-plan source-coverage audit adding independent gates for corpus
+  reproducibility, ICC adaptive gain, BCP 47, JPEG APPn/COM policy, TIFF
+  orientation/calibrated color, Exif 3.1, and separate XMP packet/XML/RDF
+  layers.
+- Pinned XML, Namespaces, RDF/XML, BCP 47, and TIFF T.4/T.6 dependencies plus
+  a manual ISO 21496-1:2025 acquisition record.
 
 ## [0.1.0] - Unreleased
 

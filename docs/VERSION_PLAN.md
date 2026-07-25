@@ -85,15 +85,16 @@ are pinned when implementation begins.
 | Family | Required baseline | Explicit scope |
 | --- | --- | --- |
 | PNG/APNG | [ISO/IEC 15948:2004](https://www.iso.org/standard/29581.html), [W3C PNG Third Edition](https://www.w3.org/TR/png-3/), its [errata](https://www.w3.org/2025/06/REC-PNG-20250624-errata), RFC 1950, RFC 1951 | APNG, cICP/HDR/WCG, eXIf, precedence, private/unknown chunks, editor rules |
-| JPEG | [ITU-T T.81](https://www.itu.int/rec/T-REC-T.81/en), corrigenda, separately scoped JFIF/T.871, Exif, ICC APP2, Adobe conventions | Sequential, progressive, lossless, arithmetic, differential, hierarchical, precision, encoders |
+| JPEG | [ITU-T T.81](https://www.itu.int/rec/T-REC-T.81/en), corrigenda, separately scoped JFIF/T.871, T.86 registrations, Exif, ICC APP2, Adobe conventions | Sequential, progressive, lossless, arithmetic, differential, hierarchical, precision, COM/APPn policy, encoders |
 | WebP | [RFC 9649](https://www.rfc-editor.org/info/rfc9649/), [RFC 6386](https://www.rfc-editor.org/rfc/rfc6386.html), [VP8L](https://developers.google.com/speed/webp/docs/webp_lossless_bitstream_specification) | VP8, VP8L, ALPH, VP8X, animation, metadata, unknown chunks, order |
 | GIF | GIF87a and [GIF89a](https://www.w3.org/Graphics/GIF/spec-gif89a.txt) | Normative blocks versus Netscape/de facto extensions |
-| TIFF | [TIFF 6.0](https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf), Adobe PageMaker/Photoshop Technical Notes, and corrected JPEG-in-TIFF rules | Strips, tiles, planes, pages, compression, TIFF Predictor 2, separately sourced Adobe floating-point Predictor 3, JPEG variants, color, ICC, tags; BigTIFF is separate |
+| TIFF | [TIFF 6.0](https://www.itu.int/itudoc/itu-t/com16/tiff-fx/docs/tiff6.pdf), the referenced 1988 T.4/T.6 fax editions, Adobe PageMaker/Photoshop Technical Notes, and corrected JPEG-in-TIFF rules | Strips, tiles, planes, pages, compression, TIFF Predictor 2, separately sourced Adobe floating-point Predictor 3, JPEG variants, orientation, calibrated color, ICC, tags; BigTIFF is separate |
 | BMP | Microsoft GDI and Open Specifications for the core/INFO/V4/V5 families, original IBM documentation for every admitted OS/2 family, and pinned primary provenance for compatibility headers | Exact header sizes, envelopes, palettes, masks, RLE, V4/V5 color, embedded profiles, inert linked paths, and explicit unsupported dialects |
-| Netpbm | [PBM/PGM/PPM](https://netpbm.sourceforge.net/doc/pnm.html) and [PAM](https://netpbm.sourceforge.net/doc/pam.html) | Plain/raw syntax, comments, concatenation, MAXVAL, 16-bit, and PAM; PFM is explicitly outside the official Netpbm claim and pre-1.0 scope |
+| Netpbm | [PBM/PGM/PPM](https://netpbm.sourceforge.net/doc/pnm.html) and [PAM](https://netpbm.sourceforge.net/doc/pam.html) | Plain/raw syntax, comments, concatenation, MAXVAL, 16-bit, source-defined BT.709 transfer semantics, linear-opacity PAM tuples, and PAM; PFM is explicitly outside the official Netpbm claim and pre-1.0 scope |
 | QOI | Author's [QOI specification](https://phoboslab.org/log/2021/12/qoi-specification) | Pixel termination, marker, wraparound, hints, trailing data |
 | farbfeld | [suckless definition](https://tools.suckless.org/farbfeld/) | RGBA16-BE, unassociated alpha, exact length, trailing data |
-| Shared color and blending | Pinned ICC v2 and ICC.1:2022/v4.4 sources, sRGB, BT.601/709/2020, H.273, PQ/HLG when claimed, CIE XYZ/Lab, Porter-Duff, and the selected artistic-blend specification | Edition, numeric domain, rounding, alpha, gamut, tolerance, and unsupported operations |
+| Shared color and blending | Pinned ICC v2 and ICC.1:2022/v4.4 sources, the ICC 2025 adaptive-gain amendment and ISO 21496-1:2025 dependency, sRGB, BT.601/709/2020, H.273, PQ/HLG when claimed, CIE XYZ/Lab, Porter-Duff, and the selected artistic-blend specification | Edition, numeric domain, rounding, alpha, gamut, patent/admission status, tolerance, and unsupported operations |
+| Exif and XMP | CIPA DC-008-Translation-2026 Exif 3.1, CIPA DC-010-2026, Adobe XMP Parts 1-3, XML 1.0 Fifth Edition, Namespaces in XML 1.0 Third Edition, RDF 1.1 XML Syntax, and BCP 47 | Selected Exif profile, raw XMP packets, bounded XML/RDF inspection, language alternatives, no external resolution, reconciliation, and transformation effects |
 
 ## Format-profile decisions visible in release gates
 
@@ -115,8 +116,11 @@ are pinned when implementation begins.
   floating-point Predictor 3 profile, YCbCr dependencies/siting, sparse strips,
   and overlapping strip/tile policy. BigTIFF stays separate.
 - Netpbm gates define the exact header-to-raw-raster boundary, concatenated
-  images, trailing material, and unknown PAM tuple policy. PFM is not an
-  official Netpbm format and remains unclaimed before 1.0.
+  images, trailing material, the source-defined BT.709 transfer/range semantics
+  versus common linear/sRGB variants, linear alpha/opacity, and unknown PAM
+  tuple policy. Variants require explicit compatibility mode and never inherit
+  the official PGM/PPM claim. PFM is not an official Netpbm format and remains
+  unclaimed before 1.0.
 
 ## BMP dialect admission contract
 
@@ -455,9 +459,10 @@ v0.99.18 only verifies and freezes the already-corrected facade.
 
 Container milestones initially preserve bounded raw Exif, ICC, and XMP
 transport. Structured v1 inspection is added later through a shared TIFF/Exif
-IFD parser, selected Exif fields, opaque MakerNotes, bounded string values,
-explicit thumbnail limits, and a declared XMP raw-packet versus bounded-XML
-policy.
+IFD parser, a CIPA Exif 3.1 selected-field profile, opaque MakerNotes, bounded
+string values, explicit thumbnail limits, and independently pentested XMP
+packet, XML/Namespaces, and RDF/XMP data-model layers. CIPA DC-010-2026 binds
+Exif/XMP reconciliation; no metadata identifier is dereferenced.
 
 Exif orientation is metadata until a caller explicitly requests normalization.
 Transcoders choose discard, inspect, preserve raw, parse selected namespaces,
@@ -566,6 +571,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | --- | --- | --- |
 | 0.1.0 | Existing workspace, licenses, feature boundaries, release policy | Current checks plus completed exact-commit pentest |
 | 0.2.0 | Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema | No contradictions across README, support matrix, and normative plans |
+| 0.2.1 | Reproducible specification corpus and legal-disposition gate | Every source classified public/offline/manual, immutable hashes, clean recreation, package exclusion, and legal review |
 | 0.3.0 | Checked conversion/add/multiply/align/range primitives | Exhaustive extrema tests and Kani arithmetic proofs |
 | 0.4.0 | Validated dimensions, rectangles, strides, planes, and output lengths | Zero/min/max, last-row, alignment, and 32-bit usize proofs |
 | 0.5.0 | Explicit pixel layout and sample-storage domains | Invalid layout/sample/plane/chroma/alpha combinations are unrepresentable |
@@ -593,7 +599,11 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.15.2 | ICC matrix/TRC and chromatic-adaptation engine | Parametric curves, PCS conversion, adaptation, rendering intent, deterministic scalar vectors, and limits |
 | 0.15.3 | ICC v2 LUT pipelines and deterministic interpolation | LUT dimensions/elements, interpolation, PCS bounds, intent, numeric tolerance, and v2 profiles |
 | 0.15.4 | ICC v4 mAB/mBA and processing-element pipelines | Element counts/types/order, curves, matrices, CLUTs, recursion, interpolation, and v4 profiles |
-| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and execution audit | Execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, differential tests, and freeze |
+| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and core execution audit | Core execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, and differential tests |
+| 0.15.6 | ICC adaptive-gain tag and type structural parsing | ICC 2025 amendment and ISO 21496-1:2025 provenance, exact bounds, offsets, counts, floats, CICP fields, and patent review |
+| 0.15.7 | ICC adaptive-gain execution admission | Piecewise-cubic evaluation, headroom interpolation, numeric limits and tolerances, or an explicit legally reviewed unclaimed decision |
+| 0.15.8 | Complete declared ICC profile audit | Amendment-inclusive profile matrix, unsupported preservation, conformance, differential, fuzzing, and freeze |
+| 0.15.9 | Bounded BCP 47 language-tag profile | RFC 5646 syntax/canonicalization, RFC 4647 matching, private-use and `x-default`, length/work bounds, and cross-metadata vectors |
 | 0.16.0 | Format IDs, media types, bounded probing, static registry | Collision, ambiguity, polyglot, and disabled-feature tests |
 | 0.16.1 | Non-destructive forward-only and seekable probing | Shared caller prefix, decoder inheritance, NeedInput minima/cap, one-time byte charging, and seek restoration |
 | 0.17.0 | Fallible owned storage and std::io adapters | Allocation-failure, interrupted-I/O, and feature-matrix tests |
@@ -611,13 +621,13 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.25.0 | BMP deterministic uncompressed encoders | Explicit output-dialect policy, exact headers/masks/palettes/padding, determinism, and round trips |
 | 0.25.1 | BMP deterministic RLE4/RLE8 encoders | Escape/padding/delta policy, deterministic packets, bounded work, and decode/encode round trips |
 | 0.25.2 | Complete declared BMP dialect audit | Exhaustive envelope/header/depth/palette/mask/compression/orientation/profile matrix, OS/2 legacy decisions, embedded payload policy, and external review |
-| 0.26.0 | QOI structural parse and bounded decoder | Pixel count, wraparound, end-marker, trailing-data tests |
+| 0.26.0 | QOI structural parse and bounded decoder | Magic, dimensions, channels, colorspace hint, pixel count, wraparound, end-marker, and trailing-data tests |
 | 0.27.0 | QOI deterministic encoder | Reference-vector and encode/decode conformance |
 | 0.28.0 | Bounded Netpbm tokenizer | Comment, whitespace, decimal overflow, token-length fuzzing |
 | 0.29.0 | PBM P1/P4 decode/encode | Bit order, row padding, multi-image policy |
-| 0.30.0 | PGM P2/P5 decode/encode | MAXVAL scaling, 8/16-bit, truncation |
-| 0.31.0 | PPM P3/P6 decode/encode | Sample scaling, token bombs, binary boundaries |
-| 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, header termination, unknown fields |
+| 0.30.0 | PGM P2/P5 decode/encode | MAXVAL scaling, 8/16-bit, source-defined BT.709 transfer, linear/sRGB variant policy, and truncation |
+| 0.31.0 | PPM P3/P6 decode/encode | Sample scaling, BT.709 primaries/transfer/range declaration, variant policy, token bombs, and binary boundaries |
+| 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, linear opacity, header termination, unknown fields, and color/alpha declarations |
 | 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images, official-tool differential tests, and explicit PFM exclusion |
 | 0.34.0 | farbfeld decode and encode | Exact-size arithmetic, RGBA16-BE, alpha semantics |
 | 0.35.0 | Simple-codec contract and security freeze | Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review |
@@ -646,7 +656,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.46.2 | PNG deterministic encoding | Third Edition emission, row filters, Deflate, metadata, and determinism |
 | 0.46.3 | APNG deterministic encoding | frame sequencing, rectangles, timing, disposal/blend, and round trips |
 | 0.46.4 | Complete PNG/APNG conformance and security audit | Third Edition mapping, conformance/differential corpus, and long fuzzing |
-| 0.47.0 | GIF87a/89a structure, palettes, sub-blocks, descriptors | Block termination and palette bounds |
+| 0.47.0 | GIF87a/89a structure, palettes, sub-blocks, descriptors | Logical-screen fields, color resolution/sort/background/aspect policy, block termination, and palette bounds |
 | 0.48.0 | GIF LZW | Dictionary/code-width proofs and fuzzing |
 | 0.49.0 | GIF single-frame decode and deinterlace | Exact pixels and four-pass geometry tests |
 | 0.50.0 | GIF GCE, transparency, frame composition, all disposal modes | Snapshot caps and animation bomb corpus |
@@ -679,6 +689,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.60.0 | JPEG JFIF and Adobe color declarations | T.871 APP0 plus Adobe RGB/CMYK/YCCK interpretation and precedence |
 | 0.60.1 | JPEG Exif APP1 transport | identifier, length, nested offset, duplicate, and preservation policies |
 | 0.60.2 | JPEG ICC APP2 assembly and color precedence | chunk numbering/completeness/duplicates, profile limits, and color vectors |
+| 0.60.3 | JPEG COM and registered/unknown APPn policy | T.86 registry mapping, SPIFF decision, bounded COM/APPn preservation, duplicates, and inert metadata |
 | 0.61.0 | Baseline JPEG encoder | Deterministic valid baseline emission, quality controls, coefficient limits, and round trips |
 | 0.61.1 | Progressive JPEG encoder | Scan scripts, successive approximation, deterministic tables, restart policy, and round trips |
 | 0.61.2 | Extended-sequential JPEG encoder | precision/process-valid emission, tables, restart, and differential tests |
@@ -707,7 +718,7 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.68.3 | VP8L subtract-green transform | modular channel arithmetic, order, and exact pixel vectors |
 | 0.68.4 | VP8L color-indexing transform | palette image, packing widths, dimension reduction, indexes, and bounds |
 | 0.68.5 | VP8L complete lossless reconstruction audit | all transforms plus prefix/LZ/cache integration, exact pixels, bombs, and fuzzing |
-| 0.69.0 | WebP animation decoding | ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing |
+| 0.69.0 | WebP animation decoding | ANIM background/loop plus ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing |
 | 0.69.1 | VP8L deterministic encoder | Prefix/LZ/cache/transform validity, quality-effort controls, bounded search, determinism, and round trips |
 | 0.69.2 | VP8 deterministic encoder | Prediction/partition/token validity, quality-effort controls, bounded heuristics, backend determinism, and differential tests |
 | 0.69.3 | Animated WebP encoder | ANMF ordering/rectangles, mixed frame modes, blend/dispose, metadata, and round trips |
@@ -730,6 +741,8 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.75.1 | TIFF CMYK and CIELab native samples | Photometric dependencies, signed/sample domains, planar layouts, declarations, and native golden vectors |
 | 0.75.2 | TIFF alpha, ICC, and rendered-color integration | ExtraSamples association, ICC precedence, shared rendering, and tolerances |
 | 0.75.3 | TIFF signed-integer and IEEE floating sample domains | SampleFormat/depth combinations, endian, NaN/infinity policy, and native output |
+| 0.75.4 | TIFF Orientation presentation policy | all eight values, native coordinates, opt-in normalization, region mapping, and metadata effects |
+| 0.75.5 | TIFF calibrated color declarations | WhitePoint, PrimaryChromaticities, TransferFunction, ReferenceBlackWhite, precedence, and unsupported combinations |
 | 0.76.0 | Corrected JPEG-in-TIFF decoding | old/new JPEG distinction, table ownership, strip/tile boundaries, and corpus |
 | 0.76.1 | TIFF Exif IFD integration | Exif/GPS/Interop graph namespaces, nested offsets, cycles, and limits |
 | 0.76.2 | TIFF admitted-extension profile freeze | each extension has pinned provenance and an explicit support disposition |
@@ -753,9 +766,12 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 | 0.80.0 | Selected bounded Exif field interpretation | dimensions, timestamps, strings, types/counts, encoding, and conflicts |
 | 0.80.1 | Bounded Exif thumbnail extraction | thumbnail offsets/lengths, nested format limits, overlap, and bomb resistance |
 | 0.80.2 | Explicit Exif orientation policy | all eight orientations, coordinate mapping, opt-in transform, and metadata effect |
-| 0.81.0 | XMP raw-packet transport and bounded RDF/XML inspection | packet/nesting/name/attribute/text limits and malicious XML corpus |
-| 0.81.1 | XMP and legacy-metadata conflict/rewrite policy | XMP Part 3 reconciliation, preserve/discard/rewrite, duplicates, and round trips |
-| 0.81.2 | Transformation-aware metadata effect planning | preserved/rewritten/invalidated/decision results for every operation |
+| 0.80.3 | Exif 3.1 and Exif-for-XMP profile freeze | DC-008/DC-010 2026 mappings, selected/opaque/unsupported fields, container consistency, and differential audit |
+| 0.81.0 | XMP packet framing and bounded raw transport | xpacket boundaries, encoding, padding, read-only flag, exact preservation, truncation, and no external I/O |
+| 0.81.1 | Bounded XML 1.0 and Namespaces profile for XMP | token/nesting/name/attribute/text limits, encoding rules, disabled DTD/entities/resolvers, and malicious XML corpus |
+| 0.81.2 | Bounded RDF/XML and XMP data-model inspection | RDF productions, arrays/structures/qualifiers, namespaces, aliases, duplicate policy, and graph budgets |
+| 0.81.3 | XMP and legacy-metadata conflict/rewrite policy | XMP Part 3 plus CIPA DC-010 reconciliation, preserve/discard/rewrite, duplicates, and round trips |
+| 0.81.4 | Transformation-aware metadata effect planning | preserved/rewritten/invalidated/decision results for every operation |
 | 0.82.0 | YCbCr matrices, ranges, subsampling, and chroma siting | JPEG/WebP/TIFF reference vectors |
 | 0.83.0 | Gray, CMYK, and YCCK conversion | black-generation/Adobe policy, native-to-rendered vectors, and gamut limits |
 | 0.83.1 | CIELab and declared wide-gamut conversion | white-point/adaptation/range rules, out-of-gamut policy, and reference vectors |
@@ -932,6 +948,55 @@ Exit criteria:
 - CI and CodeQL default setup are green, the permanent report records PASS, and
   the version release gate accepts the exact reviewed commit.
 - `v0.2.0 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.2.1 - Reproducible specification corpus and legal-disposition gate
+
+Status: Planned.
+
+Context:
+
+This governance handoff turns the source ledger into a reproducible,
+fail-closed corpus before implementation relies on any normative text. It adds
+no codec behavior.
+
+Goal:
+
+Make every normative, supplemental, errata, and conformance source available
+through a legally reviewed tracked, offline, or manual acquisition path.
+
+Deliverables:
+
+- Classify every source as public, offline, or manual with publisher, exact
+  edition, role, acquisition URL, terms, filename, size ceiling, and hash.
+- Track only unmodified sources with explicit redistribution permission; keep
+  restricted and unclear material ignored and never claim ownership.
+- Provide allow-listed HTTPS fetch, candidate-lock, verification, read-only
+  mode, exact-file-set, symlink, atomic-replacement, and package-exclusion gates.
+- Record every normative dependency discovered inside an admitted source,
+  including errata, XML/RDF dependencies, TIFF fax baselines, and patent-bearing
+  or purchased references.
+- Prove a clean checkout can recreate every automatic offline source while
+  manual acquisition never accepts terms, uses credentials, or bypasses payment.
+- Update source policy, release notes, SBOM inputs, and the pentest scaffold.
+
+Verification:
+
+- Rebuild public and offline corpora from an empty destination, verify all
+  hashes and modes, mutate one byte and one manifest field, and require closed
+  failure without replacing the reviewed lock.
+- Verify public terms and attribution records, review redirects and host
+  allowlists, and confirm crate packages contain no specification documents.
+
+Exit criteria:
+
+- Every pre-1.0 requirement maps to a pinned source or an explicit blocked
+  manual record; no implementation may begin with an unresolved normative
+  dependency.
+- Legal review approves every public copy and confirms offline/manual material
+  is ignored; all critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green, the permanent report records PASS, and
+  the exact-version release gate accepts the reviewed corpus.
+- `v0.2.1 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
@@ -2386,25 +2451,25 @@ Exit criteria:
   the version release gate accepts the exact reviewed commit.
 - `v0.15.4 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.15.5 - ICC PCS Lab/XYZ, intent selection, and execution audit
+### v0.15.5 - ICC PCS Lab/XYZ, intent selection, and core execution audit
 
 Status: Planned.
 
 Context:
 
 This is the exclusive foundations handoff for
-icc pcs lab/xyz, intent selection, and execution audit. Its API and attack-surface delta must be implemented,
+icc pcs lab/xyz, intent selection, and core execution audit. Its API and attack-surface delta must be implemented,
 tested, reviewed, and pentested independently. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
 
-Complete icc pcs lab/xyz, intent selection, and execution audit with bounded behavior, explicit claims, and
+Complete icc pcs lab/xyz, intent selection, and core execution audit with bounded behavior, explicit claims, and
 evidence sufficient for an exact-commit security decision.
 
 Deliverables:
 
-- Complete only the release-scoped capability: ICC PCS Lab/XYZ, intent selection, and execution audit.
+- Complete only the release-scoped capability: ICC PCS Lab/XYZ, intent selection, and core execution audit.
 - Define contracts, invariants, limits, capabilities, terminal states, errors,
   output commits, compatibility, native/rendered behavior, and unsupported cases.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
@@ -2421,7 +2486,7 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, differential tests, and freeze.
+- Required release evidence: Core execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, and differential tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -2442,6 +2507,168 @@ Exit criteria:
 - CI and CodeQL default setup are green, the permanent report records PASS, and
   the version release gate accepts the exact reviewed commit.
 - `v0.15.5 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.15.6 - ICC adaptive-gain tag and type structural parsing
+
+Status: Planned.
+
+Context:
+
+This handoff admits only the structure added by the ICC 17 April 2025
+Adaptive Gain Curve amendment. Execution remains unavailable.
+
+Goal:
+
+Parse and preserve ADGC/adaptiveGainCurveType without arithmetic ambiguity,
+out-of-range reads, unbounded tables, or accidental execution.
+
+Deliverables:
+
+- Pin the ICC amendment and its normative ISO 21496-1:2025 dependency; record
+  redistribution, purchase, patent, and implementation-authorization status.
+- Validate profile class/data colour space, embedded flags, signatures,
+  reserved fields, GUID, CICP values, float encodings, 64-bit positions,
+  shared curve ranges, triplet counts, exact lengths, and non-overlap policy.
+- Preserve valid unsupported data opaquely and reject malformed structures
+  without interpreting the curve.
+- Add every-field truncation, offset/count overflow, overlap, non-finite float,
+  duplicate-position, huge-table, mutation, fuzz, and 32-bit tests.
+
+Verification:
+
+- Required release evidence: clause mapping, primary-source and patent review,
+  exact bounds, independent structural vectors, and fail-closed unsupported
+  execution.
+- Run repository, supported-Rust, no_std, target, package, SBOM, fuzz, Miri,
+  sanitizer, and denial-of-service gates.
+
+Exit criteria:
+
+- Structural support is the only new capability and cannot execute an adaptive
+  curve through any public API.
+- The legal/IP decision and unsupported behavior are explicit; all
+  critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default setup are green and the permanent report records PASS.
+- `v0.15.6 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.15.7 - ICC adaptive-gain execution admission
+
+Status: Planned.
+
+Context:
+
+This handoff either admits the independently reviewed adaptive-gain algorithm
+or freezes it as preservable Unsupported. Structural parsing is unchanged.
+
+Goal:
+
+Make one explicit, legally reviewed execution decision with complete numeric,
+resource, and interoperability evidence.
+
+Deliverables:
+
+- Complete patent/licensing review before implementation; absence of authority
+  produces a documented unclaimed decision, not an inferred permission.
+- If admitted, implement the input, piecewise-cubic gain, and output evaluators
+  with bounded node search, target-headroom policy, CICP handling, finite-domain
+  checks, coefficient stability, declared precision/FMA behavior, and work cost.
+- Define degenerate x coordinates, node ordering, extrapolation, clipping,
+  negative/non-finite values, shared curves, LUT approximation, and output-tier
+  semantics.
+- Add normative, high-precision, boundary, cross-platform, differential,
+  property, fuzz, and hostile-complexity vectors.
+
+Verification:
+
+- Required release evidence: legal admission record plus bit/tolerance contract,
+  high-precision oracle comparisons, deterministic resume, and bounded work; or
+  a tested Unsupported result for every structurally valid ADGC profile.
+- Pentest the exact admitted or explicitly unclaimed surface.
+
+Exit criteria:
+
+- The support matrix states exactly whether ADGC execution is supported and
+  never conflates preservation, parsing, and execution.
+- All critical/high findings are fixed and cleanly retested; CI and CodeQL
+  default setup are green and the permanent report records PASS.
+- `v0.15.7 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.15.8 - Complete declared ICC profile audit
+
+Status: Planned.
+
+Context:
+
+This evidence handoff freezes the complete declared ICC v2/v4.4 profile,
+including the 2025 amendment decision, before codecs consume it.
+
+Goal:
+
+Demonstrate that every declared ICC profile class, tag path, execution route,
+limit, preservation rule, and unsupported case is mapped and tested.
+
+Deliverables:
+
+- Publish the amendment-inclusive structural/execution cross-product and close
+  every SPEC_MAPPING disposition.
+- Run conformance and differential profiles across matrix/TRC, v2 LUT,
+  mAB/mBA, PCS, intents, adaptation, malformed profiles, and ADGC policy.
+- Freeze numeric tolerances, corpus provenance, public API, limits, package
+  contents, release notes, SBOM, and exact-version pentest scope.
+
+Verification:
+
+- Required release evidence: complete profile matrix, long fuzzing, 32-bit and
+  cross-target vectors, independent color-engine comparisons, and zero
+  unexplained mismatches.
+
+Exit criteria:
+
+- No wildcard ICC claim remains and valid unimplemented profiles are
+  preservable Unsupported.
+- All critical/high findings are fixed and cleanly retested; CI and CodeQL
+  default setup are green and the permanent report records PASS.
+- `v0.15.8 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.15.9 - Bounded BCP 47 language-tag profile
+
+Status: Planned.
+
+Context:
+
+PNG iTXt, XML `xml:lang`, and XMP language alternatives share one language-tag
+grammar and must not grow independent, inconsistent parsers.
+
+Goal:
+
+Provide a no_std, allocation-free BCP 47 syntax/canonicalization and matching
+foundation with bounded input and explicit registry-independent semantics.
+
+Deliverables:
+
+- Pin RFC 5646 and RFC 4647 and distinguish well-formed syntax from living
+  IANA-registry validity.
+- Parse language, extlang, script, region, variant, extension, private-use, and
+  grandfathered shapes with duplicate-singleton/variant checks and ASCII case
+  rules.
+- Define length/subtag/work limits, canonical comparison, basic filtering/
+  lookup scope, private-use handling, and XMP's `x-default` policy.
+- Add every-boundary, malformed, case, duplicate, private-use, long-tag,
+  matching, PNG/XML/XMP integration, property, fuzz, and differential tests.
+
+Verification:
+
+- Required release evidence: RFC production mapping, registry-independent
+  claim language, cross-container vectors, allocation-free bounds, and no
+  locale/environment dependence.
+
+Exit criteria:
+
+- One shared parser serves every admitted language-tag field and does not claim
+  that a syntactically valid tag is currently registered.
+- Pentest covers the exact parser; all critical/high findings are fixed and
+  cleanly retested, and CI/CodeQL are green.
+- `v0.15.9 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.16.0 - Format IDs, media types, bounded probing, static registry
 
@@ -3498,7 +3725,8 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Pixel count, wraparound, end-marker, trailing-data tests.
+- Required release evidence: Magic, dimensions, channels, colorspace hint,
+  pixel count, wraparound, end-marker, and trailing-data tests.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3706,7 +3934,9 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: MAXVAL scaling, 8/16-bit, truncation.
+- Required release evidence: MAXVAL scaling, 8/16-bit, source-defined BT.709
+  transfer/range declaration, explicit linear/sRGB variant policy, and
+  truncation.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3758,7 +3988,8 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Sample scaling, token bombs, binary boundaries.
+- Required release evidence: Sample scaling, BT.709 primaries/transfer/range
+  declaration, explicit variant policy, token bombs, and binary boundaries.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -3810,7 +4041,8 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Tuple types, depth, header termination, unknown fields.
+- Required release evidence: Tuple types, depth, linear opacity, color/alpha
+  declarations, header termination, and unknown fields.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -5202,7 +5434,8 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: Block termination and palette bounds.
+- Required release evidence: Logical-screen fields, color resolution/sort/
+  background/aspect policy, block termination, and palette bounds.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -6665,6 +6898,44 @@ Exit criteria:
   PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.60.2 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.60.3 - JPEG COM and registered/unknown APPn policy
+
+Status: Planned.
+
+Context:
+
+T.86 registrations, COM, SPIFF identifiers, and unknown APPn segments are a
+metadata policy surface distinct from JFIF, Exif, and ICC interpretation.
+
+Goal:
+
+Bound, classify, preserve, discard, or reject non-image JPEG segments without
+executing metadata or making an aggregate SPIFF claim.
+
+Deliverables:
+
+- Pin T.86 and map registered APPn identifiers, COM, duplicates, ordering, and
+  conflicts; decide SPIFF structural support explicitly.
+- Bound segment count, individual/aggregate payload, preserved unknown bytes,
+  text exposure, and warnings; metadata remains inert.
+- Define exact round-trip and safe editor policy for recognized, unknown,
+  duplicate, malformed, and truncated segments.
+- Add identifier-collision, polyglot, log-injection, NUL/text, segment-bomb,
+  truncation, mutation, preservation, and fuzz fixtures.
+
+Verification:
+
+- Required release evidence: T.86 registry mapping, SPIFF decision,
+  byte-preservation matrix, metadata budgets, and no hidden I/O or execution.
+
+Exit criteria:
+
+- Every APPn/COM class has a documented disposition and no “unknown APP”
+  wildcard claim remains.
+- Pentest covers the exact metadata surface; all critical/high findings are
+  fixed and cleanly retested, and CI/CodeQL are green.
+- `v0.60.3 implementation stop reached. Run pentest for this exact commit.`
+
 ### v0.61.0 - Baseline JPEG encoder
 
 Status: Planned.
@@ -7873,7 +8144,8 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing.
+- Required release evidence: ANIM background/loop plus ANMF rectangles,
+  duration, blend/dispose, frame limits, and animation fuzzing.
 - Audit arithmetic, offsets, terminal transitions, capability negotiation,
   cumulative/live/peak budgets, typed scratch, output, metadata, and work.
 - Run applicable unit, property, every-byte/bit truncation, round-trip,
@@ -9009,6 +9281,83 @@ Exit criteria:
   PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.75.3 implementation stop reached. Run pentest for this exact commit.`
 
+### v0.75.4 - TIFF Orientation presentation policy
+
+Status: Planned.
+
+Context:
+
+TIFF Orientation changes the relationship between stored samples and presented
+coordinates and must be settled before TIFF profile and encoder audits.
+
+Goal:
+
+Preserve native storage coordinates while offering explicit, bounded,
+caller-selected orientation normalization for all eight defined values.
+
+Deliverables:
+
+- Define stored, native, oriented, region, tile, row-event, and output
+  coordinates for every orientation, including width/height swaps.
+- Keep decode_native unapplied; require explicit normalization and report its
+  allocation, scratch, work, metadata, and loss effects.
+- Reuse one checked coordinate kernel later for Exif without duplicating
+  format policy.
+- Add corners, 1xN/Nx1, odd dimensions, tiles, planar data, regions,
+  incremental output, overflow, round-trip, and property tests.
+
+Verification:
+
+- Required release evidence: all-eight-value matrix, inverse mappings,
+  selective-decode equivalence, metadata effects, and checked-coordinate proofs.
+
+Exit criteria:
+
+- No TIFF path silently applies Orientation and every output tier states its
+  coordinate space.
+- Pentest covers the exact presentation surface; all critical/high findings are
+  fixed and cleanly retested, and CI/CodeQL are green.
+- `v0.75.4 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.75.5 - TIFF calibrated color declarations
+
+Status: Planned.
+
+Context:
+
+Baseline TIFF colorimetry includes calibrated declarations that are neither ICC
+execution nor raw photometric decoding.
+
+Goal:
+
+Validate and interpret the declared TIFF calibrated-color tag profile with
+explicit precedence and unsupported behavior.
+
+Deliverables:
+
+- Map WhitePoint, PrimaryChromaticities, TransferFunction,
+  ReferenceBlackWhite, BitsPerSample, PhotometricInterpretation, ICC, and
+  default dependencies by sample/color profile.
+- Bound rational/table counts and numeric domains; reject contradictions and
+  preserve valid unsupported combinations without silently assuming sRGB.
+- Define ICC-versus-tag precedence, native declarations, rendering plans,
+  transfer-table interpolation, rounding, and tolerance.
+- Add malformed count/type/rational/table, duplicate/conflict, grayscale/RGB/
+  YCbCr, cross-endian, reference-color, and differential fixtures.
+
+Verification:
+
+- Required release evidence: calibrated-tag dependency and precedence matrix,
+  independent color vectors, limits, and explicit unsupported cells.
+
+Exit criteria:
+
+- Every admitted calibrated-color combination has a source-mapped disposition;
+  no absent or contradictory declaration silently becomes sRGB.
+- Pentest covers the exact color surface; all critical/high findings are fixed
+  and cleanly retested, and CI/CodeQL are green.
+- `v0.75.5 implementation stop reached. Run pentest for this exact commit.`
+
 ### v0.76.0 - Corrected JPEG-in-TIFF decoding
 
 Status: Planned.
@@ -9960,36 +10309,81 @@ Exit criteria:
   PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.80.2 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.81.0 - XMP raw-packet transport and bounded RDF/XML inspection
+### v0.80.3 - Exif 3.1 and Exif-for-XMP profile freeze
 
 Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for XMP raw-packet transport and bounded RDF/XML inspection. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+The selected Exif API needs an edition-specific audit against CIPA
+DC-008-Translation-2026 and DC-010-2026 before XMP reconciliation begins.
 
 Goal:
 
-Complete XMP raw-packet transport and bounded RDF/XML inspection with bounded behavior, explicit claims, and evidence
-sufficient for an exact-commit security decision.
+Freeze an honest Exif 3.1 field and container profile plus the exact
+Exif-to-XMP mapping boundary.
 
 Deliverables:
 
-- Complete only the release-scoped capability: XMP raw-packet transport and bounded RDF/XML inspection.
+- Map every Exif 3.1 IFD, tag, type/count, value domain, encoding, thumbnail,
+  orientation, GPS/Interop relationship, MakerNote, and container rule to
+  selected, opaque-preserved, unsupported, or rejected.
+- Map every DC-010-2026 property conversion, multiplicity, precedence,
+  information-loss, namespace, and round-trip limitation.
+- Differentially test JPEG, TIFF, and raw Exif envelopes and publish the exact
+  metadata profile used by later XMP policy.
+- Freeze limits, warnings, support tables, sources, release notes, SBOM, and
+  exact-version pentest scope.
+
+Verification:
+
+- Required release evidence: complete DC-008/DC-010 dispositions, cross-
+  container consistency, differential corpus, and zero unexplained mappings.
+
+Exit criteria:
+
+- “Selected Exif” is an enumerable edition-specific claim, not an open-ended
+  promise, and every unimplemented valid field remains safely opaque or
+  Unsupported.
+- Pentest covers the exact profile; all critical/high findings are fixed and
+  cleanly retested, and CI/CodeQL are green.
+- `v0.80.3 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.81.0 - XMP packet framing and bounded raw transport
+
+Status: Planned.
+
+Context:
+
+This handoff treats XMP as bounded inert bytes. XML and RDF interpretation
+remain unavailable.
+
+Goal:
+
+Frame, validate, expose, and preserve raw XMP packets without parsing their
+data model or accessing external resources.
+
+Deliverables:
+
+- Complete only the release-scoped capability: XMP packet framing and bounded raw transport.
 - Define contracts, invariants, limits, terminal states, errors, output
   commits, compatibility behavior, and unsupported cases before code.
 - Update SPEC_MAPPING, support/source/architecture records, crate
   boundaries, corpus provenance, security documentation, and claims.
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
-- Disable DTDs, entity expansion, external entities, XInclude, schema
-  retrieval, and every filesystem/network resolver; XMP is inert data.
+- Validate xpacket begin/id/end processing instructions, UTF encoding
+  declarations, BOM, padding, read-only/update flags, exact packet boundaries,
+  aggregate limits, and byte-preservation policy.
+- No XML parser, resolver, filesystem, network, schema, or namespace behavior
+  is reachable in this release.
 - Update changelog, notes, crate versions, packages, SBOM, and the
   exact-version pentest-report scaffold.
 
 Verification:
 
-- Required release evidence: packet/nesting/name/attribute/text limits and malicious XML corpus.
+- Required release evidence: packet boundary/encoding/padding/read-only matrix,
+  every-byte truncation, exact preservation, and no external I/O.
 - Audit arithmetic, offsets, terminal transitions, capability
   negotiation, cumulative/live/peak budgets, scratch, output,
   metadata, and work accounting.
@@ -10012,7 +10406,88 @@ Exit criteria:
   PASS, and the version release gate accepts the exact reviewed commit.
 - `v0.81.0 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.81.1 - XMP and legacy-metadata conflict/rewrite policy
+### v0.81.1 - Bounded XML 1.0 and Namespaces profile for XMP
+
+Status: Planned.
+
+Context:
+
+XML tokenization, encoding, namespaces, and entity handling are an independent
+hostile-input state machine beneath RDF/XMP interpretation.
+
+Goal:
+
+Implement only the XML 1.0 Fifth Edition and Namespaces 1.0 Third Edition
+subset required for XMP, with no resource resolution.
+
+Deliverables:
+
+- Pin the dated W3C XML and Namespaces Recommendations and applicable errata.
+- Bound bytes, decoded scalar values, depth, names, attributes, namespace
+  bindings, text, comments, CDATA, processing instructions, and total events.
+- Support required UTF-8/UTF-16 detection and XML character/end-of-line rules
+  with explicit malformed, unsupported-encoding, and limit outcomes.
+- Reject DTDs and all general, parameter, internal, and external entity
+  declarations except direct recognition of XML's five predefined references;
+  disable XInclude, catalogs, schemas, and every resolver.
+- Add encoding, namespace, duplicate-attribute, billion-laughs, quadratic-text,
+  deep-nesting, truncation, mutation, property, differential, and fuzz tests.
+
+Verification:
+
+- Required release evidence: W3C production mapping, malicious XML corpus,
+  deterministic event stream, hard memory/work limits, and proof of no I/O.
+
+Exit criteria:
+
+- Only the documented XMP XML profile is accepted; a generic XML conformance
+  claim is forbidden.
+- Pentest covers the exact parser state machine; all critical/high findings are
+  fixed and cleanly retested, and CI/CodeQL are green.
+- `v0.81.1 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.81.2 - Bounded RDF/XML and XMP data-model inspection
+
+Status: Planned.
+
+Context:
+
+RDF/XML graph construction and XMP arrays, structures, qualifiers, aliases,
+and namespaces are separate from safe XML tokenization.
+
+Goal:
+
+Inspect the admitted RDF/XML/XMP data model with finite storage and work while
+preserving valid unsupported constructs.
+
+Deliverables:
+
+- Pin RDF 1.1 XML Syntax and map the XMP Part 1 restrictions and deviations.
+- Bound graph nodes, properties, values, arrays, structures, qualifiers,
+  aliases, namespace bindings, identifiers, strings, language alternatives,
+  recursion, and duplicate work.
+- Define rdf:about/ID/nodeID/resource/parseType, URI/base behavior, arrays,
+  typed nodes, unknown namespaces, aliases, duplicates, and unsupported
+  productions without dereferencing any IRI.
+- Route `xml:lang` and XMP language alternatives through the shared v0.15.9
+  BCP 47 profile, including the XMP-specific `x-default` policy.
+- Add grammar-production, graph-bomb, alias-cycle, duplicate, namespace,
+  malformed, truncation, round-trip, differential, property, and fuzz tests.
+
+Verification:
+
+- Required release evidence: RDF/XMP production and data-model mapping,
+  bounded graph accounting, malicious RDF corpus, and no URI dereference.
+
+Exit criteria:
+
+- The public claim is the exact bounded XMP inspection profile, not a general
+  RDF store or validating XML processor.
+- Pentest covers the exact graph surface; all critical/high findings are fixed
+  and cleanly retested, and CI/CodeQL are green.
+- `v0.81.2 implementation stop reached. Run pentest for this exact commit.`
+
+### v0.81.3 - XMP and legacy-metadata conflict/rewrite policy
 
 Status: Planned.
 
@@ -10039,7 +10514,7 @@ Deliverables:
 
 Verification:
 
-- Required release evidence: XMP Part 3 reconciliation, preserve/discard/rewrite, duplicates, and round trips.
+- Required release evidence: XMP Part 3 and CIPA DC-010 reconciliation, preserve/discard/rewrite, duplicates, and round trips.
 - Audit arithmetic, offsets, terminal transitions, capability
   negotiation, cumulative/live/peak budgets, scratch, output,
   metadata, and work accounting.
@@ -10060,9 +10535,9 @@ Exit criteria:
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.81.1 implementation stop reached. Run pentest for this exact commit.`
+- `v0.81.3 implementation stop reached. Run pentest for this exact commit.`
 
-### v0.81.2 - Transformation-aware metadata effect planning
+### v0.81.4 - Transformation-aware metadata effect planning
 
 Status: Planned.
 
@@ -10110,7 +10585,7 @@ Exit criteria:
   critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the exact reviewed commit.
-- `v0.81.2 implementation stop reached. Run pentest for this exact commit.`
+- `v0.81.4 implementation stop reached. Run pentest for this exact commit.`
 
 ### v0.82.0 - YCbCr matrices, ranges, subsampling, and chroma siting
 

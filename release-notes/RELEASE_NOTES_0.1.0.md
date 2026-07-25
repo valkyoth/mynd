@@ -13,6 +13,10 @@ notices; restricted or unclear documents remain ignored and reproducible from
 official sources, while purchase/login/acceptance-gated standards use manual
 acquisition records.
 
+The initial corpus also pins the transitive XML, Namespaces, RDF/XML, BCP 47,
+and TIFF fax references found during the release-plan coverage audit. Protected
+ISO 21496-1:2025 remains a manual private acquisition record.
+
 Security evidence required before release:
 
 - all repository checks pass on Rust 1.90.0 and 1.97.1;

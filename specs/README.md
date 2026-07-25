@@ -18,7 +18,7 @@ by Mynd's MIT or Apache-2.0 software licenses.
 | --- | --- | --- | --- |
 | `public` | `specs/public/` | tracked | Unmodified redistribution is supported by explicit publisher terms |
 | `offline` | `specs/offline/files/` | ignored | Direct official download exists, but redistribution permission is absent, unclear, or too narrow |
-| `manual` | `specs/offline/files/` | ignored | Purchase, login, disclaimer acceptance, or unresolved provenance prevents unattended acquisition |
+| `manual` | `specs/offline/files/` | ignored | Purchase, login, disclaimer acceptance, publisher automation blocking, or unresolved provenance prevents unattended acquisition |
 
 Availability without a paywall is not treated as redistribution permission.
 Patent promises, royalty-free implementation rights, and copyright permission
@@ -29,7 +29,7 @@ Tracked material currently relies on these explicit terms:
 | Publisher/source | Governing terms |
 | --- | --- |
 | RFC Editor publications | [IETF Trust Legal Provisions 5.0](https://trustee.ietf.org/documents/trust-legal-provisions/tlp-5/) |
-| W3C technical reports | [W3C Document License 2023](https://www.w3.org/copyright/document-license-2023/) |
+| W3C technical reports | The exact W3C document-use/license generation recorded per dated report in `SOURCES.json` |
 | MicrosoftDocs snapshots | CC BY 4.0; the exact repository license copies are included |
 | QOI reference source/specification | MIT; the exact license copy is included |
 | farbfeld format source | ISC; the exact upstream license page is included |

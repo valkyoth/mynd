@@ -110,6 +110,8 @@ BMP_MARKERS = {
     "v0.25.2": "no wildcard, nearest-version, or fallback claims",
 }
 SIZING_ORDERS = {
+    "source corpus": ("v0.2.0", "v0.2.1", "v0.3.0"),
+    "ICC and shared metadata syntax": tuple(f"v0.15.{minor}" for minor in range(10)),
     "PNG framing": ("v0.36.0", "v0.36.1", "v0.36.2", "v0.37.0"),
     "Deflate": ("v0.38.0", "v0.38.1", "v0.38.2", "v0.39.0"),
     "PNG color metadata": ("v0.44.0", "v0.44.1", "v0.44.2"),
@@ -131,6 +133,8 @@ SIZING_ORDERS = {
         "v0.72.3",
     ),
     "TIFF layout": ("v0.74.0", "v0.74.1", "v0.74.2"),
+    "TIFF color": tuple(f"v0.75.{minor}" for minor in range(6)),
+    "JPEG metadata": tuple(f"v0.60.{minor}" for minor in range(4)),
     "VP8L transforms": (
         "v0.68.0",
         "v0.68.1",
@@ -148,11 +152,33 @@ SIZING_ORDERS = {
         "v0.94.4",
         "v0.94.5",
     ),
+    "Exif and XMP": (
+        "v0.80.0",
+        "v0.80.1",
+        "v0.80.2",
+        "v0.80.3",
+        "v0.81.0",
+        "v0.81.1",
+        "v0.81.2",
+        "v0.81.3",
+        "v0.81.4",
+    ),
 }
 SIZING_MARKERS = {
+    "v0.2.1": "public, offline, or manual",
+    "v0.15.6": "ISO 21496-1:2025",
+    "v0.15.7": "patent/licensing review",
+    "v0.15.9": "registry-independent",
+    "v0.30.0": "explicit linear/sRGB variant policy",
+    "v0.32.0": "linear opacity",
+    "v0.60.3": "SPIFF structural support",
+    "v0.75.4": "all eight defined values",
+    "v0.75.5": "PrimaryChromaticities",
+    "v0.80.3": "DC-008/DC-010",
+    "v0.81.1": "Reject DTDs",
+    "v0.81.2": "no URI dereference",
     "v0.33.0": "PFM has incompatible",
     "v0.72.3": "separately sourced Adobe extension",
-    "v0.81.0": "external entities",
     "v0.68.2": "distinct from the entropy color cache",
     "v0.92.5": "fonts",
 }
@@ -193,8 +219,8 @@ def main() -> int:
 
     errors: list[str] = []
     versions = [version for version, _ in releases]
-    if len(versions) != 258:
-        errors.append(f"expected 258 release handoffs, found {len(versions)}")
+    if len(versions) != 269:
+        errors.append(f"expected 269 release handoffs, found {len(versions)}")
     if len(set(versions)) != len(versions):
         errors.append("release headings contain duplicate versions")
 

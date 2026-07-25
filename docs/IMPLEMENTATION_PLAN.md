@@ -145,8 +145,10 @@ security delta is reviewable.
 
 Establish repository policy, checked math, validated dimensions/layouts/views,
 frames, timing, budgets, scratch, byte/bit I/O, incremental execution, metadata
-transport, ICC foundations, probing, adapters, and the common codec contract.
-`mynd-core` never parses formats.
+transport, a reproducible standards corpus, ICC foundations including an
+explicit adaptive-gain admission decision, shared bounded BCP 47 language-tag
+syntax, probing, adapters, and the common codec contract. `mynd-core` never
+parses formats.
 
 Acceptance emphasis: integer extrema, zero dimensions, stride/rectangle
 overflow, short buffers, failed reservation, and invalid type combinations.
@@ -158,7 +160,8 @@ farbfeld in separate crates, then freeze the common simple-codec contract.
 
 Acceptance emphasis: exact dialect dispatch, truncation at every byte/bit,
 checked output size, row/palette/mask boundaries, concatenated-image policy,
-PFM exclusion, deterministic encoders, and cross-codec probe ambiguity.
+Netpbm transfer/linear-opacity semantics and variant policy, PFM exclusion,
+deterministic encoders, and cross-codec probe ambiguity.
 
 ## 7. Codec phases
 
@@ -187,15 +190,17 @@ own bounded work and output evidence.
 
 Versions 0.70-0.77 implement the declared TIFF 6.0 and extension profile.
 IFD mechanics and schema policy are separate. Compression dialects, predictors,
-layout modes, sample domains, corrected JPEG-in-TIFF, Exif integration,
-encoders, and the final profile audit have explicit support matrices. BigTIFF
-remains outside 1.0.
+layout modes, sample domains, orientation, calibrated color, corrected
+JPEG-in-TIFF, Exif integration, encoders, and the final profile audit have
+explicit support matrices. The TIFF-referenced T.4/T.6 editions are pinned.
+BigTIFF remains outside 1.0.
 
 ## 8. Encoding, facade, and stabilization
 
-Versions 0.78-0.94 add shared metadata/color interpretation, conversion,
-geometry, resampling, compositing, bounded raster-drawing primitives,
-processing graphs, selective decoding, and the audited facade candidate.
+Versions 0.78-0.94 add shared metadata/color interpretation, an Exif 3.1 profile
+freeze, separately bounded XMP packet/XML/RDF layers, conversion, geometry,
+resampling, compositing, bounded raster-drawing primitives, processing graphs,
+selective decoding, and the audited facade candidate.
 
 Versions 0.95-0.98.7 exercise async, WASM, parallel, GPU, CLI, batch, and
 service boundaries. Version 0.98.8 resolves every adapter-driven facade issue

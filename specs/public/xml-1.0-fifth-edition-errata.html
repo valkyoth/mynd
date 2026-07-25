@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xml:lang="en" lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8" /><style type="text/css">
+code           { font-family: monospace; }
+
+div.constraint,
+div.issue,
+div.note,
+div.notice     { margin-left: 2em; }
+
+li p           { margin-top: 0.3em;
+margin-bottom: 0.3em; }
+
+div.exampleInner pre { margin-left: 1em;
+margin-top: 0em; margin-bottom: 0em}
+div.exampleOuter {border: 4px double gray;
+margin: 0em; padding: 0em}
+div.exampleInner { background-color: #d5dee3;
+border-top-width: 4px;
+border-top-style: double;
+border-top-color: #d3d3d3;
+border-bottom-width: 4px;
+border-bottom-style: double;
+border-bottom-color: #d3d3d3;
+padding: 4px; margin: 0em }
+div.exampleWrapper { margin: 4px }
+div.exampleHeader { font-weight: bold;
+margin: 4px}
+
+div.diff-add  { background-color: #FFFF99; }
+div.diff-del  { background-color: #FF9999; text-decoration: line-through; }
+div.diff-chg  { background-color: #99FF99; }
+div.diff-off  {  }
+
+span.diff-add { background-color: #FFFF99; }
+span.diff-del { background-color: #FF9999; text-decoration: line-through; }
+span.diff-chg { background-color: #99FF99; }
+span.diff-off {  }
+
+td.diff-add   { background-color: #FFFF99; }
+td.diff-del   { background-color: #FF9999; text-decoration: line-through }
+td.diff-chg   { background-color: #99FF99; }
+td.diff-off   {  }
+
+em.rfc2119 { text-transform: lowercase;
+font-variant: small-caps;
+font-style: normal; }
+dt.plusmarge { margin-top: 2em; }
+</style><link rel="stylesheet" type="text/css" href="https://www.w3.org/StyleSheets/TR/base.css" />
+
+<title>Errata in REC-xml-20081126</title>
+
+<link href="https://www.w3.org/TR/2006/REC-xml-20081126" rel="start"></link>
+<style type="text/css">
+h3.errata {
+background: #C8C8C8;
+padding: 2ex;
+text-align: center;
+}
+.quote     { font-family: Arial, Helvetica, sans-serif; }
+span.editor { color: red; display: inline }
+</style>
+</head>
+
+<body><div class="head"><p>
+<a href="https://www.w3.org/">
+<img alt="W3C" src="https://www.w3.org//Icons/w3c_home" height="48" width="72"></img>
+</a>
+</p><h1>XML 1.0 Fifth Edition Specification Errata</h1><h2>Abstract</h2><p>This document records all known errors in the <a href="https://www.w3.org/TR/2008/REC-xml-20081126/"><cite>Fifth Edition of the Extensible Markup Language (XML) 1.0 Specification</cite> </a>;
+for updates see <a href="https://www.w3.org/TR/xml">the latest version</a>.</p><p>The errata are numbered, classified as <a href="#substantive">Substantive</a> or <a href="#editorial">Editorial</a>, and listed in <em>reverse chronological order</em> of their date of publication in each category.
+Changes to the text of the spec are indicated thus:
+<span class="quote">
+<span class="diff-del"><span>deleted text</span></span>, <span class="diff-add"><span>new text</span></span>, <span class="diff-chg"><span>modified text</span></span>
+</span>.
+Substantive corrections are proposed by the <a href="https://www.w3.org/XML/Core/">XML Core Working
+Group</a>, which has consensus that they are appropriate; they are not to be considered normative
+until approved by a <a href="https://www.w3.org/2004/02/Process-20040205/tr.html#cfr-corrections">Call
+for Review of Proposed Corrections</a> or a <a href="https://www.w3.org/2004/02/Process-20040205/tr.html#cfr-edited">Call
+for Review of an Edited Recommendation</a>.</p><p>Please email error reports to <a href="mailto:xml-editor@w3.org">xml-editor@w3.org</a>.</p></div>
+
+<h2 id="substantive">Substantive errata</h2>
+
+<a id="S20130109" name="S20130109" />
+<h3 class="errata">Errata as of 2013-01-09</h3>
+
+<div class="erratum"><a name="S01" id="S01"></a><h4>S01</h4>
+<dl>
+<dt class="plusmarge">Section
+<a href="https://www.w3.org/TR/REC-xml/#sec-common-syn">
+<b>2.3 Common Syntactic Constructs</b></a>
+</dt>
+<dd>
+<p>Delete the following paragraph:</p>
+
+   <div class="diff-del">
+     <p>Names beginning with the string "xml", or with
+     any string which would match (('X'|'x') ('M'|'m') ('L'|'l')), are
+     reserved for standardization in this or future versions of this
+     specification.</p>
+   </div>
+</dd>
+
+<dt class="plusmarge">Section
+<a href="https://www.w3.org/TR/REC-xml/#sec-pi">
+<b>2.6 Processing Instructions</b>
+</a>
+</dt>
+<dd>
+<p>Make the following change:</p>
+
+   <p>PIs are not part of the document's character data,
+   but must be passed through to the application. The PI begins with a
+   target (PITarget) used to identify the application to which the
+   instruction is directed.
+
+   <span class="diff-del">The target names " XML ", " xml ", and so
+   on are reserved for standardization in this or future versions of
+   this specification.</span><span class="diff-add">Target
+   names that begin "<code>xml-</code>" are reserved for
+   standardization in this or future specifications from the
+   <a href="https://www.w3.org/XML/Core/">XML Core Working Group</a>
+   or its successors. The target name "<code>xml</code>" is
+   forbidden as it introduces the XML declaration.</span>
+
+   The XML Notation mechanism may be used for
+   formal declaration of PI targets. Parameter entity references must
+   not be recognized within processing instructions.</p>
+</dd>
+
+<dt class="plusmarge">Section
+<a href="https://www.w3.org/TR/REC-xml/#sec-logical-struct">
+<b>3 Logical Structures</b>
+</a>
+</dt>
+<dd>
+<p>Make the following changes:</p>
+
+     <p>This specification does not constrain the application
+     semantics, use, or (beyond syntax) names of the element types and
+     attributes, except that names beginning with
+     <span class="diff-del">a match to
+     (('X'|'x')('M'|'m')('L'|'l'))</span>
+     <span class="diff-add">"<code>xml:</code>"</span>
+     are reserved for standardization in this or future
+     <span class="diff-del">versions of this specification</span>
+     <span class="diff-add">specifications from the
+     <a href="https://www.w3.org/XML/Core/">XML Core Working Group</a>
+     or its successors</span>.</p>
+</dd>
+
+
+
+<hr align="left" width="50%" />
+
+<h2 id="editorial">Editorial errata</h2>
+<a id="E20090916" name="E20090916" /><h3 class="errata">Errata as of 2009-09-16</h3>
+<div class="erratum"><a name="E01" id="E01"></a><h4>E01</h4>
+<dl>
+<dt class="plusmarge">Section <a href="https://www.w3.org/TR/2006/REC-xml-20081126#charsets"><b>2.2 Characters</b></a></dt>
+<dd>
+<p>Add a Note at the very end of the section as follows:</p>
+<div class="diff-add"><div class="note"><p class="prefix"><b>Note:</b></p><p><a href="#">[Unicode]</a> (conformance clause C06) says that canonically equivalent sequences of
+characters ought to be treated as identical. However, XML <a title="" href="#">parsed entities</a>
+(including <a title="" href="#">document entities</a>) that are canonically
+equivalent according to Unicode but which use distinct code point
+(character) sequences are considered distinct by XML processors.
+Therefore, all XML parsed entities SHOULD be created in a "fully
+normalized" form per <a href="#CharMod-Norm">[CharMod-Norm]</a>. Otherwise the user might
+unknowingly create canonically equivalent but unequal sequences that
+appear identical to the user but which are treated as distinct by XML
+processors.</p><p>A document can still be well-formed, even if it is not in a normalized
+form. XML processors <em class="rfc2119" title="Keyword in RFC 2119 context">MAY</em> verify that the document being processed is in
+a fully-normalized form and report to the application whether it is or not.
+</p></div></div>
+</dd>
+
+<dt class="plusmarge">Section <a href="https://www.w3.org/TR/2006/REC-xml-20081126#null"><b>A.2 Other References</b></a></dt>
+<dd>
+<p>Add a reference to CharMod-Norm:</p>
+
+<dt class="label"><span class="diff-add"><a name="CharMod-Norm" />CharMod-Norm</span></dt><dd><div class="diff-add">W3C Working Draft.
+<a href="https://www.w3.org/TR/charmod-norm/"><cite>Character Model for the World Wide Web 1.0: Normalization</cite></a>.
+François Yergeau, Martin J. Dürst, Richard Ishida, Addison Phillips, Misha Wolf, Tex Texin.  (See http://www.w3.org/TR/charmod-norm/.)</div></dd>
+</dd>
+
+<dt class="plusmarge">Rationale</dt>
+<dd>The ill effects of (the lack of) Unicode normalization are noteworthy, but advice in a note is the best that can be done as part of an erratum, i.e.
+without changing the spec normatively.
+</dd>
+</dl>
+</div>
+
+<hr align="left" width="50%"></hr><address>Last updated $Date: 2013/02/13 15:08:50 $ by $Author: NormanWalsh $<br></br>
+<a href="mailto:xml-editor@w3.org">xml-editor</a>
+</address></body>
+</html>
