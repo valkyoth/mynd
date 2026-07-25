@@ -90,23 +90,17 @@ the roadmap. Exact scope and public claim words are defined by the
 Format and processing capabilities will be added as narrowly scoped opt-in
 features only when their release gates are complete.
 
-## Rust compatibility
+## Rust Version Support
 
-The supported MSRV is Rust 1.90.0. Development and release verification use
-Rust 1.97.1, and every stable compiler in the supported interval is tested.
+The minimum supported Rust version is Rust `1.90.0`. New deployments should use
+the pinned stable Rust `1.97.1` until the toolchain policy is updated.
 
-| Rust | Tier | CI expectation |
-|---|---|---|
-| 1.90.0 | MSRV | Build and test |
-| 1.91.0 | Supported | Build and test |
-| 1.92.0 | Supported | Build and test |
-| 1.93.0 | Supported | Build and test |
-| 1.94.0 | Supported | Build and test |
-| 1.95.0 | Supported | Build and test |
-| 1.96.0 | Supported | Build and test |
-| 1.96.1 | Supported | Build and test |
-| 1.97.0 | Supported | Build and test |
-| 1.97.1 | Development and release | Full verification |
+Compatibility evidence for `0.2.0`:
+
+| Rust | Local Evidence |
+| --- | --- |
+| `1.90.0`-`1.97.0` | `cargo check` and `cargo test` on every supported toolchain |
+| `1.97.1` | Full release gate |
 
 The compatibility policy is documented in
 [toolchain policy](https://github.com/valkyoth/mynd/blob/main/docs/toolchain-policy.md).
