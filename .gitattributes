@@ -1,1 +1,2 @@
 vendor/** linguist-vendored
+specs/public/** -text -diff

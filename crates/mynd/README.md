@@ -151,6 +151,8 @@ Please report vulnerabilities privately as described in the security policy.
 Mynd implementations must be traceable to authoritative format specifications,
 errata, and recorded security limits. The repository maintains:
 
+- [Specification corpus and reproduction workflow](https://github.com/valkyoth/mynd/blob/main/specs/README.md)
+- [Specification source ledger](https://github.com/valkyoth/mynd/blob/main/SPEC_SOURCES.md)
 - [Specification source policy](https://github.com/valkyoth/mynd/blob/main/docs/spec-source-policy.md)
 - [Implementation plan](https://github.com/valkyoth/mynd/blob/main/docs/IMPLEMENTATION_PLAN.md)
 - [Version plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)

@@ -1,17 +1,87 @@
 # mynd Specification Source Policy
 
-Every format behavior starts with current official or original source material.
+Status: policy
 
-1. Verify publisher, title, edition, errata, and redistribution status.
-2. Store public metadata in `SPEC_SOURCES.md` and protected documents privately.
-3. Hash the exact source snapshot used for implementation.
-4. Map requirements to modules, tests, fuzz targets, proofs, and support claims.
-5. Test official conformance material where licensing permits.
-6. Compare independent implementations without treating majority behavior as
-   automatically normative.
-7. Stop and document ambiguities before selecting behavior.
-8. Record source changes in release notes and security review evidence.
+Every format behavior starts with current official or original source
+material. The public source ledger is [`SPEC_SOURCES.md`](../SPEC_SOURCES.md);
+the machine-readable acquisition and legal ledger is
+[`specs/SOURCES.json`](../specs/SOURCES.json).
 
-Codec implementation is blocked when source provenance is unresolved. Blog
-posts, tutorials, and remembered behavior may help investigation but are never
-the normative basis.
+## Source admission
+
+Before implementation:
+
+1. Verify publisher, exact title, edition/revision, status, corrigenda, errata,
+   and normative versus informative role.
+2. Check the publisher's actual copyright and redistribution terms. Public
+   availability, a patent promise, or royalty-free implementation permission
+   is not by itself permission to republish a document.
+3. Prefer a dated publication or commit-pinned official source. Record a
+   living source only when no immutable official form exists.
+4. Hash the exact bytes reviewed for implementation.
+5. Map clauses to modules, tests, fuzz targets, proofs, support claims, and
+   documented exclusions.
+6. Stop and record ambiguities before choosing behavior.
+
+Codec implementation remains blocked when source provenance or the applicable
+profile is unresolved. Blogs, tutorials, remembered behavior, and third-party
+summaries may aid investigation but are never normative.
+
+## Legal dispositions
+
+Every source has exactly one disposition:
+
+- `public`: an unmodified copy may be tracked because explicit publisher terms
+  support redistribution and their notice/attribution conditions are retained;
+- `offline`: an official direct download exists, but its copy is ignored
+  because redistribution permission is absent, unclear, or narrower than the
+  repository use;
+- `manual`: purchase, authentication, click-through acceptance, or unresolved
+  provenance requires a human acquisition step.
+
+The project claims no ownership in third-party materials. They are not
+licensed under Mynd's MIT or Apache-2.0 terms. When uncertainty remains, the
+source is kept offline; maintainers do not make an optimistic legal inference.
+
+## Immutable local evidence
+
+- `specs/SHA256SUMS` locks every tracked public copy.
+- `specs/OFFLINE_SHA256SUMS` locks every reproducible ignored copy.
+- `specs/MANUAL_SHA256SUMS` locks acquired private copies without publishing
+  them.
+- Source copies are unmodified and read-only locally. Notes and errata
+  decisions live elsewhere.
+- `.gitattributes` disables text normalization for tracked copies.
+- Builds, tests, and crate consumers never download specifications.
+- Strict package allowlists prevent source documents entering crates.io
+  archives.
+
+Git does not preserve read-only mode portably. The repository gate reapplies
+it before checking mode, file identity, hashes, symlink safety, and the exact
+tracked public set.
+
+## Acquisition security
+
+The fetcher:
+
+- accepts only manifest-listed HTTPS URLs on a fixed publisher host allowlist;
+- validates every redirect and final host;
+- enforces a per-source maximum size;
+- hashes a temporary download before atomic installation;
+- never overwrites changed local evidence silently;
+- never supplies credentials, accepts legal terms, or automates purchases.
+
+A remote hash change fails closed. It is a source-update event requiring
+identity, edition, legal, content, test, security, and release-note review.
+
+## Conformance and interpretation
+
+Official conformance material is tested where licensing permits. Independent
+implementations are compared for compatibility evidence, but majority behavior
+is never presumed normative. Errata are recorded separately; published source
+bytes are never locally “corrected.”
+
+Source editions, clause mappings, ambiguities, compatibility decisions, and
+support changes must appear in the affected release evidence and release
+notes. See [`specs/README.md`](../specs/README.md) for commands and the update
+procedure.

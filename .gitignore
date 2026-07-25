@@ -20,6 +20,7 @@ release-reports/
 ISO_IEC_*.pdf
 ITU_T_*.pdf
 TGA_*.pdf
+/specs/offline/files/
 
 # Python local bytecode
 __pycache__/

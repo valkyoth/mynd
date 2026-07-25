@@ -3,6 +3,9 @@ set -eu
 
 cargo fmt --all --check
 scripts/check_shell_syntax.sh
+scripts/lock-specs.sh
+scripts/verify-specs.sh
+python3 scripts/test-spec-sources.py
 scripts/check-readmes.sh
 scripts/check_doc_links.sh
 python3 scripts/check-version-plan.py

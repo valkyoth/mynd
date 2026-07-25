@@ -7,6 +7,12 @@ dual license, `no_std` and unsafe-forbidden baseline, toolchain/platform CI,
 security policies, source ledger, and staged release plans. It contains no
 image decoder or encoder and makes no format-support claim.
 
+The source ledger is backed by a checksum-locked local reference corpus.
+Explicitly redistributable documents are tracked without changing their legal
+notices; restricted or unclear documents remain ignored and reproducible from
+official sources, while purchase/login/acceptance-gated standards use manual
+acquisition records.
+
 Security evidence required before release:
 
 - all repository checks pass on Rust 1.90.0 and 1.97.1;

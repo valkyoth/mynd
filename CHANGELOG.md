@@ -6,7 +6,11 @@ a time.
 
 ## [Unreleased]
 
-- No unreleased changes recorded.
+### Added
+
+- Checksum-locked specification corpus with a legally reviewed tracked/offline
+  split, secure reproducible fetcher, manual acquisition ledger, and CI
+  integrity tests.
 
 ## [0.1.0] - Unreleased
 
@@ -17,6 +21,8 @@ a time.
 - Rust 1.90.0 MSRV and Rust 1.97.1 development pin.
 - Cross-platform and full supported-toolchain CI matrices.
 - Security, specification, modularity, supply-chain, and release policies.
+- Local authoritative source workflow with immutable public references and
+  ignored reproducible copies of redistribution-restricted documents.
 - Staged implementation and version plans through the 1.0 admission gate.
 - Adapted independent-crate release planner from the `eth` workflow.
 
