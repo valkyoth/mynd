@@ -18,7 +18,7 @@ a time.
 - Pinned XML, Namespaces, RDF/XML, BCP 47, and TIFF T.4/T.6 dependencies plus
   a manual ISO 21496-1:2025 acquisition record.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-07-25
 
 ### Added
 

@@ -847,7 +847,7 @@ Establish explicit sample/color/alpha primitives, source/sink negotiation, stick
 
 ### v0.1.0 - Existing workspace, licenses, feature boundaries, release policy
 
-Status: Implementation complete; awaiting pentest.
+Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
 
 Context:
 

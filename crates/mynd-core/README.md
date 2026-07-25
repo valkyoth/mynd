@@ -28,7 +28,7 @@
 Support crate for [`mynd`](https://crates.io/crates/mynd): format-neutral,
 `no_std` image foundations shared by Mynd's codecs and processing crates.
 
-Most users should depend on the facade crate after its first release:
+Most users should depend on the facade crate:
 
 ```toml
 [dependencies]

@@ -37,8 +37,8 @@ defines the incremental path to the first production-ready 1.0.0 release.
 
 ## Install
 
-After the first release is published, most applications should depend on the
-facade crate with only the capabilities they need:
+Most applications should depend on the facade crate with only the capabilities
+they need:
 
 ```toml
 [dependencies]
@@ -103,6 +103,8 @@ Rust 1.97.1, and every stable compiler in the supported interval is tested.
 | 1.94.0 | Supported | Build and test |
 | 1.95.0 | Supported | Build and test |
 | 1.96.0 | Supported | Build and test |
+| 1.96.1 | Supported | Build and test |
+| 1.97.0 | Supported | Build and test |
 | 1.97.1 | Development and release | Full verification |
 
 The compatibility policy is documented in
@@ -127,9 +129,10 @@ Run the repository gate locally with the pinned development toolchain:
 rustup run 1.97.1 scripts/checks.sh
 ```
 
-The gate covers formatting, lints, tests, documentation, `no_std` builds,
-MSRV checks, dependency policy, vulnerability auditing, package contents, and
-SBOM generation. See
+The repository gate covers formatting, lints, tests, documentation, `no_std`
+builds, MSRV checks, dependency policy, and package contents. The full release
+gate and CI additionally run vulnerability auditing, the complete Rust and
+platform matrices, latest-tool checks, and SBOM verification. See
 [toolchain policy](https://github.com/valkyoth/mynd/blob/main/docs/toolchain-policy.md) for the
 full command matrix.
 

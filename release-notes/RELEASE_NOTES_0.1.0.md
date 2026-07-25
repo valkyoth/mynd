@@ -1,6 +1,6 @@
 # mynd 0.1.0 Release Notes
 
-Status: planned; not yet released.
+Release date: 2026-07-25.
 
 This release establishes the virtual workspace, facade/core package boundaries,
 dual license, `no_std` and unsafe-forbidden baseline, toolchain/platform CI,
@@ -36,4 +36,4 @@ Security evidence required before release:
 - every initial target build passes;
 - package contents, bundled MIT/Apache-2.0 texts, and zero third-party runtime
   dependencies are verified;
-- `security/pentest/v0.1.0.md` reaches `Status: PASS`.
+- `security/pentest/v0.1.0.md` records a clean final retest and `Status: PASS`.
