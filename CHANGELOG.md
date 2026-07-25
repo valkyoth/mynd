@@ -6,8 +6,17 @@ a time.
 
 ## [Unreleased]
 
+## [0.2.0] - Unreleased
+
 ### Added
 
+- Normative scope and claim contract defining exact pre-1.0 codec families,
+  dedicated crate ownership, capability vocabulary, exclusions, and claim
+  qualifiers.
+- Standards and errata ledger with exact coverage of every source-manifest ID,
+  implementation blockers, and official living review endpoints.
+- JSON Schema for the specification provenance manifest plus dependency-free
+  schema drift and source-coverage validation.
 - Checksum-locked specification corpus with a legally reviewed tracked/offline
   split, secure reproducible fetcher, manual acquisition ledger, and CI
   integrity tests.
@@ -17,6 +26,15 @@ a time.
   layers.
 - Pinned XML, Namespaces, RDF/XML, BCP 47, and TIFF T.4/T.6 dependencies plus
   a manual ISO 21496-1:2025 acquisition record.
+
+### Changed
+
+- Reconciled README, format-support, implementation, post-1.0, specification,
+  modularity, and version-plan scope around the same BMP-through-TIFF 1.0
+  format set, including farbfeld at v0.34.0.
+- Corrected the simple-codec release range to begin at v0.20.0.
+- Separated `mynd-core` from the facade version train so unchanged support
+  crates are not republished; only `mynd` advances to 0.2.0.
 
 ## [0.1.0] - 2026-07-25
 
@@ -48,5 +66,6 @@ a time.
 - Explicit crates.io version-and-lockfile trust boundary for CI security-tool
   installation.
 
-[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/valkyoth/mynd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/valkyoth/mynd/releases/tag/v0.1.0

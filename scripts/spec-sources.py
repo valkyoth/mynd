@@ -18,6 +18,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from spec_schema import SchemaError, validate_manifest_schema
+
 ROOT = Path(__file__).resolve().parent.parent
 SPEC_DIR = ROOT / "specs"
 SOURCE_FILE = SPEC_DIR / "SOURCES.json"
@@ -111,8 +113,10 @@ def load_sources() -> list[Source]:
         document = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise SourceError(f"cannot read {SOURCE_FILE}: {error}") from error
-    if document.get("schema_version") != 1 or not isinstance(document.get("sources"), list):
-        raise SourceError("SOURCES.json must use schema_version 1 and contain a source list")
+    try:
+        validate_manifest_schema(document)
+    except SchemaError as error:
+        raise SourceError(str(error)) from error
 
     sources: list[Source] = []
     identifiers: set[str] = set()

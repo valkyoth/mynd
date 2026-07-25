@@ -2,6 +2,8 @@
 
 Support is not a yes/no claim. Each capability advances only with documented
 tests, specification mapping, conformance evidence, and security review.
+The normative meanings and required qualifiers are defined in
+[`docs/SCOPE_AND_CLAIMS.md`](docs/SCOPE_AND_CLAIMS.md).
 
 | Format | Probe | Structural parse | Decode | Encode | Metadata | Status |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -14,9 +16,9 @@ tests, specification mapping, conformance evidence, and security review.
 | Classic JPEG declared T.81 profiles | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.52.0-v0.62.0`) |
 | WebP | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.63.0-v0.69.4`) |
 | TIFF 6.0 declared profiles | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Planned pre-1.0 (`v0.70.0-v0.77.14`); BigTIFF is not included |
-| TGA, PFM, BigTIFF, AVIF/HEIF, JXL, J2K, JLS, JXR, JXS, and other unlisted formats | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Outside the 1.0 claim; separate post-1.0 admission required |
+| TGA, PFM, BigTIFF, AVIF/HEIF, JPEG XL, JPEG 2000, JPEG-LS, JPEG XR, JPEG XS, and other unlisted formats | Not implemented | Not implemented | Not implemented | Not implemented | Not implemented | Outside the 1.0 claim; separate post-1.0 admission required |
 
-The support vocabulary is: `probe-only`, `structural-parse`,
+The support vocabulary is: `not-implemented`, `probe-only`, `structural-parse`,
 `defensive-decode`, `conformant-decode`, `defensive-encode`,
 `conformant-encode`, and `stable`. A codec README must state unsupported
 features and policy differences before its first release.

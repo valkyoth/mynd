@@ -29,9 +29,9 @@
 resource use, deterministic behavior, and deployment from embedded `no_std`
 systems through desktop and server applications.
 
-The project is currently in its 0.1.0 foundation phase. The workspace, security
-policy, verification gates, and crate boundaries exist; image decoding and
-encoding APIs do not yet exist. The
+The project is in its current 0.2.0 governance phase. The workspace, security
+policy, verification gates, crate boundaries, scope contract, and standards
+ledger exist; image decoding and encoding APIs do not yet exist. The
 [release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 defines the incremental path to the first production-ready 1.0.0 release.
 
@@ -42,7 +42,7 @@ they need:
 
 ```toml
 [dependencies]
-mynd = { version = "0.1.0", default-features = false }
+mynd = { version = "0.2.0", default-features = false }
 ```
 
 The default feature set is intentionally empty.
@@ -51,10 +51,10 @@ The default feature set is intentionally empty.
 
 | Capability | Status | Planned release family |
 |---|---|---|
-| `no_std` facade and core crate boundary | Foundation available | 0.1.x |
-| Validated image metadata and caller-owned buffers | Planned | 0.6.x-0.12.x |
-| Bounded streaming primitives | Planned | 0.13.x-0.18.x |
-| BMP, QOI, Netpbm PNM/PAM, and farbfeld | Planned | 0.19.x-0.35.x |
+| `no_std` facade, core boundary, and governance contract | Foundation available | 0.1.x-0.2.x |
+| Checked image foundations and caller-owned buffers | Planned | 0.3.x-0.12.x |
+| Shared I/O, probing, and codec contracts | Planned | 0.13.x-0.19.x |
+| BMP, QOI, Netpbm PNM/PAM, and farbfeld | Planned | 0.20.x-0.35.x |
 | PNG, GIF, JPEG, WebP, and TIFF | Planned | 0.36.x-0.77.x |
 | Color, resize, transform, and bounded raster-drawing primitives | Planned | 0.78.x-0.94.x |
 | Optional parallelism, async adapters, GPU hooks, and CLI | Planned | 0.95.x-0.98.x |
@@ -62,7 +62,8 @@ The default feature set is intentionally empty.
 
 Each release must satisfy its stated verification and security exit criteria;
 future capabilities are not considered available merely because they appear on
-the roadmap.
+the roadmap. Exact scope and public claim words are defined by the
+[scope and claim contract](https://github.com/valkyoth/mynd/blob/main/docs/SCOPE_AND_CLAIMS.md).
 
 ## Design goals
 
@@ -156,6 +157,9 @@ errata, and recorded security limits. The repository maintains:
 
 - [Specification corpus and reproduction workflow](https://github.com/valkyoth/mynd/blob/main/specs/README.md)
 - [Specification source ledger](https://github.com/valkyoth/mynd/blob/main/SPEC_SOURCES.md)
+- [Standards and errata ledger](https://github.com/valkyoth/mynd/blob/main/docs/STANDARDS_LEDGER.md)
+- [Scope and claim contract](https://github.com/valkyoth/mynd/blob/main/docs/SCOPE_AND_CLAIMS.md)
+- [Corpus provenance schema](https://github.com/valkyoth/mynd/blob/main/docs/corpus-provenance-schema.md)
 - [Specification source policy](https://github.com/valkyoth/mynd/blob/main/docs/spec-source-policy.md)
 - [Implementation plan](https://github.com/valkyoth/mynd/blob/main/docs/IMPLEMENTATION_PLAN.md)
 - [Version plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)

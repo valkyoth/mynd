@@ -847,7 +847,7 @@ Establish explicit sample/color/alpha primitives, source/sink negotiation, stick
 
 ### v0.1.0 - Existing workspace, licenses, feature boundaries, release policy
 
-Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
+Status: Released 2026-07-25.
 
 Context:
 
@@ -899,7 +899,7 @@ Exit criteria:
 
 ### v0.2.0 - Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema
 
-Status: Planned.
+Status: Implementation complete; awaiting pentest.
 
 Context:
 

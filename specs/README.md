@@ -37,6 +37,9 @@ Tracked material currently relies on these explicit terms:
 
 The files are kept byte-for-byte unmodified. Project annotations, clause maps,
 errata decisions, and implementation notes belong outside `specs/public/`.
+The manifest is governed by
+[`SOURCES.schema.json`](SOURCES.schema.json) and the project’s
+[provenance schema contract](../docs/corpus-provenance-schema.md).
 
 ## Recreate and verify
 

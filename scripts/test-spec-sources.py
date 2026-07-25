@@ -73,6 +73,31 @@ def test_manifest_and_locks(module) -> None:
     module.verify(sources, require_offline=False, require_manual=False)
 
 
+def test_manifest_schema_rejects_drift(module) -> None:
+    document = json.loads((ROOT / "specs" / "SOURCES.json").read_text())
+    module.validate_manifest_schema(document)
+
+    unknown = json.loads(json.dumps(document))
+    unknown["sources"][0]["unreviewed_field"] = "not allowed"
+    try:
+        module.validate_manifest_schema(unknown)
+    except module.SchemaError:
+        pass
+    else:
+        raise AssertionError("unknown provenance field was accepted")
+
+    wrong_url_kind = json.loads(json.dumps(document))
+    wrong_url_kind["sources"][0]["acquisition_url"] = wrong_url_kind["sources"][0].pop(
+        "download_url"
+    )
+    try:
+        module.validate_manifest_schema(wrong_url_kind)
+    except module.SchemaError:
+        pass
+    else:
+        raise AssertionError("public source with manual acquisition URL was accepted")
+
+
 def test_malformed_lock_rejected(module) -> None:
     original = module.LOCK_FILES["manual"]
     with tempfile.TemporaryDirectory() as directory:
@@ -126,6 +151,7 @@ def main() -> int:
     module = load_module()
     test_url_security(module)
     test_manifest_and_locks(module)
+    test_manifest_schema_rejects_drift(module)
     test_malformed_lock_rejected(module)
     test_offline_tree_is_ignored()
     test_manifest_is_plain_metadata()

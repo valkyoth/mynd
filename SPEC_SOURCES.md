@@ -8,6 +8,10 @@ This is the human-readable scope ledger. The complete machine-readable
 acquisition, terms, legal disposition, and filename ledger is
 [`specs/SOURCES.json`](specs/SOURCES.json); operating instructions are in
 [`specs/README.md`](specs/README.md).
+The manifest schema is documented in
+[`docs/corpus-provenance-schema.md`](docs/corpus-provenance-schema.md), and
+[`docs/STANDARDS_LEDGER.md`](docs/STANDARDS_LEDGER.md) records scope, errata,
+and unresolved admission blockers.
 
 ## Initial formats
 

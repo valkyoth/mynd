@@ -24,10 +24,11 @@ users of unrelated formats to compile their implementation.
 
 ## Already-admitted 1.0 families
 
-PNM/PAM, QOI, PNG/APNG, classic JPEG, TIFF/Exif, and WebP are no longer
-post-1.0 candidates. Their normative facade handoffs, codec boundaries, and
-evidence gates live only in `docs/VERSION_PLAN.md`; this file must not assign
-a second or conflicting codec train.
+BMP, QOI, PNM/PAM, farbfeld, PNG/APNG, GIF, classic JPEG, TIFF/Exif, and WebP
+are admitted to the 1.0 train and are not post-1.0 candidates. Their normative
+facade handoffs, codec boundaries, and evidence gates live only in
+`docs/VERSION_PLAN.md`; this file must not assign a second or conflicting codec
+train.
 
 ## mynd-jxl internal structure
 
