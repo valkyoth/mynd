@@ -3,8 +3,9 @@
 
 from __future__ import annotations
 
-import importlib.util
+import dataclasses
 import hashlib
+import importlib.util
 import json
 import stat
 import subprocess
@@ -120,13 +121,35 @@ def test_legal_review_reuses_validated_filename_boundary() -> None:
         malicious.write_text(json.dumps(document), encoding="utf-8")
         module.SOURCE_FILE = malicious
         try:
-            module.load_validated_sources()
+            module.load_validated_corpus()
         except module.ReviewError:
             pass
         else:
             raise AssertionError("legal review accepted an unsafe source filename")
         finally:
             module.SOURCE_FILE = original
+
+
+def test_legal_review_binds_exact_public_corpus() -> None:
+    module = load_legal_module()
+    sources, locks = module.load_validated_corpus()
+    review = module.load_json(module.REVIEW)
+    module.validate_review(sources, locks, review)
+    source = next(source for source in sources if source.disposition == "public")
+    changed_sources = [
+        dataclasses.replace(item, title=f"{item.title} changed")
+        if item.identifier == source.identifier
+        else item
+        for item in sources
+    ]
+    changed_locks = dict(locks)
+    changed_locks[source.filename] = "0" * 64
+    try:
+        module.validate_review(changed_sources, changed_locks, review)
+    except module.ReviewError:
+        pass
+    else:
+        raise AssertionError("legal review accepted changed provenance and source bytes")
 
 
 def test_malformed_lock_rejected(module) -> None:
@@ -257,6 +280,9 @@ def test_changed_upstream_bytes_are_not_installed(module) -> None:
         source = module.Source(
             identifier="changed-upstream",
             title="Changed upstream",
+            publisher="W3C",
+            edition="Test",
+            role="Test fixture",
             disposition="public",
             filename="changed.txt",
             download_url="https://www.w3.org/TR/png-3/",
@@ -315,6 +341,7 @@ def main() -> int:
     test_manifest_and_locks(module)
     test_manifest_schema_rejects_drift(module)
     test_legal_review_reuses_validated_filename_boundary()
+    test_legal_review_binds_exact_public_corpus()
     test_malformed_lock_rejected(module)
     test_byte_mutation_is_rejected(module)
     test_unknown_private_entry_is_rejected(module)

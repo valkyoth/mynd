@@ -48,6 +48,10 @@ The legal-review ledger documents a maintainer repository disposition, not
 legal advice. Its approval applies only to exact unmodified, checksum-locked
 bytes with their original notices; any source, bytes, edition, URL, license,
 terms, or disposition change invalidates that evidence until reviewed again.
+The approval's `corpus_sha256` is computed over canonical JSON containing
+every public source's validated identity, publisher, edition, role,
+disposition, filename, acquisition and terms URLs, license, byte ceiling, and
+locked content hash. Renewing it is an explicit human review action.
 
 ## Immutable local evidence
 

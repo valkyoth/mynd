@@ -4,6 +4,7 @@
   "reviewed_by": "Mynd maintainers",
   "scope": "Disposition review for unmodified third-party specification copies tracked in specs/public.",
   "decision": "approved",
+  "corpus_sha256": "bafdcf804b56d884efc48e96c564e555e8921ab029b5061ad52f6324a240f4f8",
   "limitations": [
     "This record documents a repository disposition decision and is not legal advice.",
     "Mynd claims no ownership in third-party materials and does not relicense them under MIT or Apache-2.0.",

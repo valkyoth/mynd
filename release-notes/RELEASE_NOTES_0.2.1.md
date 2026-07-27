@@ -50,3 +50,11 @@ checker reconstructed ignored private paths from raw manifest JSON after the
 canonical validator had separately accepted the file. The checker now consumes
 only validated `Source` objects, and a traversal-shaped filename regression
 test proves failure before any Git path check. The remediation awaits retest.
+
+A follow-up review found that legal approval was not yet cryptographically
+bound to the approved source bytes and complete provenance record. The legal
+ledger now contains a canonical corpus SHA-256 covering every validated public
+identity, publisher, edition, role, disposition, filename, acquisition field,
+terms field, license, byte ceiling, and locked source hash. Changing both
+source provenance and its checksum now fails legal validation until a human
+deliberately renews that approval digest. This remediation also awaits retest.

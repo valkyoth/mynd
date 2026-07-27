@@ -36,7 +36,8 @@ JSON Schema does not:
 - manual locks cannot name an unknown record;
 - tracked public files are regular, non-symlink, read-only, exact-hash files;
 - every tracked source is covered exactly once by `specs/LEGAL_REVIEW.json`,
-  with a matching license, terms URL, and attribution instruction;
+  with a matching license, terms URL, attribution instruction, and canonical
+  digest over all public provenance fields and locked content hashes;
 - ignored offline/manual files are verified when present or explicitly
   required, and unknown entries in their shared directory are rejected;
 - crate allowlists exclude every specification document.
@@ -58,4 +59,6 @@ evidence.
 The legal-review record is intentionally separate from the source schema. A
 valid provenance record describes the declared terms; only the separately
 reviewed, machine-checked disposition record authorizes an exact public copy
-for tracking.
+for tracking. Its `corpus_sha256` changes when any security-relevant public
+metadata or locked bytes change, requiring deliberate disposition review
+before the repository gate can pass again.

@@ -73,6 +73,9 @@ class SourceError(RuntimeError):
 class Source:
     identifier: str
     title: str
+    publisher: str
+    edition: str
+    role: str
     disposition: str
     filename: str
     download_url: str | None
@@ -119,7 +122,6 @@ def load_sources() -> list[Source]:
         validate_manifest_schema(document)
     except SchemaError as error:
         raise SourceError(str(error)) from error
-
     sources: list[Source] = []
     identifiers: set[str] = set()
     destinations: set[tuple[str, str]] = set()
@@ -171,6 +173,9 @@ def load_sources() -> list[Source]:
             Source(
                 identifier=identifier,
                 title=raw["title"],
+                publisher=raw["publisher"],
+                edition=raw["edition"],
+                role=raw["role"],
                 disposition=disposition,
                 filename=filename,
                 download_url=download_url,
@@ -228,9 +233,7 @@ def assert_file_type(path: Path) -> None:
         raise SourceError(f"expected an HTML document: {path}")
 
 
-def expected_by_disposition(
-    sources: list[Source],
-) -> dict[str, dict[str, Source]]:
+def expected_by_disposition(sources: list[Source]) -> dict[str, dict[str, Source]]:
     result = {key: {} for key in LOCK_FILES}
     for source in sources:
         result[source.disposition][source.filename] = source

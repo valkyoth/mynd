@@ -34,6 +34,9 @@ a time.
 - Remediated the pentest's Low inconsistent-filename-validation finding by
   making the legal checker consume only the canonical validated source model
   and adding a traversal-shaped filename regression test.
+- Remediated the follow-up Medium stale-legal-approval finding by binding
+  approval to a canonical digest of every public provenance field and locked
+  source hash, with a coupled provenance/content mutation regression test.
 
 ## [0.2.0] - 2026-07-25
 

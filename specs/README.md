@@ -41,9 +41,10 @@ The manifest is governed by
 [`SOURCES.schema.json`](SOURCES.schema.json) and the project’s
 [provenance schema contract](../docs/corpus-provenance-schema.md).
 [`LEGAL_REVIEW.json`](LEGAL_REVIEW.json) binds the maintainer disposition
-approval for each tracked source to its exact source ID, license, terms URL,
-and attribution requirement. It is a repository disposition record, not legal
-advice or an ownership claim.
+approval to a canonical digest of every tracked source's complete validated
+provenance record and locked content hash. Per-source groups also record exact
+source IDs, licenses, terms URLs, and attribution requirements. It is a
+repository disposition record, not legal advice or an ownership claim.
 
 ## Recreate and verify
 
@@ -87,7 +88,7 @@ accepts click-through terms, supplies credentials, or automates purchases.
 - `MANUAL_SHA256SUMS` locks lawfully acquired manual copies without publishing
   them.
 - `LEGAL_REVIEW.json` covers every tracked source exactly once and is checked
-  against the manifest.
+  against the complete manifest and public checksum set.
 - `scripts/lock-specs.sh` applies a local read-only guard.
 - `.gitattributes` prevents text and line-ending normalization.
 - `CODEOWNERS` protects source and checksum changes when branch rules enforce

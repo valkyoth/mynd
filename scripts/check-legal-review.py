@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime
+import hashlib
 import importlib.util
 import json
 import subprocess
@@ -23,6 +24,7 @@ TOP_LEVEL_KEYS = {
     "decision",
     "limitations",
     "groups",
+    "corpus_sha256",
 }
 GROUP_KEYS = {
     "id",
@@ -53,7 +55,7 @@ def require(condition: bool, message: str) -> None:
         raise ReviewError(message)
 
 
-def load_validated_sources() -> list[Any]:
+def load_validated_corpus() -> tuple[list[Any], dict[str, str]]:
     module_path = ROOT / "scripts" / "spec-sources.py"
     spec = importlib.util.spec_from_file_location("mynd_legal_spec_sources", module_path)
     if spec is None or spec.loader is None:
@@ -63,7 +65,8 @@ def load_validated_sources() -> list[Any]:
     spec.loader.exec_module(module)
     module.SOURCE_FILE = SOURCE_FILE
     try:
-        return module.load_sources()
+        sources = module.load_sources()
+        return sources, module.validate_locks(sources)["public"]
     except module.SourceError as error:
         raise ReviewError(f"source manifest validation failed: {error}") from error
 
@@ -79,7 +82,35 @@ def git_lines(*arguments: str) -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
-def validate_review(sources: list[Any], review: dict[str, Any]) -> None:
+def legal_corpus_digest(sources: list[Any], public_locks: dict[str, str]) -> str:
+    records = [
+        {
+            "id": source.identifier,
+            "title": source.title,
+            "publisher": source.publisher,
+            "edition": source.edition,
+            "role": source.role,
+            "disposition": source.disposition,
+            "filename": source.filename,
+            "download_url": source.download_url,
+            "acquisition_url": source.acquisition_url,
+            "terms_url": source.terms_url,
+            "license": source.license,
+            "max_bytes": source.max_bytes,
+            "sha256": public_locks[source.filename],
+        }
+        for source in sorted(sources, key=lambda item: item.identifier)
+        if source.disposition == "public"
+    ]
+    canonical = json.dumps(
+        records, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def validate_review(
+    sources: list[Any], public_locks: dict[str, str], review: dict[str, Any]
+) -> None:
     require(set(review) == TOP_LEVEL_KEYS, "legal review top-level fields differ")
     require(review["schema_version"] == 1, "unsupported legal review schema")
     try:
@@ -151,6 +182,10 @@ def validate_review(sources: list[Any], review: dict[str, Any]) -> None:
         f"missing={sorted(public_ids - set(reviewed))}, "
         f"extra={sorted(set(reviewed) - public_ids)}",
     )
+    require(
+        review["corpus_sha256"] == legal_corpus_digest(sources, public_locks),
+        "legal approval does not match the exact reviewed corpus",
+    )
 
 
 def validate_private_exclusion(sources: list[Any]) -> None:
@@ -178,9 +213,9 @@ def validate_private_exclusion(sources: list[Any]) -> None:
 
 def main() -> int:
     try:
-        sources = load_validated_sources()
+        sources, public_locks = load_validated_corpus()
         review = load_json(REVIEW)
-        validate_review(sources, review)
+        validate_review(sources, public_locks, review)
         validate_private_exclusion(sources)
     except (KeyError, ReviewError, subprocess.SubprocessError) as error:
         print(f"legal review error: {error}", file=sys.stderr)
