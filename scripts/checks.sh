@@ -6,6 +6,7 @@ scripts/check_shell_syntax.sh
 scripts/lock-specs.sh
 scripts/verify-specs.sh
 python3 scripts/test-spec-sources.py
+python3 scripts/check-legal-review.py
 python3 scripts/check-governance.py
 scripts/check-readmes.sh
 scripts/check-package-licenses.sh

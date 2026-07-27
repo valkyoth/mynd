@@ -35,8 +35,10 @@ JSON Schema does not:
 - checksum manifests contain exactly the public/offline file set;
 - manual locks cannot name an unknown record;
 - tracked public files are regular, non-symlink, read-only, exact-hash files;
+- every tracked source is covered exactly once by `specs/LEGAL_REVIEW.json`,
+  with a matching license, terms URL, and attribution instruction;
 - ignored offline/manual files are verified when present or explicitly
-  required;
+  required, and unknown entries in their shared directory are rejected;
 - crate allowlists exclude every specification document.
 
 The schema and validator are both release-controlled. Raising
@@ -52,3 +54,8 @@ accept errata, admit a format, or prove conformance. Those decisions live in
 [`STANDARDS_LEDGER.md`](STANDARDS_LEDGER.md),
 [`SCOPE_AND_CLAIMS.md`](SCOPE_AND_CLAIMS.md), and exact-version release
 evidence.
+
+The legal-review record is intentionally separate from the source schema. A
+valid provenance record describes the declared terms; only the separately
+reviewed, machine-checked disposition record authorizes an exact public copy
+for tracking.

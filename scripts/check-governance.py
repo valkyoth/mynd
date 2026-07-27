@@ -97,8 +97,8 @@ def check_document_scope() -> None:
         (readme, facade_readme, support, implementation, sources, modularity)
     )
     require(readme == facade_readme, "facade README differs from repository README")
-    require("current 0.2.0 governance phase" in readme, "README phase is stale")
-    require('version = "0.2.0"' in readme, "README install version is stale")
+    require("current 0.2.1 specification-corpus phase" in readme, "README phase is stale")
+    require('version = "0.2.1"' in readme, "README install version is stale")
     require("0.13.x-0.19.x" in readme, "README shared-contract train is stale")
     require(
         "Version 0.1.0 is a repository foundation only." in core_readme
@@ -166,23 +166,23 @@ def check_release_graph() -> None:
     core = toml("crates/mynd-core/Cargo.toml")
     release = toml("release-crates.toml")
     require(workspace["workspace"]["package"]["version"] == "0.1.0", "support baseline version")
-    require(facade["package"]["version"] == "0.2.0", "mynd facade train version")
+    require(facade["package"]["version"] == "0.2.1", "mynd facade train version")
     require(
         core["package"]["version"] == {"workspace": True},
         "mynd-core must remain at the 0.1.0 workspace baseline",
     )
     dependency = workspace["workspace"]["dependencies"]["mynd-core"]
     require(dependency["version"] == "=0.1.0", "mynd-core dependency must stay exact")
-    require(release["release"]["version"] == "0.2.0", "release plan version drift")
+    require(release["release"]["version"] == "0.2.1", "release plan version drift")
     require(
         release["crates"]["mynd-core"]["change"] == "unchanged"
         and release["crates"]["mynd-core"]["publish"] is False,
         "unchanged mynd-core must not publish",
     )
     require(
-        release["crates"]["mynd"]["version"] == "0.2.0"
+        release["crates"]["mynd"]["version"] == "0.2.1"
         and release["crates"]["mynd"]["publish"] is True,
-        "mynd 0.2.0 must be the only published package",
+        "mynd 0.2.1 must be the only published package",
     )
 
 

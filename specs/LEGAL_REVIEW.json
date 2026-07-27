@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "reviewed_on": "2026-07-27",
+  "reviewed_by": "Mynd maintainers",
+  "scope": "Disposition review for unmodified third-party specification copies tracked in specs/public.",
+  "decision": "approved",
+  "limitations": [
+    "This record documents a repository disposition decision and is not legal advice.",
+    "Mynd claims no ownership in third-party materials and does not relicense them under MIT or Apache-2.0.",
+    "Approval applies only to the exact checksum-locked, unmodified source bytes and recorded notices.",
+    "A source, byte, edition, URL, license, terms, or disposition change requires a new review."
+  ],
+  "groups": [
+    {
+      "id": "ietf-tlp-5",
+      "license": "IETF Trust Legal Provisions 5.0",
+      "terms_url": "https://trustee.ietf.org/documents/trust-legal-provisions/tlp-5/",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain each RFC's IETF Trust copyright, authorship, status, and license notices.",
+      "source_ids": [
+        "rfc1950",
+        "rfc1951",
+        "rfc2119",
+        "rfc4647",
+        "rfc5646",
+        "rfc6386",
+        "rfc8174",
+        "rfc9649"
+      ]
+    },
+    {
+      "id": "w3c-document-license-2023",
+      "license": "W3C Document License 2023",
+      "terms_url": "https://www.w3.org/copyright/document-license-2023/",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the original W3C document URL, copyright notice, document status, and license notice.",
+      "source_ids": [
+        "compositing1",
+        "css-color4",
+        "png3",
+        "png3-errata"
+      ]
+    },
+    {
+      "id": "w3c-document-license-2002",
+      "license": "W3C Document License 2002",
+      "terms_url": "https://www.w3.org/Consortium/Legal/2002/copyright-documents-20021231",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the original W3C document URL, copyright notice, document status, and license notice.",
+      "source_ids": [
+        "rdf11-xml",
+        "xml-names10-third",
+        "xml-names10-third-errata",
+        "xml10-fifth",
+        "xml10-fifth-errata"
+      ]
+    },
+    {
+      "id": "microsoftdocs-cc-by-4",
+      "license": "Creative Commons Attribution 4.0",
+      "terms_url": "https://creativecommons.org/licenses/by/4.0/legalcode",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain MicrosoftDocs attribution, source links, copyright notices, and the CC BY 4.0 license link.",
+      "source_ids": [
+        "bmp-compression",
+        "bmp-core-header",
+        "bmp-file-header",
+        "bmp-header-types",
+        "bmp-info-header",
+        "bmp-rgbquad",
+        "bmp-rgbtriple",
+        "bmp-storage",
+        "bmp-v4-header",
+        "bmp-v5-header",
+        "ms-sdk-api-license",
+        "ms-win32-license"
+      ]
+    },
+    {
+      "id": "libwebp-bsd-3-clause",
+      "license": "BSD-3-Clause",
+      "terms_url": "https://raw.githubusercontent.com/webmproject/libwebp/733c91e461c18cf1127c9ed0a80dccbcfed599d3/COPYING",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the libwebp copyright and BSD-3-Clause conditions and disclaimer.",
+      "source_ids": [
+        "libwebp-license",
+        "vp8l"
+      ]
+    },
+    {
+      "id": "qoi-mit-upstream",
+      "license": "MIT",
+      "terms_url": "https://raw.githubusercontent.com/phoboslab/qoi/97bacc86a9c4abf5a2d452102dc26546c4c670b9/LICENSE",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the QOI copyright and MIT permission notice.",
+      "source_ids": [
+        "qoi-spec"
+      ]
+    },
+    {
+      "id": "qoi-mit-reference",
+      "license": "MIT",
+      "terms_url": "https://opensource.org/license/mit",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the QOI copyright and MIT permission notice.",
+      "source_ids": [
+        "qoi-license"
+      ]
+    },
+    {
+      "id": "farbfeld-isc",
+      "license": "ISC",
+      "terms_url": "https://git.suckless.org/farbfeld/file/LICENSE.html",
+      "decision": "track-unmodified-with-notices",
+      "attribution": "Retain the farbfeld copyright and ISC permission notice.",
+      "source_ids": [
+        "farbfeld-format",
+        "farbfeld-license"
+      ]
+    }
+  ]
+}

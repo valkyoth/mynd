@@ -1,6 +1,6 @@
 # mynd 0.2.0 Release Notes
 
-Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
+Release date: 2026-07-25.
 
 This governance-only release reconciles the exact pre-1.0 image scope, public
 claim vocabulary, standards and errata ledger, corpus provenance schema, crate

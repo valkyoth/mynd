@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
+import stat
 import subprocess
 import sys
 import tempfile
@@ -115,6 +117,136 @@ def test_malformed_lock_rejected(module) -> None:
             module.LOCK_FILES["manual"] = original
 
 
+def test_byte_mutation_is_rejected(module) -> None:
+    source = next(
+        source for source in module.load_sources() if source.disposition == "public"
+    )
+    original = source.destination.read_bytes()
+    expected = hashlib.sha256(original).hexdigest()
+    lock_before = module.LOCK_FILES["public"].read_bytes()
+    with tempfile.TemporaryDirectory() as directory:
+        candidate = Path(directory) / source.filename
+        candidate.write_bytes(original)
+        candidate.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        module.assert_integrity(candidate, expected)
+        candidate.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        changed = bytearray(original)
+        changed[0] ^= 1
+        candidate.write_bytes(changed)
+        candidate.chmod(stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+        try:
+            module.assert_integrity(candidate, expected)
+        except module.SourceError:
+            pass
+        else:
+            raise AssertionError("mutated source bytes were accepted")
+    assert module.LOCK_FILES["public"].read_bytes() == lock_before
+
+
+def test_unknown_private_entry_is_rejected(module) -> None:
+    original = module.OFFLINE_DIR
+    with tempfile.TemporaryDirectory() as directory:
+        module.OFFLINE_DIR = Path(directory)
+        (module.OFFLINE_DIR / "unreviewed-source.pdf").write_bytes(b"%PDF-1.7\n")
+        try:
+            module.verify(
+                module.load_sources(), require_offline=False, require_manual=False
+            )
+        except module.SourceError:
+            pass
+        else:
+            raise AssertionError("unknown private source entry was accepted")
+        finally:
+            module.OFFLINE_DIR = original
+
+
+def test_private_dangling_symlink_is_rejected(module) -> None:
+    original = module.OFFLINE_DIR
+    source = next(
+        source for source in module.load_sources() if source.disposition == "offline"
+    )
+    with tempfile.TemporaryDirectory() as directory:
+        module.OFFLINE_DIR = Path(directory)
+        (module.OFFLINE_DIR / source.filename).symlink_to("missing-source")
+        try:
+            module.verify(
+                module.load_sources(), require_offline=False, require_manual=False
+            )
+        except module.SourceError:
+            pass
+        else:
+            raise AssertionError("private dangling symlink was accepted")
+        finally:
+            module.OFFLINE_DIR = original
+
+
+def test_fetch_all_never_selects_manual_sources(module) -> None:
+    original_download = module.download
+    original_lock = module.lock_local_files
+    selected: list[str] = []
+    module.download = lambda source, _expected: selected.append(source.disposition)
+    module.lock_local_files = lambda _sources: None
+    try:
+        module.fetch(module.load_sources(), "all")
+    finally:
+        module.download = original_download
+        module.lock_local_files = original_lock
+    assert selected
+    assert set(selected) == {"public", "offline"}
+
+
+def test_changed_upstream_bytes_are_not_installed(module) -> None:
+    class Response:
+        headers: dict[str, str] = {}
+
+        def __init__(self) -> None:
+            self.remaining = b"unexpected upstream bytes"
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args) -> None:
+            return None
+
+        def geturl(self) -> str:
+            return "https://www.w3.org/TR/png-3/"
+
+        def read(self, _size: int) -> bytes:
+            chunk, self.remaining = self.remaining, b""
+            return chunk
+
+    class Opener:
+        def open(self, _request, timeout: int):
+            assert timeout == 30
+            return Response()
+
+    original_public = module.PUBLIC_DIR
+    original_builder = module.urllib.request.build_opener
+    with tempfile.TemporaryDirectory() as directory:
+        module.PUBLIC_DIR = Path(directory)
+        module.urllib.request.build_opener = lambda *_handlers: Opener()
+        source = module.Source(
+            identifier="changed-upstream",
+            title="Changed upstream",
+            disposition="public",
+            filename="changed.txt",
+            download_url="https://www.w3.org/TR/png-3/",
+            acquisition_url=None,
+            terms_url="https://www.w3.org/copyright/document-license-2023/",
+            max_bytes=1024,
+        )
+        try:
+            module.download(source, "0" * 64)
+        except module.SourceError:
+            pass
+        else:
+            raise AssertionError("changed upstream bytes were installed")
+        finally:
+            module.PUBLIC_DIR = original_public
+            module.urllib.request.build_opener = original_builder
+        assert not list(Path(directory).iterdir())
+
+
 def test_offline_tree_is_ignored() -> None:
     result = subprocess.run(
         ["git", "check-ignore", "specs/offline/files/probe.pdf"],
@@ -153,6 +285,11 @@ def main() -> int:
     test_manifest_and_locks(module)
     test_manifest_schema_rejects_drift(module)
     test_malformed_lock_rejected(module)
+    test_byte_mutation_is_rejected(module)
+    test_unknown_private_entry_is_rejected(module)
+    test_private_dangling_symlink_is_rejected(module)
+    test_fetch_all_never_selects_manual_sources(module)
+    test_changed_upstream_bytes_are_not_installed(module)
     test_offline_tree_is_ignored()
     test_manifest_is_plain_metadata()
     print("specification source tests passed")

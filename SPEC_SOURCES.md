@@ -9,7 +9,10 @@ acquisition, terms, legal disposition, and filename ledger is
 [`specs/SOURCES.json`](specs/SOURCES.json); operating instructions are in
 [`specs/README.md`](specs/README.md).
 The manifest schema is documented in
-[`docs/corpus-provenance-schema.md`](docs/corpus-provenance-schema.md), and
+[`docs/corpus-provenance-schema.md`](docs/corpus-provenance-schema.md).
+[`specs/LEGAL_REVIEW.json`](specs/LEGAL_REVIEW.json) records exact
+tracked-source disposition and attribution review. It is not an ownership
+claim or broad legal advice.
 [`docs/STANDARDS_LEDGER.md`](docs/STANDARDS_LEDGER.md) records scope, errata,
 and unresolved admission blockers.
 
@@ -52,4 +55,5 @@ ISO and other protected publications remain outside the public repository.
 Original implementation notes may cite clauses but must not reproduce large
 normative passages. Run `scripts/fetch-specs.sh` to recreate public and
 direct-download offline evidence; it never automates purchases, credentials,
-or click-through acceptance.
+or click-through acceptance. CI runs `scripts/check-spec-recreation.py` from
+isolated empty destinations and rejects any fetched manual or unknown file.

@@ -11,7 +11,7 @@ workspace version without changing its package inputs.
 | Crate | Previous | Planned | Change | Publish | Reason |
 | --- | --- | --- | --- | --- | --- |
 | `mynd-core` | `0.1.0` | `0.1.0` | unchanged | No | No published code, dependency, or package metadata changed. |
-| `mynd` | `0.1.0` | `0.2.0` | metadata | Yes | Publish the reconciled scope, claims, and governance documentation. |
+| `mynd` | `0.2.0` | `0.2.1` | metadata | Yes | Publish reproducible corpus, legal-disposition, and verification documentation. |
 
 Change kinds follow the adapted `eth` release tool: facade code uses the
 milestone version; support-crate code gets its next independent minor; bugfixes

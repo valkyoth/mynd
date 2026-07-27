@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from spec_fs import directory_entry_names
 from spec_schema import SchemaError, validate_manifest_schema
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -268,14 +269,7 @@ def verify(
 ) -> None:
     locks = validate_locks(sources)
     expected = expected_by_disposition(sources)
-    try:
-        public_actual = {
-            path.name
-            for path in PUBLIC_DIR.iterdir()
-            if path.is_file() or path.is_symlink()
-        }
-    except FileNotFoundError:
-        public_actual = set()
+    public_actual = directory_entry_names(PUBLIC_DIR)
     public_expected = set(expected["public"])
     if public_actual != public_expected:
         raise SourceError(
@@ -286,13 +280,19 @@ def verify(
     for filename, digest in locks["public"].items():
         assert_integrity(PUBLIC_DIR / filename, digest)
 
+    private_actual = directory_entry_names(OFFLINE_DIR)
+    private_expected = set(expected["offline"]) | set(expected["manual"])
+    private_extra = private_actual - private_expected
+    if private_extra:
+        raise SourceError(f"private source set has unknown entries: {sorted(private_extra)}")
+
     for disposition, required in (
         ("offline", require_offline),
         ("manual", require_manual),
     ):
         for filename, source in expected[disposition].items():
             path = source.destination
-            if not path.exists():
+            if not path.exists() and not path.is_symlink():
                 if required:
                     raise SourceError(f"required {disposition} source is missing: {filename}")
                 continue

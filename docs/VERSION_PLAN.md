@@ -899,7 +899,7 @@ Exit criteria:
 
 ### v0.2.0 - Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema
 
-Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
+Status: Released 2026-07-25.
 
 Context:
 
@@ -955,7 +955,7 @@ Exit criteria:
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
-Status: Planned.
+Status: Implementation complete; awaiting pentest.
 
 Context:
 

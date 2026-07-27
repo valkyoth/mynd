@@ -1,5 +1,5 @@
 [release]
-version = "0.2.0"
+version = "0.2.1"
 
 [crates.mynd-core]
 previous_version = "0.1.0"
@@ -9,8 +9,8 @@ publish = false
 reason = "No published code, dependency, or package metadata changed."
 
 [crates.mynd]
-previous_version = "0.1.0"
-version = "0.2.0"
+previous_version = "0.2.0"
+version = "0.2.1"
 change = "metadata"
 publish = true
-reason = "Publish the reconciled scope, claims, and governance documentation."
+reason = "Publish reproducible corpus, legal-disposition, and verification documentation."

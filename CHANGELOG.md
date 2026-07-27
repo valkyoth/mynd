@@ -6,7 +6,33 @@ a time.
 
 ## [Unreleased]
 
-## [0.2.0] - Unreleased
+## [0.2.1] - Unreleased
+
+### Added
+
+- Exact, machine-checked legal-disposition review covering every tracked
+  third-party specification and its attribution requirements.
+- Isolated clean-destination reconstruction gate for all public and
+  automatically downloadable offline sources.
+- Mutation tests for source bytes, manifest structure, unknown private files,
+  manual-fetch exclusion, and changed upstream responses.
+
+### Changed
+
+- Specification verification now rejects every unknown entry in the shared
+  ignored offline/manual directory as well as the tracked public directory.
+- Corpus policy and provenance documentation now bind tracked approval to
+  exact unmodified bytes and require review again after any relevant change.
+
+### Security
+
+- Downloads remain allow-listed, size-bounded, checksum-locked, and atomically
+  installed only after full verification; manual acquisitions remain excluded
+  from automation.
+- Added a permanent v0.2.1 pentest scaffold for the corpus reconstruction and
+  legal-disposition boundary.
+
+## [0.2.0] - 2026-07-25
 
 ### Added
 
@@ -73,6 +99,7 @@ a time.
 - Explicit crates.io version-and-lockfile trust boundary for CI security-tool
   installation.
 
-[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/valkyoth/mynd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/valkyoth/mynd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/valkyoth/mynd/releases/tag/v0.1.0

@@ -5,7 +5,8 @@ Status: policy
 Every format behavior starts with current official or original source
 material. The public source ledger is [`SPEC_SOURCES.md`](../SPEC_SOURCES.md);
 the machine-readable acquisition and legal ledger is
-[`specs/SOURCES.json`](../specs/SOURCES.json).
+[`specs/SOURCES.json`](../specs/SOURCES.json). The exact tracked-source
+disposition approval is [`specs/LEGAL_REVIEW.json`](../specs/LEGAL_REVIEW.json).
 
 ## Source admission
 
@@ -43,6 +44,10 @@ Every source has exactly one disposition:
 The project claims no ownership in third-party materials. They are not
 licensed under Mynd's MIT or Apache-2.0 terms. When uncertainty remains, the
 source is kept offline; maintainers do not make an optimistic legal inference.
+The legal-review ledger documents a maintainer repository disposition, not
+legal advice. Its approval applies only to exact unmodified, checksum-locked
+bytes with their original notices; any source, bytes, edition, URL, license,
+terms, or disposition change invalidates that evidence until reviewed again.
 
 ## Immutable local evidence
 
@@ -59,7 +64,7 @@ source is kept offline; maintainers do not make an optimistic legal inference.
 
 Git does not preserve read-only mode portably. The repository gate reapplies
 it before checking mode, file identity, hashes, symlink safety, and the exact
-tracked public set.
+tracked public and ignored private sets.
 
 ## Acquisition security
 
@@ -74,6 +79,9 @@ The fetcher:
 
 A remote hash change fails closed. It is a source-update event requiring
 identity, edition, legal, content, test, security, and release-note review.
+CI separately recreates every automatic public/offline source from isolated
+empty destinations and proves that the operation never selects a manual
+source.
 
 ## Conformance and interpretation
 

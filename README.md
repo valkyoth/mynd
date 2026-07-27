@@ -29,9 +29,9 @@
 resource use, deterministic behavior, and deployment from embedded `no_std`
 systems through desktop and server applications.
 
-The project is in its current 0.2.0 governance phase. The workspace, security
-policy, verification gates, crate boundaries, scope contract, and standards
-ledger exist; image decoding and encoding APIs do not yet exist. The
+The project is in its current 0.2.1 specification-corpus phase. The workspace,
+security policy, verification gates, crate boundaries, scope contract, and
+standards ledger exist; image decoding and encoding APIs do not yet exist. The
 [release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 defines the incremental path to the first production-ready 1.0.0 release.
 
@@ -42,7 +42,7 @@ they need:
 
 ```toml
 [dependencies]
-mynd = { version = "0.2.0", default-features = false }
+mynd = { version = "0.2.1", default-features = false }
 ```
 
 The default feature set is intentionally empty.
@@ -95,7 +95,7 @@ features only when their release gates are complete.
 The minimum supported Rust version is Rust `1.90.0`. New deployments should use
 the pinned stable Rust `1.97.1` until the toolchain policy is updated.
 
-Compatibility evidence for `0.2.0`:
+Compatibility evidence for `0.2.1`:
 
 | Rust | Local Evidence |
 | --- | --- |
@@ -150,6 +150,7 @@ Mynd implementations must be traceable to authoritative format specifications,
 errata, and recorded security limits. The repository maintains:
 
 - [Specification corpus and reproduction workflow](https://github.com/valkyoth/mynd/blob/main/specs/README.md)
+- [Tracked-source legal disposition review](https://github.com/valkyoth/mynd/blob/main/specs/LEGAL_REVIEW.json)
 - [Specification source ledger](https://github.com/valkyoth/mynd/blob/main/SPEC_SOURCES.md)
 - [Standards and errata ledger](https://github.com/valkyoth/mynd/blob/main/docs/STANDARDS_LEDGER.md)
 - [Scope and claim contract](https://github.com/valkyoth/mynd/blob/main/docs/SCOPE_AND_CLAIMS.md)

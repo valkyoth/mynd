@@ -40,6 +40,10 @@ errata decisions, and implementation notes belong outside `specs/public/`.
 The manifest is governed by
 [`SOURCES.schema.json`](SOURCES.schema.json) and the project’s
 [provenance schema contract](../docs/corpus-provenance-schema.md).
+[`LEGAL_REVIEW.json`](LEGAL_REVIEW.json) binds the maintainer disposition
+approval for each tracked source to its exact source ID, license, terms URL,
+and attribution requirement. It is a repository disposition record, not legal
+advice or an ownership claim.
 
 ## Recreate and verify
 
@@ -57,6 +61,9 @@ scripts/verify-specs.sh
 
 # Also require the complete automatically downloadable offline set.
 scripts/verify-specs.sh --require-offline
+
+# Recreate public and offline sources from isolated empty destinations.
+python3 scripts/check-spec-recreation.py
 
 # Show the remaining purchase/login/manual work.
 python3 scripts/spec-sources.py status
@@ -79,6 +86,8 @@ accepts click-through terms, supplies credentials, or automates purchases.
 - `OFFLINE_SHA256SUMS` makes ignored direct downloads reproducible.
 - `MANUAL_SHA256SUMS` locks lawfully acquired manual copies without publishing
   them.
+- `LEGAL_REVIEW.json` covers every tracked source exactly once and is checked
+  against the manifest.
 - `scripts/lock-specs.sh` applies a local read-only guard.
 - `.gitattributes` prevents text and line-ending normalization.
 - `CODEOWNERS` protects source and checksum changes when branch rules enforce
@@ -98,7 +107,7 @@ access.
 3. Run `python3 scripts/spec-sources.py candidate-locks public` or `offline`
    into a temporary review record.
 4. Inspect the fetched identity, legal notices, edition, and content before
-   changing the appropriate checksum manifest.
+   changing the appropriate checksum manifest and `LEGAL_REVIEW.json`.
 5. Remove only the specific obsolete local copy, run `scripts/fetch-specs.sh`,
    and review the replacement.
 6. Update `SPEC_SOURCES.md`, requirement mappings, tests, security evidence,
