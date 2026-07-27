@@ -31,6 +31,9 @@ a time.
   from automation.
 - Added a permanent v0.2.1 pentest scaffold for the corpus reconstruction and
   legal-disposition boundary.
+- Remediated the pentest's Low inconsistent-filename-validation finding by
+  making the legal checker consume only the canonical validated source model
+  and adding a traversal-shaped filename regression test.
 
 ## [0.2.0] - 2026-07-25
 

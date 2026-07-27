@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime
+import importlib.util
 import json
 import subprocess
 import sys
@@ -11,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCES = ROOT / "specs" / "SOURCES.json"
+SOURCE_FILE = ROOT / "specs" / "SOURCES.json"
 REVIEW = ROOT / "specs" / "LEGAL_REVIEW.json"
 
 TOP_LEVEL_KEYS = {
@@ -52,6 +53,21 @@ def require(condition: bool, message: str) -> None:
         raise ReviewError(message)
 
 
+def load_validated_sources() -> list[Any]:
+    module_path = ROOT / "scripts" / "spec-sources.py"
+    spec = importlib.util.spec_from_file_location("mynd_legal_spec_sources", module_path)
+    if spec is None or spec.loader is None:
+        raise ReviewError("cannot load the validated specification source model")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    module.SOURCE_FILE = SOURCE_FILE
+    try:
+        return module.load_sources()
+    except module.SourceError as error:
+        raise ReviewError(f"source manifest validation failed: {error}") from error
+
+
 def git_lines(*arguments: str) -> list[str]:
     result = subprocess.run(
         ["git", *arguments],
@@ -63,7 +79,7 @@ def git_lines(*arguments: str) -> list[str]:
     return [line for line in result.stdout.splitlines() if line]
 
 
-def validate_review(sources: dict[str, Any], review: dict[str, Any]) -> None:
+def validate_review(sources: list[Any], review: dict[str, Any]) -> None:
     require(set(review) == TOP_LEVEL_KEYS, "legal review top-level fields differ")
     require(review["schema_version"] == 1, "unsupported legal review schema")
     try:
@@ -83,11 +99,11 @@ def validate_review(sources: dict[str, Any], review: dict[str, Any]) -> None:
         "legal review limitations are incomplete",
     )
 
-    entries = {entry["id"]: entry for entry in sources["sources"]}
+    entries = {source.identifier: source for source in sources}
     public_ids = {
         identifier
-        for identifier, entry in entries.items()
-        if entry["disposition"] == "public"
+        for identifier, source in entries.items()
+        if source.disposition == "public"
     }
     reviewed: list[str] = []
     group_ids: set[str] = set()
@@ -118,11 +134,11 @@ def validate_review(sources: dict[str, Any], review: dict[str, Any]) -> None:
             require(identifier in public_ids, f"{group['id']}: non-public source {identifier}")
             entry = entries[identifier]
             require(
-                entry["license"] == group["license"],
+                entry.license == group["license"],
                 f"{identifier}: reviewed license differs from source manifest",
             )
             require(
-                entry["terms_url"] == group["terms_url"],
+                entry.terms_url == group["terms_url"],
                 f"{identifier}: reviewed terms URL differs from source manifest",
             )
             reviewed.append(identifier)
@@ -137,13 +153,13 @@ def validate_review(sources: dict[str, Any], review: dict[str, Any]) -> None:
     )
 
 
-def validate_private_exclusion(sources: dict[str, Any]) -> None:
+def validate_private_exclusion(sources: list[Any]) -> None:
     tracked = git_lines("ls-files", "specs/offline/files")
     require(not tracked, f"private specification files are tracked: {tracked}")
     private_paths = [
-        f"specs/offline/files/{entry['filename']}"
-        for entry in sources["sources"]
-        if entry["disposition"] in {"offline", "manual"}
+        f"specs/offline/files/{source.filename}"
+        for source in sources
+        if source.disposition in {"offline", "manual"}
     ]
     result = subprocess.run(
         ["git", "check-ignore", "--stdin"],
@@ -162,7 +178,7 @@ def validate_private_exclusion(sources: dict[str, Any]) -> None:
 
 def main() -> int:
     try:
-        sources = load_json(SOURCES)
+        sources = load_validated_sources()
         review = load_json(REVIEW)
         validate_review(sources, review)
         validate_private_exclusion(sources)

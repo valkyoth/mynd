@@ -78,6 +78,7 @@ class Source:
     download_url: str | None
     acquisition_url: str | None
     terms_url: str
+    license: str
     max_bytes: int
 
     @property
@@ -175,6 +176,7 @@ def load_sources() -> list[Source]:
                 download_url=download_url,
                 acquisition_url=acquisition_url,
                 terms_url=terms_url,
+                license=raw["license"],
                 max_bytes=max_bytes,
             )
         )

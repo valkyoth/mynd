@@ -14,10 +14,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULE_PATH = ROOT / "scripts" / "spec-sources.py"
+LEGAL_MODULE_PATH = ROOT / "scripts" / "check-legal-review.py"
 
 
 def load_module():
     spec = importlib.util.spec_from_file_location("mynd_spec_sources", MODULE_PATH)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_legal_module():
+    spec = importlib.util.spec_from_file_location("mynd_legal_review", LEGAL_MODULE_PATH)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -98,6 +108,25 @@ def test_manifest_schema_rejects_drift(module) -> None:
         pass
     else:
         raise AssertionError("public source with manual acquisition URL was accepted")
+
+
+def test_legal_review_reuses_validated_filename_boundary() -> None:
+    module = load_legal_module()
+    document = json.loads((ROOT / "specs" / "SOURCES.json").read_text())
+    document["sources"][0]["filename"] = "../../../etc/passwd"
+    original = module.SOURCE_FILE
+    with tempfile.TemporaryDirectory() as directory:
+        malicious = Path(directory) / "SOURCES.json"
+        malicious.write_text(json.dumps(document), encoding="utf-8")
+        module.SOURCE_FILE = malicious
+        try:
+            module.load_validated_sources()
+        except module.ReviewError:
+            pass
+        else:
+            raise AssertionError("legal review accepted an unsafe source filename")
+        finally:
+            module.SOURCE_FILE = original
 
 
 def test_malformed_lock_rejected(module) -> None:
@@ -233,6 +262,7 @@ def test_changed_upstream_bytes_are_not_installed(module) -> None:
             download_url="https://www.w3.org/TR/png-3/",
             acquisition_url=None,
             terms_url="https://www.w3.org/copyright/document-license-2023/",
+            license="W3C Document License 2023",
             max_bytes=1024,
         )
         try:
@@ -284,6 +314,7 @@ def main() -> int:
     test_url_security(module)
     test_manifest_and_locks(module)
     test_manifest_schema_rejects_drift(module)
+    test_legal_review_reuses_validated_filename_boundary()
     test_malformed_lock_rejected(module)
     test_byte_mutation_is_rejected(module)
     test_unknown_private_entry_is_rejected(module)

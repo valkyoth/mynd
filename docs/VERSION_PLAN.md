@@ -955,7 +955,7 @@ Exit criteria:
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
-Status: Implementation complete; awaiting pentest.
+Status: Implementation complete; pentest remediation awaiting retest.
 
 Context:
 

@@ -1,6 +1,6 @@
 # mynd 0.2.1 Release Notes
 
-Status: implementation candidate; pentest not yet run.
+Status: implementation candidate; pentest remediation awaiting retest.
 
 This governance-only release completes the reproducible specification-corpus
 and legal-disposition handoff. It adds no image parser, decoder, encoder,
@@ -44,3 +44,9 @@ Release requirements:
   package, documentation, and SBOM gates pass;
 - `security/pentest/v0.2.1.md` reaches `Status: PASS`;
 - the final committed candidate passes GitHub CI and CodeQL before tagging.
+
+The initial pentest found one Low defense-in-depth inconsistency: the legal
+checker reconstructed ignored private paths from raw manifest JSON after the
+canonical validator had separately accepted the file. The checker now consumes
+only validated `Source` objects, and a traversal-shaped filename regression
+test proves failure before any Git path check. The remediation awaits retest.
