@@ -37,6 +37,8 @@ a time.
 - Remediated the follow-up Medium stale-legal-approval finding by binding
   approval to a canonical digest of every public provenance field and locked
   source hash, with a coupled provenance/content mutation regression test.
+- Completed the v0.2.1 pentest and remediation loop with a green final retest
+  and no unresolved Critical, High, Medium, or Low finding.
 
 ## [0.2.0] - 2026-07-25
 

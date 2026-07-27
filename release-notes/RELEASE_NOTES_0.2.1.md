@@ -1,6 +1,6 @@
 # mynd 0.2.1 Release Notes
 
-Status: implementation candidate; pentest remediation awaiting retest.
+Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
 
 This governance-only release completes the reproducible specification-corpus
 and legal-disposition handoff. It adds no image parser, decoder, encoder,
@@ -49,7 +49,8 @@ The initial pentest found one Low defense-in-depth inconsistency: the legal
 checker reconstructed ignored private paths from raw manifest JSON after the
 canonical validator had separately accepted the file. The checker now consumes
 only validated `Source` objects, and a traversal-shaped filename regression
-test proves failure before any Git path check. The remediation awaits retest.
+test proves failure before any Git path check. The final retest confirmed the
+remediation.
 
 A follow-up review found that legal approval was not yet cryptographically
 bound to the approved source bytes and complete provenance record. The legal
@@ -57,4 +58,5 @@ ledger now contains a canonical corpus SHA-256 covering every validated public
 identity, publisher, edition, role, disposition, filename, acquisition field,
 terms field, license, byte ceiling, and locked source hash. Changing both
 source provenance and its checksum now fails legal validation until a human
-deliberately renews that approval digest. This remediation also awaits retest.
+deliberately renews that approval digest. The final retest confirmed this
+remediation, and the permanent pentest report records `Status: PASS`.

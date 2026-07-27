@@ -955,7 +955,7 @@ Exit criteria:
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
-Status: Implementation complete; pentest remediation awaiting retest.
+Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
 
 Context:
 
