@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULE_PATH = ROOT / "scripts" / "spec-sources.py"
+INTEGRITY_ATTEMPTS = 3
 
 
 def load_module():
@@ -21,6 +22,24 @@ def load_module():
     return module
 
 
+def fetch_with_integrity_retry(module, sources) -> None:
+    """Reject changed bytes, retrying only a transient integrity mismatch."""
+    for attempt in range(1, INTEGRITY_ATTEMPTS + 1):
+        try:
+            module.fetch(sources, "all")
+            return
+        except module.SourceError as error:
+            changed = "upstream bytes changed" in str(error)
+            if not changed or attempt == INTEGRITY_ATTEMPTS:
+                raise
+            print(
+                f"rejected changed upstream bytes; integrity retry "
+                f"{attempt + 1}/{INTEGRITY_ATTEMPTS}",
+                file=sys.stderr,
+            )
+    raise AssertionError("unreachable integrity retry state")
+
+
 def main() -> int:
     module = load_module()
     sources = module.load_sources()
@@ -29,7 +48,7 @@ def main() -> int:
         module.ROOT = destination
         module.PUBLIC_DIR = destination / "public"
         module.OFFLINE_DIR = destination / "private"
-        module.fetch(sources, "all")
+        fetch_with_integrity_retry(module, sources)
         module.verify(sources, require_offline=True, require_manual=False)
 
         expected_public = {

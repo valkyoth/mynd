@@ -63,7 +63,11 @@ ALLOWED_HOSTS = {
 }
 ID_RE = re.compile(r"[a-z0-9][a-z0-9.-]*\Z")
 HASH_RE = re.compile(r"([0-9a-f]{64})  ([A-Za-z0-9][A-Za-z0-9._+-]*)\Z")
-
+DOWNLOAD_HEADERS = {
+    "Accept-Encoding": "identity",
+    "Cache-Control": "no-cache",
+    "User-Agent": "mynd-spec-source-fetcher/1.0",
+}
 
 class SourceError(RuntimeError):
     """A source manifest, integrity, or download failure."""
@@ -332,7 +336,7 @@ def download(source: Source, expected: str) -> None:
     opener = urllib.request.build_opener(SafeRedirectHandler())
     request = urllib.request.Request(
         source.download_url or "",
-        headers={"User-Agent": "mynd-spec-source-fetcher/1.0"},
+        headers=DOWNLOAD_HEADERS,
     )
     temporary_name: str | None = None
     try:
@@ -396,7 +400,7 @@ def remote_digest(source: Source) -> str:
     opener = urllib.request.build_opener(SafeRedirectHandler())
     request = urllib.request.Request(
         source.download_url or "",
-        headers={"User-Agent": "mynd-spec-source-fetcher/1.0"},
+        headers=DOWNLOAD_HEADERS,
     )
     digest = hashlib.sha256()
     total = 0
@@ -443,10 +447,8 @@ def status(sources: list[Source]) -> None:
         members = [source for source in sources if source.disposition == disposition]
         present = sum(source.destination.is_file() for source in members)
         locked = sum(source.filename in locks[disposition] for source in members)
-        print(
-            f"{disposition}: {present}/{len(members)} present, "
-            f"{locked}/{len(members)} checksum-locked"
-        )
+        print(f"{disposition}: {present}/{len(members)} present, "
+              f"{locked}/{len(members)} checksum-locked")
     missing_manual = [
         source
         for source in sources
@@ -463,9 +465,7 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
     fetch_parser = subparsers.add_parser("fetch", help="fetch checksum-locked sources")
     fetch_parser.add_argument("scope", choices=("public", "offline", "all"))
-    candidate_parser = subparsers.add_parser(
-        "candidate-locks", help="print current remote hashes for maintainer review"
-    )
+    candidate_parser = subparsers.add_parser("candidate-locks", help="print current remote hashes for maintainer review")
     candidate_parser.add_argument("scope", choices=("public", "offline", "all"))
     verify_parser = subparsers.add_parser("verify", help="verify manifests and local files")
     verify_parser.add_argument("--require-offline", action="store_true")

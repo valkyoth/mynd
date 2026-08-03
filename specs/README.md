@@ -95,6 +95,9 @@ accepts click-through terms, supplies credentials, or automates purchases.
   review.
 - CI reconstructs the read-only bit before verification because Git does not
   preserve it portably.
+- Remote acquisition requests identity-encoded, cache-revalidated bytes. The
+  isolated recreation gate may retry a rejected checksum mismatch twice, but
+  accepts only the exact reviewed checksum and fails on persistent drift.
 
 The manifests and public copies are excluded from crates.io packages by each
 crate's strict package allowlist. Builds and library tests never need network

@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 MODULE_PATH = ROOT / "scripts" / "spec-sources.py"
 LEGAL_MODULE_PATH = ROOT / "scripts" / "check-legal-review.py"
+RECREATION_MODULE_PATH = ROOT / "scripts" / "check-spec-recreation.py"
 
 
 def load_module():
@@ -29,6 +30,17 @@ def load_module():
 
 def load_legal_module():
     spec = importlib.util.spec_from_file_location("mynd_legal_review", LEGAL_MODULE_PATH)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_recreation_module():
+    spec = importlib.util.spec_from_file_location(
+        "mynd_spec_recreation_test", RECREATION_MODULE_PATH
+    )
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -268,8 +280,11 @@ def test_changed_upstream_bytes_are_not_installed(module) -> None:
             return chunk
 
     class Opener:
-        def open(self, _request, timeout: int):
+        def open(self, request, timeout: int):
             assert timeout == 30
+            assert request.get_header("Accept-encoding") == "identity"
+            assert request.get_header("Cache-control") == "no-cache"
+            assert request.get_header("User-agent") == "mynd-spec-source-fetcher/1.0"
             return Response()
 
     original_public = module.PUBLIC_DIR
@@ -301,6 +316,59 @@ def test_changed_upstream_bytes_are_not_installed(module) -> None:
             module.PUBLIC_DIR = original_public
             module.urllib.request.build_opener = original_builder
         assert not list(Path(directory).iterdir())
+
+
+def test_recreation_integrity_retry_is_bounded() -> None:
+    recreation = load_recreation_module()
+
+    class _SourceError(RuntimeError):
+        pass
+
+    class TransientModule:
+        SourceError = _SourceError
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def fetch(self, _sources, scope: str) -> None:
+            assert scope == "all"
+            self.calls += 1
+            if self.calls == 1:
+                raise self.SourceError("upstream bytes changed")
+
+    transient = TransientModule()
+    recreation.fetch_with_integrity_retry(transient, [])
+    assert transient.calls == 2
+
+    class PersistentModule(TransientModule):
+        def fetch(self, _sources, scope: str) -> None:
+            assert scope == "all"
+            self.calls += 1
+            raise self.SourceError("upstream bytes changed")
+
+    persistent = PersistentModule()
+    try:
+        recreation.fetch_with_integrity_retry(persistent, [])
+    except _SourceError:
+        pass
+    else:
+        raise AssertionError("persistent source drift was accepted")
+    assert persistent.calls == recreation.INTEGRITY_ATTEMPTS
+
+    class NetworkFailureModule(TransientModule):
+        def fetch(self, _sources, scope: str) -> None:
+            assert scope == "all"
+            self.calls += 1
+            raise self.SourceError("download failed")
+
+    network_failure = NetworkFailureModule()
+    try:
+        recreation.fetch_with_integrity_retry(network_failure, [])
+    except _SourceError:
+        pass
+    else:
+        raise AssertionError("non-integrity failure was retried or accepted")
+    assert network_failure.calls == 1
 
 
 def test_offline_tree_is_ignored() -> None:
@@ -348,6 +416,7 @@ def main() -> int:
     test_private_dangling_symlink_is_rejected(module)
     test_fetch_all_never_selects_manual_sources(module)
     test_changed_upstream_bytes_are_not_installed(module)
+    test_recreation_integrity_retry_is_bounded()
     test_offline_tree_is_ignored()
     test_manifest_is_plain_metadata()
     print("specification source tests passed")

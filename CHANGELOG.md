@@ -38,6 +38,9 @@ a time.
 - Remediated the pentest's latent division-invariant and verification-gap
   observations by storing channel counts and sampling divisors as `NonZeroU8`
   and symbolically proving every chroma variant across full `u32` axes.
+- Hardened isolated specification recreation against a transient upstream
+  cache variant while retaining exact checksum enforcement and bounded
+  fail-closed behavior for persistent source drift.
 
 ## [0.4.0] - 2026-08-03
 

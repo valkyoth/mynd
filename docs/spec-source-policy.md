@@ -78,14 +78,17 @@ The fetcher:
 - validates every redirect and final host;
 - enforces a per-source maximum size;
 - hashes a temporary download before atomic installation;
+- requests identity-encoded, cache-revalidated responses;
 - never overwrites changed local evidence silently;
 - never supplies credentials, accepts legal terms, or automates purchases.
 
-A remote hash change fails closed. It is a source-update event requiring
-identity, edition, legal, content, test, security, and release-note review.
-CI separately recreates every automatic public/offline source from isolated
-empty destinations and proves that the operation never selects a manual
-source.
+A remote hash change fails closed. Isolated CI recreation may reject and retry
+a mismatched response up to three times, but succeeds only if a later response
+matches the reviewed checksum exactly. Persistent drift is a source-update
+event requiring identity, edition, legal, content, test, security, and
+release-note review. CI separately recreates every automatic public/offline
+source from isolated empty destinations and proves that the operation never
+selects a manual source.
 
 ## Conformance and interpretation
 
