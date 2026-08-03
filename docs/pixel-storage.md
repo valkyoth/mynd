@@ -1,6 +1,7 @@
 # Pixel Layout And Sample Storage Contract
 
-Status: v0.5.0 implementation candidate; external pentest pending.
+Status: v0.5.0 release-candidate contract; cumulative pentest PASS; awaiting
+green GitHub CI and CodeQL.
 
 This document defines the format-neutral `mynd-core` 0.3.0 storage boundary.
 It is `no_std`, allocation-free, and safe Rust. It accepts no byte slice and

@@ -1,6 +1,7 @@
 # mynd 0.5.0 Release Notes
 
-Status: implementation candidate; cumulative external pentest pending.
+Status: release candidate; cumulative pentest PASS; awaiting GitHub CI and
+CodeQL.
 
 This release adds explicit format-neutral pixel-layout and sample-storage
 domains. It does not add buffer access, allocation, format parsing, decoding,
@@ -80,6 +81,11 @@ no public layout variant and fail closed until separately admitted.
 The cumulative external pentest reported two related Low/Informational
 hardening observations: chroma divisors were stored as plain integers, and the
 full-domain Kani proof covered only 4:2:0. Channel counts and sampling divisors
-are now `NonZeroU8`, and Kani symbolically covers every chroma variant. External
-retest remains pending; details are recorded in
-`security/pentest/v0.5.0.md`.
+are now `NonZeroU8`, Kani symbolically covers every chroma variant, and the
+external retest is green.
+
+The release gate also rejected a transient mismatched TIFF specification
+response. The approved checksum remains unchanged; specification acquisition
+now requests identity-encoded cache-revalidated bytes, and isolated recreation
+uses bounded retries that still accept only the exact reviewed hash. Details
+are recorded in `security/pentest/v0.5.0.md`.

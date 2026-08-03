@@ -1144,7 +1144,8 @@ Exit criteria:
 
 ### v0.5.0 - Explicit pixel layout and sample-storage domains
 
-Status: Implementation candidate; cumulative pentest pending.
+Status: Release candidate; cumulative pentest PASS; awaiting green GitHub CI
+and CodeQL.
 
 Context:
 
