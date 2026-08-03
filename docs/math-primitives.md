@@ -1,6 +1,6 @@
 # Checked Arithmetic Contract
 
-Status: v0.3.0 release-candidate contract.
+Status: v0.3.0 released contract.
 
 `mynd-math` is the only implementation owner for the checked integer
 primitives introduced by v0.3.0. It is `no_std`, dependency-free,

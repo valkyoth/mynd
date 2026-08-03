@@ -13,6 +13,9 @@ Initial enforced controls:
 - MSRV/current-stable and platform compilation matrices;
 - checked conversion, addition, multiplication, alignment, and range
   primitives with extrema tests and Kani proofs;
+- nonzero dimensions, retained-bounds rectangles, numerically aligned plane
+  layouts, exact last-row output lengths, ordered nonoverlapping plane sets,
+  and explicit 32-bit representability failures;
 - GitHub CodeQL default setup policy.
 
 Cargo profiles belong to the top-level build. Downstream consumers control

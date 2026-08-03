@@ -32,18 +32,30 @@ Most users should depend on the facade crate:
 
 ```toml
 [dependencies]
-mynd = { version = "0.1.0", default-features = false }
+mynd = { version = "0.4.0", default-features = false }
 ```
 
 `mynd-core` is published separately to maintain small implementation boundaries
 and permit expert integrations. It is not the default application-facing API.
 
+Expert users who only need the validated primitives may depend directly on:
+
+```toml
+[dependencies]
+mynd-core = { version = "0.2.0", default-features = false }
+```
+
 ## Current status
 
-Version 0.1.0 is a repository foundation only. The crate establishes the
-`no_std` feature boundary and package policy but does not yet expose public
-image types. Validated dimensions, layouts, metadata, and caller-owned buffer
-views arrive through the staged releases in the
+Version 0.2.0 provides validated geometry: nonzero image dimensions, contained
+nonempty rectangles, aligned nonempty plane layouts, and exact target-width
+output lengths. Layout constructors reject zero fields, invalid strides,
+misalignment, overlap, arithmetic overflow, and values that cannot fit the
+target's `usize`.
+
+These are storage-neutral prerequisites. Pixel/sample formats, chroma and alpha
+semantics, slice-backed views, allocation, and codecs remain unavailable until
+their staged releases in the
 [version plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md).
 
 ## Features
@@ -56,10 +68,10 @@ views arrive through the staged releases in the
 ## Security posture
 
 - `no_std` is the baseline; the default feature set is empty.
-- The package currently has no runtime dependencies.
+- The only runtime dependency is the first-party, dependency-free `mynd-math`.
 - Unsafe code is forbidden by workspace policy.
-- Future dimensions, strides, offsets, and buffer requirements must use checked
-  arithmetic and explicit limits.
+- Dimensions, strides, offsets, last-row extents, and plane-set output lengths
+  are validated with checked arithmetic before becoming usable values.
 - Malformed untrusted input must not panic, over-allocate, or perform unbounded
   work.
 

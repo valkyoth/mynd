@@ -28,5 +28,12 @@ Rules:
 
 ```sh
 scripts/check-rust-version-matrix.sh
+scripts/check-platform-targets.sh
 scripts/check-kani.sh
 ```
+
+The platform gate includes explicit 32-bit and WASM compilation in addition to
+Linux, Windows, FreeBSD, macOS, Android, and iOS. Kani verifies both the
+`mynd-math` arithmetic primitives and the current `mynd-core` geometry
+properties; each proof document states whether its symbolic domain is full or
+reduced.

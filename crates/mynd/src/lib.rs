@@ -4,8 +4,9 @@
 
 //! Security-first image codecs and processing for Rust.
 //!
-//! Version 0.3.0 exposes checked arithmetic foundations. Image-model and codec
-//! APIs remain unavailable until their implementation and security milestones
+//! Version 0.4.0 adds validated dimensions, contained rectangles, plane
+//! layouts, and output lengths to the checked arithmetic foundations. Pixel
+//! formats, buffer views, and codecs remain unavailable until their milestones
 //! pass.
 
 #[cfg(feature = "alloc")]

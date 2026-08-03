@@ -1,6 +1,6 @@
 [package]
 name = "mynd-core"
-version.workspace = true
+version = "0.2.0"
 edition.workspace = true
 rust-version.workspace = true
 description = "Format-neutral no_std image types for the mynd ecosystem."
@@ -17,12 +17,16 @@ include = [
     "LICENSE-MIT",
     "README.md",
     "src/**/*.rs",
+    "tests/**/*.rs",
 ]
 
 [features]
 default = []
 alloc = []
 std = ["alloc"]
+
+[dependencies]
+mynd-math.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

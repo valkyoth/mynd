@@ -1,6 +1,7 @@
 # mynd Implementation Plan
 
-Status: repository foundation. No codec capability is implemented or claimed.
+Status: checked-arithmetic and validated-geometry foundation. No codec
+capability is implemented or claimed.
 
 This plan turns the final direction from the project design discussion into
 small, testable, security-reviewable increments. `docs/VERSION_PLAN.md` is the

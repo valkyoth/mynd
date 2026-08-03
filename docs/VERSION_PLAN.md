@@ -2,7 +2,8 @@
 
 Status: active planning document
 
-Mynd is currently governance scaffolding, not an image engine. The repository
+Mynd currently provides checked arithmetic and validated geometry foundations,
+not an image engine. The repository
 has a no_std facade/core skeleton, security and release policy, and verification
 tooling, but no image model, parser, codec, processing algorithm, or Rust
 test-bearing behavior. Roadmap entries are not support claims; only implemented
@@ -1035,7 +1036,7 @@ Exit criteria:
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
-Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
+Status: Released 2026-08-03.
 
 Context:
 
@@ -1089,7 +1090,7 @@ Exit criteria:
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
-Status: Planned.
+Status: Implementation complete; awaiting exact-version pentest.
 
 Context:
 

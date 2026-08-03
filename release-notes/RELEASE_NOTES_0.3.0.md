@@ -1,6 +1,6 @@
 # mynd 0.3.0 Release Notes
 
-Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
+Status: released 2026-08-03.
 
 This release introduces Mynd's first public implementation surface: checked,
 constant-work integer arithmetic for values derived from hostile image input.

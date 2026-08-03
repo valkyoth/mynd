@@ -1,23 +1,23 @@
 [release]
-version = "0.3.0"
+version = "0.4.0"
 
 [crates.mynd-math]
-previous_version = "0.0.0"
-version = "0.1.0"
-change = "code"
-publish = true
-reason = "Introduce checked conversion, arithmetic, alignment, range, tests, and Kani proofs."
-
-[crates.mynd-core]
 previous_version = "0.1.0"
 version = "0.1.0"
 change = "unchanged"
 publish = false
 reason = "No published code, dependency, or package metadata changed."
 
-[crates.mynd]
-previous_version = "0.2.1"
-version = "0.3.0"
+[crates.mynd-core]
+previous_version = "0.1.0"
+version = "0.2.0"
 change = "code"
 publish = true
-reason = "Re-export the checked mynd-math v0.1.0 API through the facade."
+reason = "Add validated dimensions, rectangles, plane layouts, output lengths, tests, and Kani proofs."
+
+[crates.mynd]
+previous_version = "0.3.0"
+version = "0.4.0"
+change = "code"
+publish = true
+reason = "Re-export the validated mynd-core v0.2.0 geometry API through the facade."

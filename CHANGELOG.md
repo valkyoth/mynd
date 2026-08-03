@@ -6,6 +6,36 @@ a time.
 
 ## [Unreleased]
 
+## [0.4.0] - Unreleased
+
+### Added
+
+- Added `mynd-core` 0.2.0 validated nonzero dimensions with exact fixed-width
+  pixel counts and explicit target-width conversion.
+- Added retained-bounds nonempty rectangles with checked exclusive ends and
+  exact areas.
+- Added aligned nonempty plane layouts with exact last-row output extents,
+  ordered nonoverlapping plane-set validation, and nonzero output lengths.
+- Added boundary, error-order, overlap, 32-bit compilation, and facade tests,
+  plus Kani proofs with explicitly documented full and reduced domains.
+- Added the normative geometry/layout contract and expanded the platform gate
+  with 32-bit Linux and WASM targets.
+
+### Changed
+
+- Advanced the `mynd` facade to 0.4.0 and `mynd-core` to 0.2.0; unchanged
+  `mynd-math` remains at 0.1.0 and is not republished.
+- Re-exported the validated geometry API through `mynd::core` while retaining
+  the checked arithmetic API through `mynd::math`.
+
+### Security
+
+- Geometry constructors reject zero extents, containment overflow, invalid
+  strides, numeric misalignment, plane overlap, arithmetic overflow, and
+  target-width truncation before returning usable values.
+- Added an exact-version v0.4.0 pentest scaffold; release remains blocked until
+  the external test and remediation loop is green.
+
 ## [0.3.0] - 2026-08-03
 
 ### Added
@@ -140,7 +170,8 @@ a time.
 - Explicit crates.io version-and-lockfile trust boundary for CI security-tool
   installation.
 
-[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/valkyoth/mynd/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/valkyoth/mynd/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/valkyoth/mynd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/valkyoth/mynd/compare/v0.1.0...v0.2.0

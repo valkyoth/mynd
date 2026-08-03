@@ -1,6 +1,6 @@
 # mynd Threat Model
 
-Status: initial repository-foundation threat model. Each codec adds a focused
+Status: v0.4.0 geometry-foundation threat model. Each codec adds a focused
 threat model before parsing code ships.
 
 ## Assets
@@ -45,3 +45,9 @@ complete format correctness. Specifications contain ambiguities, reference
 implementations can disagree, and caller-selected high limits can permit high
 resource consumption. Support statements must therefore name exact scope and
 evidence rather than promise perfect security.
+
+The v0.4.0 geometry types validate declarations but allocate no storage and
+bind no byte slice. A valid `PlaneLayout` proves only its numeric byte extent,
+alignment, and relation to other planes; it does not prove that row bytes match
+a pixel format. Pixel-layout relationships, caller-buffer access, and resource
+limits remain outside the current trusted surface until their planned releases.

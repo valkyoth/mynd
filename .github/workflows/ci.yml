@@ -49,7 +49,7 @@ jobs:
         run: scripts/generate-sbom.sh --check
 
   kani:
-    name: Kani checked-arithmetic proofs
+    name: Kani arithmetic and geometry proofs
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -59,7 +59,7 @@ jobs:
         run: |
           cargo install --locked kani-verifier --version 0.67.0
           cargo kani setup
-      - name: Prove checked arithmetic
+      - name: Prove checked arithmetic and geometry
         run: scripts/check-kani.sh
 
   rust-compatibility:
@@ -89,6 +89,8 @@ jobs:
       matrix:
         include:
           - { name: Linux, os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+          - { name: Linux 32-bit, os: ubuntu-latest, target: i686-unknown-linux-gnu }
+          - { name: WASM, os: ubuntu-latest, target: wasm32-unknown-unknown }
           - { name: Windows, os: windows-latest, target: x86_64-pc-windows-msvc }
           - { name: macOS, os: macos-latest, target: x86_64-apple-darwin }
           - { name: FreeBSD, os: ubuntu-latest, target: x86_64-unknown-freebsd }

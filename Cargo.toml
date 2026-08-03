@@ -33,7 +33,7 @@ cast_possible_truncation = "deny"
 cast_sign_loss = "deny"
 
 [workspace.dependencies]
-mynd-core = { path = "crates/mynd-core", version = "=0.1.0", default-features = false }
+mynd-core = { path = "crates/mynd-core", version = "=0.2.0", default-features = false }
 mynd-math = { path = "crates/mynd-math", version = "=0.1.0", default-features = false }
 
 [profile.release]
