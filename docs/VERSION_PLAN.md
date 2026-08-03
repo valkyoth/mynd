@@ -1090,7 +1090,7 @@ Exit criteria:
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
-Status: Implementation complete; pentest remediation complete; external retest pending.
+Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
 
 Context:
 

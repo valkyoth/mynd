@@ -1,6 +1,6 @@
 # mynd 0.4.0 Release Notes
 
-Status: release candidate; Low finding remediated; external retest pending.
+Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
 
 This release adds storage-neutral geometry and plane-layout foundations. It
 does not add pixel formats, buffer access, allocation, parsing, decoding,
@@ -62,3 +62,12 @@ sources, and requirement-to-evidence mapping are recorded in
   and the strict v0.4.0 release gate before tagging;
 - publish `mynd-core` 0.2.0 before `mynd` 0.4.0; do not republish
   `mynd-math` 0.1.0.
+
+## Security review
+
+The exact-version pentest reported one Low correctness-clarity issue in an
+unreachable, misleading output-length error fallback. The generic fallback was
+removed; the final nonzero extent is now constructed through checked
+target-width arithmetic without panic or unsafe code. The external retest was
+reported green on 2026-08-03, and `security/pentest/v0.4.0.md` records
+`Status: PASS`.

@@ -33,12 +33,13 @@ a time.
 - Geometry constructors reject zero extents, containment overflow, invalid
   strides, numeric misalignment, plane overlap, arithmetic overflow, and
   target-width truncation before returning usable values.
-- Added an exact-version v0.4.0 pentest scaffold; release remains blocked until
-  the external test and remediation loop is green.
+- Added exact-version v0.4.0 pentest scope for validated geometry, target-width
+  output arithmetic, facade exposure, and crate-publication boundaries.
 - Remediated the pentest's Low misleading-error finding by eliminating the
   generic output-length fallback and constructing the final nonzero extent
-  directly from validated, checked target-width values; external retest is
-  pending.
+  directly from validated, checked target-width values.
+- Completed the v0.4.0 pentest remediation loop with a green external retest
+  and no unresolved finding.
 
 ## [0.3.0] - 2026-08-03
 
