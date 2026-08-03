@@ -1090,7 +1090,7 @@ Exit criteria:
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
-Status: Implementation complete; awaiting exact-version pentest.
+Status: Implementation complete; pentest remediation complete; external retest pending.
 
 Context:
 

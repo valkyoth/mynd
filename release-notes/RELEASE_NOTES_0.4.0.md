@@ -1,6 +1,6 @@
 # mynd 0.4.0 Release Notes
 
-Status: release candidate; pentest not yet run.
+Status: release candidate; Low finding remediated; external retest pending.
 
 This release adds storage-neutral geometry and plane-layout foundations. It
 does not add pixel formats, buffer access, allocation, parsing, decoding,

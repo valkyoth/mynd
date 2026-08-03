@@ -47,13 +47,22 @@ impl PlaneLayout {
         alignment: u64,
     ) -> GeometryResult<Self> {
         validate_plane_fields(offset, row_bytes, row_stride, rows, alignment)?;
-        let end = required_len_u64(offset, row_bytes, row_stride, rows)?;
+        let (last_row_start, _) = required_extent_u64(offset, row_bytes, row_stride, rows)?;
         let offset = checked_u64_to_usize(offset).map_err(GeometryError::Arithmetic)?;
-        let row_bytes = nonzero_usize(row_bytes, GeometryError::ZeroRowBytes)?;
-        let row_stride = nonzero_usize(row_stride, GeometryError::StrideTooSmall)?;
-        let alignment = nonzero_usize(alignment, GeometryError::ZeroAlignment)?;
+        let row_bytes = checked_u64_to_usize(row_bytes).map_err(GeometryError::Arithmetic)?;
+        let row_bytes = NonZeroUsize::new(row_bytes).ok_or(GeometryError::ZeroRowBytes)?;
+        let row_stride = checked_u64_to_usize(row_stride).map_err(GeometryError::Arithmetic)?;
+        let row_stride = NonZeroUsize::new(row_stride).ok_or(GeometryError::StrideTooSmall)?;
+        let alignment = checked_u64_to_usize(alignment).map_err(GeometryError::Arithmetic)?;
+        let alignment = NonZeroUsize::new(alignment).ok_or(GeometryError::ZeroAlignment)?;
         let rows = NonZeroU32::new(rows).ok_or(GeometryError::ZeroRows)?;
-        let end = nonzero_usize(end, GeometryError::ZeroRowBytes)?;
+        let last_row_start =
+            checked_u64_to_usize(last_row_start).map_err(GeometryError::Arithmetic)?;
+        let end = row_bytes
+            .checked_add(last_row_start)
+            .ok_or(GeometryError::Arithmetic(
+                mynd_math::MathError::ConversionOutOfRange,
+            ))?;
         Ok(Self {
             offset,
             row_bytes,
@@ -129,12 +138,25 @@ pub fn checked_plane_output_len(planes: &[PlaneLayout]) -> GeometryResult<Output
     Ok(previous_end)
 }
 
+#[cfg(kani)]
 pub(crate) const fn required_len_u64(
     offset: u64,
     row_bytes: u64,
     row_stride: u64,
     rows: u32,
 ) -> GeometryResult<u64> {
+    match required_extent_u64(offset, row_bytes, row_stride, rows) {
+        Ok((_, end)) => Ok(end),
+        Err(error) => Err(error),
+    }
+}
+
+const fn required_extent_u64(
+    offset: u64,
+    row_bytes: u64,
+    row_stride: u64,
+    rows: u32,
+) -> GeometryResult<(u64, u64)> {
     if row_bytes == 0 {
         return Err(GeometryError::ZeroRowBytes);
     }
@@ -157,7 +179,7 @@ pub(crate) const fn required_len_u64(
         Err(error) => return Err(GeometryError::Arithmetic(error)),
     };
     match checked_add_u64(last_row, row_bytes) {
-        Ok(end) => Ok(end),
+        Ok(end) => Ok((last_row, end)),
         Err(error) => Err(GeometryError::Arithmetic(error)),
     }
 }
@@ -188,9 +210,4 @@ fn validate_plane_fields(
         return Err(GeometryError::StrideMisaligned);
     }
     Ok(())
-}
-
-fn nonzero_usize(value: u64, zero_error: GeometryError) -> GeometryResult<NonZeroUsize> {
-    let value = checked_u64_to_usize(value).map_err(GeometryError::Arithmetic)?;
-    NonZeroUsize::new(value).ok_or(zero_error)
 }

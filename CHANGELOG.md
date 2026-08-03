@@ -35,6 +35,10 @@ a time.
   target-width truncation before returning usable values.
 - Added an exact-version v0.4.0 pentest scaffold; release remains blocked until
   the external test and remediation loop is green.
+- Remediated the pentest's Low misleading-error finding by eliminating the
+  generic output-length fallback and constructing the final nonzero extent
+  directly from validated, checked target-width values; external retest is
+  pending.
 
 ## [0.3.0] - 2026-08-03
 
