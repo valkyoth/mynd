@@ -1,4 +1,5 @@
 use core::convert::TryFrom;
+use core::num::NonZeroU8;
 
 use mynd_math::{MathError, checked_add_u64, checked_mul_u64};
 
@@ -6,6 +7,11 @@ use crate::{
     Dimensions, OutputLength, PixelLayoutError, PixelLayoutResult, PlaneLayout, SampleStorage,
     checked_plane_output_len,
 };
+
+const ONE: NonZeroU8 = NonZeroU8::MIN;
+const TWO: NonZeroU8 = NonZeroU8::MIN.saturating_add(1);
+const THREE: NonZeroU8 = NonZeroU8::MIN.saturating_add(2);
+const FOUR: NonZeroU8 = NonZeroU8::MIN.saturating_add(3);
 
 /// The meaning of stored alpha samples.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -18,6 +24,7 @@ pub enum AlphaAssociation {
 
 /// Chroma sampling factors relative to full-resolution luma.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(kani, derive(kani::Arbitrary))]
 pub enum ChromaSubsampling {
     /// No chroma subsampling (4:4:4).
     Cs444,
@@ -34,26 +41,26 @@ pub enum ChromaSubsampling {
 }
 
 impl ChromaSubsampling {
-    const fn factors(self) -> (u8, u8) {
+    const fn factors(self) -> (NonZeroU8, NonZeroU8) {
         match self {
-            Self::Cs444 => (1, 1),
-            Self::Cs422 => (2, 1),
-            Self::Cs420 => (2, 2),
-            Self::Cs440 => (1, 2),
-            Self::Cs411 => (4, 1),
-            Self::Cs410 => (4, 2),
+            Self::Cs444 => (ONE, ONE),
+            Self::Cs422 => (TWO, ONE),
+            Self::Cs420 => (TWO, TWO),
+            Self::Cs440 => (ONE, TWO),
+            Self::Cs411 => (FOUR, ONE),
+            Self::Cs410 => (FOUR, TWO),
         }
     }
 
     /// Returns the horizontal chroma divisor.
     #[must_use]
-    pub const fn horizontal_divisor(self) -> u8 {
+    pub const fn horizontal_divisor(self) -> NonZeroU8 {
         self.factors().0
     }
 
     /// Returns the vertical chroma divisor.
     #[must_use]
-    pub const fn vertical_divisor(self) -> u8 {
+    pub const fn vertical_divisor(self) -> NonZeroU8 {
         self.factors().1
     }
 }
@@ -102,17 +109,17 @@ pub enum ChromaOrder {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct PixelPlane {
     sample: SampleStorage,
-    channels: u8,
-    horizontal_divisor: u8,
-    vertical_divisor: u8,
+    channels: NonZeroU8,
+    horizontal_divisor: NonZeroU8,
+    vertical_divisor: NonZeroU8,
 }
 
 impl PixelPlane {
     const fn new(
         sample: SampleStorage,
-        channels: u8,
-        horizontal_divisor: u8,
-        vertical_divisor: u8,
+        channels: NonZeroU8,
+        horizontal_divisor: NonZeroU8,
+        vertical_divisor: NonZeroU8,
     ) -> Self {
         Self {
             sample,
@@ -130,19 +137,19 @@ impl PixelPlane {
 
     /// Returns the number of interleaved channels in this plane.
     #[must_use]
-    pub const fn channels(self) -> u8 {
+    pub const fn channels(self) -> NonZeroU8 {
         self.channels
     }
 
     /// Returns the horizontal sampling divisor relative to the image.
     #[must_use]
-    pub const fn horizontal_divisor(self) -> u8 {
+    pub const fn horizontal_divisor(self) -> NonZeroU8 {
         self.horizontal_divisor
     }
 
     /// Returns the vertical sampling divisor relative to the image.
     #[must_use]
-    pub const fn vertical_divisor(self) -> u8 {
+    pub const fn vertical_divisor(self) -> NonZeroU8 {
         self.vertical_divisor
     }
 
@@ -163,7 +170,7 @@ impl PixelPlane {
     /// Returns an arithmetic error if the row-bit calculation overflows.
     pub fn row_bytes(self, image: Dimensions) -> PixelLayoutResult<u64> {
         let samples = u64::from(divided_ceil(image.width(), self.horizontal_divisor));
-        let samples = checked_mul_u64(samples, u64::from(self.channels))
+        let samples = checked_mul_u64(samples, u64::from(self.channels.get()))
             .map_err(PixelLayoutError::Arithmetic)?;
         let bits = checked_mul_u64(samples, u64::from(self.sample.storage_bits()))
             .map_err(PixelLayoutError::Arithmetic)?;
@@ -336,14 +343,14 @@ impl PixelLayout {
     #[must_use]
     pub const fn plane(self, index: u8) -> Option<PixelPlane> {
         match self {
-            Self::Gray { sample } if index == 0 => Some(full(sample, 1)),
-            Self::GrayAlphaInterleaved { sample, .. } if index == 0 => Some(full(sample, 2)),
+            Self::Gray { sample } if index == 0 => Some(full(sample, ONE)),
+            Self::GrayAlphaInterleaved { sample, .. } if index == 0 => Some(full(sample, TWO)),
             Self::GrayAlphaPlanar {
                 gray, alpha_sample, ..
             } => planar_two(index, gray, alpha_sample),
-            Self::RgbInterleaved { sample, .. } if index == 0 => Some(full(sample, 3)),
-            Self::RgbPlanar { sample } => same_full(index, sample, 3),
-            Self::RgbaInterleaved { sample, .. } if index == 0 => Some(full(sample, 4)),
+            Self::RgbInterleaved { sample, .. } if index == 0 => Some(full(sample, THREE)),
+            Self::RgbPlanar { sample } => same_full(index, sample, THREE),
+            Self::RgbaInterleaved { sample, .. } if index == 0 => Some(full(sample, FOUR)),
             Self::RgbaPlanar {
                 color,
                 alpha_sample,
@@ -415,21 +422,21 @@ impl PixelLayout {
     }
 }
 
-const fn full(sample: SampleStorage, channels: u8) -> PixelPlane {
-    PixelPlane::new(sample, channels, 1, 1)
+const fn full(sample: SampleStorage, channels: NonZeroU8) -> PixelPlane {
+    PixelPlane::new(sample, channels, ONE, ONE)
 }
 
 const fn planar_two(index: u8, first: SampleStorage, second: SampleStorage) -> Option<PixelPlane> {
     match index {
-        0 => Some(full(first, 1)),
-        1 => Some(full(second, 1)),
+        0 => Some(full(first, ONE)),
+        1 => Some(full(second, ONE)),
         _ => None,
     }
 }
 
-const fn same_full(index: u8, sample: SampleStorage, count: u8) -> Option<PixelPlane> {
-    if index < count {
-        Some(full(sample, 1))
+const fn same_full(index: u8, sample: SampleStorage, count: NonZeroU8) -> Option<PixelPlane> {
+    if index < count.get() {
+        Some(full(sample, ONE))
     } else {
         None
     }
@@ -437,8 +444,8 @@ const fn same_full(index: u8, sample: SampleStorage, count: u8) -> Option<PixelP
 
 const fn rgba_planar(index: u8, color: SampleStorage, alpha: SampleStorage) -> Option<PixelPlane> {
     match index {
-        0..=2 => Some(full(color, 1)),
-        3 => Some(full(alpha, 1)),
+        0..=2 => Some(full(color, ONE)),
+        3 => Some(full(alpha, ONE)),
         _ => None,
     }
 }
@@ -452,10 +459,10 @@ const fn ycbcr_planar(
 ) -> Option<PixelPlane> {
     let (horizontal, vertical) = subsampling.factors();
     match index {
-        0 => Some(full(luma, 1)),
-        1 | 2 => Some(PixelPlane::new(chroma, 1, horizontal, vertical)),
+        0 => Some(full(luma, ONE)),
+        1 | 2 => Some(PixelPlane::new(chroma, ONE, horizontal, vertical)),
         3 => match alpha {
-            Some(sample) => Some(full(sample, 1)),
+            Some(sample) => Some(full(sample, ONE)),
             None => None,
         },
         _ => None,
@@ -471,16 +478,16 @@ const fn ycbcr_semi(
 ) -> Option<PixelPlane> {
     let (horizontal, vertical) = subsampling.factors();
     match index {
-        0 => Some(full(luma, 1)),
-        1 => Some(PixelPlane::new(chroma, 2, horizontal, vertical)),
+        0 => Some(full(luma, ONE)),
+        1 => Some(PixelPlane::new(chroma, TWO, horizontal, vertical)),
         2 => match alpha {
-            Some(sample) => Some(full(sample, 1)),
+            Some(sample) => Some(full(sample, ONE)),
             None => None,
         },
         _ => None,
     }
 }
 
-fn divided_ceil(value: u32, divisor: u8) -> u32 {
-    value.div_ceil(u32::from(divisor))
+fn divided_ceil(value: u32, divisor: NonZeroU8) -> u32 {
+    value.div_ceil(u32::from(divisor.get()))
 }

@@ -51,8 +51,9 @@ Version 0.3.0 adds validated sample storage and format-neutral pixel layouts to
 the existing geometry foundation. Its types explicitly model integer and
 floating storage widths, byte/bit order, channel order, chroma subsampling,
 alpha association, and interleaved, planar, or semi-planar relationships.
-Concrete plane validation rejects mismatched counts, sampled rows, used row
-bytes, ordering, and overlap.
+Channel counts and sampling divisors are nonzero by type. Concrete plane
+validation rejects mismatched counts, sampled rows, used row bytes, ordering,
+and overlap.
 
 These types describe storage only. Floating-point numeric behavior, color
 conversion, slice-backed views, allocation, and codecs remain unavailable until

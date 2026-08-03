@@ -42,13 +42,13 @@ fn layout_variants_fix_plane_alpha_and_chroma_domains() -> Result<(), Box<dyn Er
 fn every_chroma_domain_has_exact_ceil_dimensions() -> Result<(), Box<dyn Error>> {
     let sample = u8_sample()?;
     let image = Dimensions::new(7, 5)?;
-    for (subsampling, width, height) in [
-        (ChromaSubsampling::Cs444, 7, 5),
-        (ChromaSubsampling::Cs422, 4, 5),
-        (ChromaSubsampling::Cs420, 4, 3),
-        (ChromaSubsampling::Cs440, 7, 3),
-        (ChromaSubsampling::Cs411, 2, 5),
-        (ChromaSubsampling::Cs410, 2, 3),
+    for (subsampling, horizontal, vertical, width, height) in [
+        (ChromaSubsampling::Cs444, 1, 1, 7, 5),
+        (ChromaSubsampling::Cs422, 2, 1, 4, 5),
+        (ChromaSubsampling::Cs420, 2, 2, 4, 3),
+        (ChromaSubsampling::Cs440, 1, 2, 7, 3),
+        (ChromaSubsampling::Cs411, 4, 1, 2, 5),
+        (ChromaSubsampling::Cs410, 4, 2, 2, 3),
     ] {
         let layout = PixelLayout::YcbcrPlanar {
             luma: sample,
@@ -58,6 +58,14 @@ fn every_chroma_domain_has_exact_ceil_dimensions() -> Result<(), Box<dyn Error>>
         let chroma = layout
             .plane(1)
             .ok_or(PixelLayoutError::PlaneCountMismatch)?;
+        assert_eq!(subsampling.horizontal_divisor().get(), horizontal);
+        assert_eq!(subsampling.vertical_divisor().get(), vertical);
+        assert_eq!(
+            chroma.horizontal_divisor(),
+            subsampling.horizontal_divisor()
+        );
+        assert_eq!(chroma.vertical_divisor(), subsampling.vertical_divisor());
+        assert_ne!(chroma.channels().get(), 0);
         assert_eq!(chroma.dimensions(image)?.width(), width);
         assert_eq!(chroma.dimensions(image)?.height(), height);
         assert_eq!(chroma.row_bytes(image)?, u64::from(width));

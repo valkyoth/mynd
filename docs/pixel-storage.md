@@ -67,9 +67,11 @@ explicit typed variant and evidence before any such combination is accepted.
 ## Logical and concrete planes
 
 `PixelLayout::plane_count()` and `plane(index)` expose the exact required
-planes. `PixelPlane` retains its channel count, sample storage, and horizontal
-and vertical divisors. Logical chroma dimensions use integer ceiling division,
-so odd image axes never discard a final chroma sample.
+planes. `PixelPlane` retains its channel count and horizontal/vertical divisors
+as `NonZeroU8`, plus its sample storage. A constructed plane therefore cannot
+reach ceiling division with a zero channel count or divisor. Logical chroma
+dimensions use integer ceiling division, so odd image axes never discard a
+final chroma sample.
 
 `PixelPlane::row_bytes()` computes the exact tightly packed used bytes:
 
@@ -112,13 +114,16 @@ out-of-range plane indices.
 Kani harnesses use no assumptions. They prove byte and packed storage
 validation across the full `u8` significant-width domain, full-word floating
 validation, exact gray-u8 row bytes across the full nonzero `u32` width domain,
-and nonzero ceiling dimensions for full `u32` 4:2:0 axes.
+and nonzero ceiling dimensions for full `u32` axes and every
+`ChromaSubsampling` variant. The chroma enum derives Kani's safe symbolic-value
+support under verifier configuration, so a newly added variant automatically
+enters the same proof.
 
 | Requirement | Implementation | Rust evidence | Kani evidence |
 | --- | --- | --- | --- |
 | `PIX-SAMPLE-01` Only valid sample widths and unit/class combinations exist | `sample.rs` | `sample_storage.rs` | byte, packed, and float harnesses |
 | `PIX-ALPHA-01` Alpha association exists only with alpha-bearing layouts | `pixel.rs` variants | `pixel_layout.rs` | encoded by enum variants |
-| `PIX-CHROMA-01` Chroma factors exist only for YCbCr and round odd axes upward | `pixel.rs` | `pixel_layout.rs` | 4:2:0 dimension harness |
+| `PIX-CHROMA-01` Chroma factors exist only for YCbCr, remain nonzero, and round odd axes upward | `pixel.rs` | `pixel_layout.rs` | all-variant dimension harness |
 | `PIX-PLANE-01` Organization fixes plane count, order, channels, and sampling | `pixel.rs` | `pixel_layout.rs` | enum and fixed-index construction |
 | `PIX-ROW-01` Exact row bytes use physical storage width and checked arithmetic | `pixel.rs` | `pixel_layout.rs` | full-width gray-u8 harness |
 | `PIX-BIND-01` Concrete planes match logical rows/bytes before geometry commit | `pixel.rs` | `pixel_layout.rs` | Rust relationship tests |
@@ -134,6 +139,7 @@ library documentation:
 - <https://doc.rust-lang.org/stable/std/primitive.u64.html#method.checked_mul>
 - <https://doc.rust-lang.org/stable/std/convert/trait.TryFrom.html>
 - <https://model-checking.github.io/kani/usage.html>
+- <https://model-checking.github.io/kani/crates/doc/kani/derive.Arbitrary.html>
 
 Format crates must separately pin and map their authoritative specifications
 before translating format declarations into these types.

@@ -274,24 +274,29 @@ fn gray_u8_row_bytes_match_every_nonzero_u32_width() {
 }
 
 #[kani::proof]
-fn cs420_plane_dimensions_round_up_without_zero() {
+fn every_chroma_plane_dimension_rounds_up_without_zero() {
     let width = kani::any::<u32>();
     let height = kani::any::<u32>();
+    let subsampling = kani::any::<ChromaSubsampling>();
     let dimensions = Dimensions::new(width, height);
     let sample = SampleStorage::new(SampleClass::UnsignedInteger, 8, StorageUnit::Byte);
     if let (Ok(dimensions), Ok(sample)) = (dimensions, sample) {
         let layout = PixelLayout::YcbcrPlanar {
             luma: sample,
             chroma: sample,
-            subsampling: ChromaSubsampling::Cs420,
+            subsampling,
         };
+        let horizontal = subsampling.horizontal_divisor();
+        let vertical = subsampling.vertical_divisor();
+        assert!(horizontal.get() != 0);
+        assert!(vertical.get() != 0);
         match layout
             .plane(1)
             .and_then(|plane| plane.dimensions(dimensions).ok())
         {
             Some(chroma) => {
-                assert!(chroma.width() == width.div_ceil(2));
-                assert!(chroma.height() == height.div_ceil(2));
+                assert!(chroma.width() == width.div_ceil(u32::from(horizontal.get())));
+                assert!(chroma.height() == height.div_ceil(u32::from(vertical.get())));
             }
             None => assert!(false),
         }

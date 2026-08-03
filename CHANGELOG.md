@@ -35,6 +35,9 @@ a time.
   ordering, or overlap mismatch before an output extent is committed.
 - Added the cumulative v0.5.0 pentest scope covering the complete delta since
   the prior published v0.4.0 checkpoint.
+- Remediated the pentest's latent division-invariant and verification-gap
+  observations by storing channel counts and sampling divisors as `NonZeroU8`
+  and symbolically proving every chroma variant across full `u32` axes.
 
 ## [0.4.0] - 2026-08-03
 

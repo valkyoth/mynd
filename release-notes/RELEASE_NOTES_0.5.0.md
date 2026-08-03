@@ -56,7 +56,8 @@ no public layout variant and fail closed until separately admitted.
   rounding, channel row accounting, plane count/rows/bytes, overlap, facade
   exports, and out-of-range indices.
 - Five new Kani harnesses use no assumptions and cover full `u8` sample-width
-  domains plus full nonzero `u32` gray-row and 4:2:0 axis relationships.
+  domains plus full nonzero `u32` gray-row and all-variant chroma-axis
+  relationships.
 - Existing arithmetic, geometry, target-width, no_std, supported-Rust,
   platform, dependency, package, specification, and supply-chain gates remain
   mandatory.
@@ -76,6 +77,9 @@ no public layout variant and fail closed until separately admitted.
 
 ## Security review
 
-The cumulative external pentest has not started. Findings, remediation, and
-retests will be recorded in `security/pentest/v0.5.0.md` until it reaches a
-clean PASS result.
+The cumulative external pentest reported two related Low/Informational
+hardening observations: chroma divisors were stored as plain integers, and the
+full-domain Kani proof covered only 4:2:0. Channel counts and sampling divisors
+are now `NonZeroU8`, and Kani symbolically covers every chroma variant. External
+retest remains pending; details are recorded in
+`security/pentest/v0.5.0.md`.
