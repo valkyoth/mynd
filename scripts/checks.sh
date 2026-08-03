@@ -30,8 +30,8 @@ cargo package -p mynd --allow-dirty \
     --config 'patch.crates-io.mynd-core.path="crates/mynd-core"' \
     --config 'patch.crates-io.mynd-math.path="crates/mynd-math"'
 cargo test --manifest-path target/package/mynd-math-0.1.0/Cargo.toml --all-features
-cargo test --manifest-path target/package/mynd-core-0.2.0/Cargo.toml --all-features \
+cargo test --manifest-path target/package/mynd-core-0.3.0/Cargo.toml --all-features \
     --config 'patch.crates-io.mynd-math.path="crates/mynd-math"'
-cargo test --manifest-path target/package/mynd-0.4.0/Cargo.toml --all-features \
+cargo test --manifest-path target/package/mynd-0.5.0/Cargo.toml --all-features \
     --config 'patch.crates-io.mynd-core.path="crates/mynd-core"' \
     --config 'patch.crates-io.mynd-math.path="crates/mynd-math"'

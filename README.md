@@ -29,10 +29,10 @@
 resource use, deterministic behavior, and deployment from embedded `no_std`
 systems through desktop and server applications.
 
-The project is in its current 0.4.0 validated-geometry phase. The workspace now
-provides checked arithmetic plus nonzero dimensions, contained rectangles,
-aligned plane layouts, and exact output lengths; pixel formats, buffer views,
-decoding, and encoding APIs do not yet exist. The
+The project is in its current 0.5.0 explicit pixel-storage phase. The workspace
+now provides checked arithmetic and validated geometry plus sample storage,
+channel order, chroma subsampling, alpha association, and exact pixel-to-plane
+relationships; buffer views, decoding, and encoding APIs do not yet exist. The
 [release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 defines the incremental path to the first production-ready 1.0.0 release.
 
@@ -43,7 +43,7 @@ they need:
 
 ```toml
 [dependencies]
-mynd = { version = "0.4.0", default-features = false }
+mynd = { version = "0.5.0", default-features = false }
 ```
 
 The default feature set is intentionally empty.
@@ -54,8 +54,9 @@ The default feature set is intentionally empty.
 |---|---|---|
 | `no_std` facade, core boundary, and governance contract | Foundation available | 0.1.x-0.2.x |
 | Checked integer arithmetic | Available | 0.3.x |
-| Validated dimensions, rectangles, planes, and output lengths | Release candidate | 0.4.x |
-| Pixel layouts, caller-owned buffers, frames, limits, and I/O | Planned | 0.5.x-0.12.x |
+| Validated dimensions, rectangles, planes, and output lengths | Available | 0.4.x |
+| Explicit sample storage and pixel-to-plane layouts | Release candidate | 0.5.0 |
+| Caller-owned buffers, frames, limits, and I/O | Planned | 0.6.x-0.12.x |
 | Shared I/O, probing, and codec contracts | Planned | 0.13.x-0.19.x |
 | BMP, QOI, Netpbm PNM/PAM, and farbfeld | Planned | 0.20.x-0.35.x |
 | PNG, GIF, JPEG, WebP, and TIFF | Planned | 0.36.x-0.77.x |
@@ -105,7 +106,7 @@ features only when their release gates are complete.
 The minimum supported Rust version is Rust `1.90.0`. New deployments should use
 the pinned stable Rust `1.97.1` until the toolchain policy is updated.
 
-Compatibility evidence for `0.4.0`:
+Compatibility evidence for `0.5.0`:
 
 | Rust | Local Evidence |
 | --- | --- |
@@ -120,7 +121,7 @@ The compatibility policy is documented in
 | Crate | Role | Runtime dependencies |
 |---|---|---:|
 | [`mynd`](https://crates.io/crates/mynd) | Public facade and feature composition | 2 first-party crates |
-| [`mynd-core`](https://crates.io/crates/mynd-core) | Validated format-neutral `no_std` geometry and plane layouts | 1 first-party crate |
+| [`mynd-core`](https://crates.io/crates/mynd-core) | Validated format-neutral geometry, sample storage, and pixel layouts | 1 first-party crate |
 | [`mynd-math`](https://crates.io/crates/mynd-math) | Checked integer conversion, arithmetic, alignment, and ranges | 0 |
 
 Application-facing APIs should enter through `mynd`. Support crates are
@@ -138,7 +139,8 @@ rustup run 1.97.1 scripts/checks.sh
 The repository gate covers formatting, lints, tests, documentation, `no_std`
 builds, MSRV checks, dependency policy, and package contents. The full release
 gate and CI additionally run vulnerability auditing, the complete Rust and
-platform matrices, Kani arithmetic and geometry proofs, latest-tool checks,
+platform matrices, Kani arithmetic, geometry, sample-storage, and layout
+proofs, latest-tool checks,
 and SBOM verification. See
 [toolchain policy](https://github.com/valkyoth/mynd/blob/main/docs/toolchain-policy.md) for the
 full command matrix.
@@ -170,6 +172,7 @@ errata, and recorded security limits. The repository maintains:
 - [Specification source policy](https://github.com/valkyoth/mynd/blob/main/docs/spec-source-policy.md)
 - [Implementation plan](https://github.com/valkyoth/mynd/blob/main/docs/IMPLEMENTATION_PLAN.md)
 - [Validated geometry and plane-layout contract](https://github.com/valkyoth/mynd/blob/main/docs/geometry-layout.md)
+- [Pixel-layout and sample-storage contract](https://github.com/valkyoth/mynd/blob/main/docs/pixel-storage.md)
 - [Version plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 - [Release process](https://github.com/valkyoth/mynd/blob/main/docs/release-runbook.md)
 

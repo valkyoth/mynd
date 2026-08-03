@@ -4,10 +4,10 @@
 
 //! Security-first image codecs and processing for Rust.
 //!
-//! Version 0.4.0 adds validated dimensions, contained rectangles, plane
-//! layouts, and output lengths to the checked arithmetic foundations. Pixel
-//! formats, buffer views, and codecs remain unavailable until their milestones
-//! pass.
+//! Version 0.5.0 adds explicit sample storage, channel order, chroma
+//! subsampling, alpha association, and pixel-to-plane relationships to the
+//! validated geometry foundation. Buffer views and codecs remain unavailable
+//! until their milestones pass.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

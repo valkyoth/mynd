@@ -32,7 +32,7 @@ Most users should depend on the facade crate:
 
 ```toml
 [dependencies]
-mynd = { version = "0.4.0", default-features = false }
+mynd = { version = "0.5.0", default-features = false }
 ```
 
 `mynd-core` is published separately to maintain small implementation boundaries
@@ -42,19 +42,20 @@ Expert users who only need the validated primitives may depend directly on:
 
 ```toml
 [dependencies]
-mynd-core = { version = "0.2.0", default-features = false }
+mynd-core = { version = "0.3.0", default-features = false }
 ```
 
 ## Current status
 
-Version 0.2.0 provides validated geometry: nonzero image dimensions, contained
-nonempty rectangles, aligned nonempty plane layouts, and exact target-width
-output lengths. Layout constructors reject zero fields, invalid strides,
-misalignment, overlap, arithmetic overflow, and values that cannot fit the
-target's `usize`.
+Version 0.3.0 adds validated sample storage and format-neutral pixel layouts to
+the existing geometry foundation. Its types explicitly model integer and
+floating storage widths, byte/bit order, channel order, chroma subsampling,
+alpha association, and interleaved, planar, or semi-planar relationships.
+Concrete plane validation rejects mismatched counts, sampled rows, used row
+bytes, ordering, and overlap.
 
-These are storage-neutral prerequisites. Pixel/sample formats, chroma and alpha
-semantics, slice-backed views, allocation, and codecs remain unavailable until
+These types describe storage only. Floating-point numeric behavior, color
+conversion, slice-backed views, allocation, and codecs remain unavailable until
 their staged releases in the
 [version plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md).
 
@@ -70,8 +71,9 @@ their staged releases in the
 - `no_std` is the baseline; the default feature set is empty.
 - The only runtime dependency is the first-party, dependency-free `mynd-math`.
 - Unsafe code is forbidden by workspace policy.
-- Dimensions, strides, offsets, last-row extents, and plane-set output lengths
-  are validated with checked arithmetic before becoming usable values.
+- Dimensions, strides, offsets, row sizes, sample widths, plane relationships,
+  and output lengths are validated with checked arithmetic before becoming
+  usable values.
 - Malformed untrusted input must not panic, over-allocate, or perform unbounded
   work.
 

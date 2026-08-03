@@ -1,6 +1,6 @@
 # Validated Geometry and Plane Layout Contract
 
-Status: v0.4.0 release-candidate contract.
+Status: v0.4.0 released geometry contract; extended, not replaced, by v0.5.0.
 
 This document defines the format-neutral `mynd-core` 0.2.0 geometry boundary.
 It is `no_std`, uses no allocation or unsafe Rust, and accepts no byte slice.
@@ -67,11 +67,13 @@ the last plane in an ordered, nonoverlapping set.
 
 ## Explicit exclusions
 
-v0.4.0 does not define pixel channels, sample storage, endianness, packed bits,
-chroma subsampling, alpha association, palette semantics, slice-backed views,
-allocation, format parsing, or decode/encode limits. In particular, `row_bytes`
-is not derived from pixels yet; callers must not treat a valid plane as proof of
-a pixel-format relationship. Those domains begin in v0.5.0 and later releases.
+The v0.4.0 API alone does not define pixel channels, sample storage,
+endianness, packed bits, chroma subsampling, alpha association, palette
+semantics, slice-backed views, allocation, format parsing, or decode/encode
+limits. In particular, a standalone `PlaneLayout` remains storage-neutral.
+Version 0.5.0 adds a separate validated pixel-to-plane relationship described
+in [`pixel-storage.md`](pixel-storage.md); buffer access and later domains
+remain excluded.
 
 ## Verification boundary
 

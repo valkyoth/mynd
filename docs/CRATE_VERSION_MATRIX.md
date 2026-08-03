@@ -11,8 +11,8 @@ workspace version without changing its package inputs.
 | Crate | Previous | Planned | Change | Publish | Reason |
 | --- | --- | --- | --- | --- | --- |
 | `mynd-math` | `0.1.0` | `0.1.0` | unchanged | No | No published code, dependency, or package metadata changed. |
-| `mynd-core` | `0.1.0` | `0.2.0` | code | Yes | Add validated dimensions, rectangles, plane layouts, output lengths, tests, and Kani proofs. |
-| `mynd` | `0.3.0` | `0.4.0` | code | Yes | Re-export the validated `mynd-core` 0.2.0 geometry API through the facade. |
+| `mynd-core` | `0.2.0` | `0.3.0` | code | Yes | Add explicit sample storage, pixel layouts, chroma and alpha domains, plane relationships, tests, and Kani proofs. |
+| `mynd` | `0.4.0` | `0.5.0` | code | Yes | Re-export the validated `mynd-core` 0.3.0 pixel-storage API through the facade. |
 
 Change kinds follow the adapted `eth` release tool: facade code uses the
 milestone version; support-crate code gets its next independent minor; bugfixes

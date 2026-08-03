@@ -16,6 +16,9 @@ Initial enforced controls:
 - nonzero dimensions, retained-bounds rectangles, numerically aligned plane
   layouts, exact last-row output lengths, ordered nonoverlapping plane sets,
   and explicit 32-bit representability failures;
+- validated integer and floating sample-storage units, explicit byte/bit order,
+  typed alpha/chroma/channel organizations, exact logical plane relationships,
+  and checked tightly packed row-byte derivation;
 - GitHub CodeQL default setup policy.
 
 Cargo profiles belong to the top-level build. Downstream consumers control

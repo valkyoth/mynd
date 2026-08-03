@@ -6,7 +6,37 @@ a time.
 
 ## [Unreleased]
 
-## [0.4.0] - Unreleased
+## [0.5.0] - Unreleased
+
+### Added
+
+- Added validated integer and floating sample-storage domains with explicit
+  significant width, physical unit, byte order, and packed-stream bit order.
+- Added typed gray, RGB, and YCbCr layouts with explicit channel ordering,
+  alpha association, six chroma-subsampling domains, and interleaved, planar,
+  or semi-planar organization.
+- Added exact logical-plane dimensions, checked tightly packed row-byte
+  derivation, and concrete plane relationship validation.
+- Added focused boundary and relationship tests, five Kani storage/layout
+  harnesses, facade coverage, and the normative pixel-storage contract.
+
+### Changed
+
+- Advanced `mynd` to 0.5.0 and `mynd-core` to 0.3.0; unchanged `mynd-math`
+  remains at 0.1.0 and is not republished.
+- Re-exported the pixel-storage foundation through `mynd::core` without adding
+  allocation, buffer access, parsing, decoding, encoding, or format support.
+
+### Security
+
+- Invalid sample width/unit/class states and contradictory
+  plane/chroma/alpha organizations cannot become validated public values.
+- Concrete planes fail closed on count, sampled-height, exact used-row-byte,
+  ordering, or overlap mismatch before an output extent is committed.
+- Added the cumulative v0.5.0 pentest scope covering the complete delta since
+  the prior published v0.4.0 checkpoint.
+
+## [0.4.0] - 2026-08-03
 
 ### Added
 
@@ -175,7 +205,8 @@ a time.
 - Explicit crates.io version-and-lockfile trust boundary for CI security-tool
   installation.
 
-[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/valkyoth/mynd/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/valkyoth/mynd/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/valkyoth/mynd/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/valkyoth/mynd/compare/v0.2.0...v0.2.1

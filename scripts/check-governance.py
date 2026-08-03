@@ -97,13 +97,13 @@ def check_document_scope() -> None:
         (readme, facade_readme, support, implementation, sources, modularity)
     )
     require(readme == facade_readme, "facade README differs from repository README")
-    require("current 0.4.0 validated-geometry phase" in readme, "README phase is stale")
-    require('version = "0.4.0"' in readme, "README install version is stale")
+    require("current 0.5.0 explicit pixel-storage phase" in readme, "README phase is stale")
+    require('version = "0.5.0"' in readme, "README install version is stale")
     require("0.13.x-0.19.x" in readme, "README shared-contract train is stale")
     require(
-        "Version 0.2.0 provides validated geometry" in core_readme
-        and 'mynd-core = { version = "0.2.0"' in core_readme,
-        "mynd-core 0.2.0 README drifted",
+        "Version 0.3.0 adds validated sample storage" in core_readme
+        and 'mynd-core = { version = "0.3.0"' in core_readme,
+        "mynd-core 0.3.0 README drifted",
     )
     require("`v0.20.0-v0.25.2`" in support, "BMP support train is stale")
     require("`v0.34.0`" in support, "farbfeld support handoff is missing")
@@ -167,10 +167,10 @@ def check_release_graph() -> None:
     math = toml("crates/mynd-math/Cargo.toml")
     release = toml("release-crates.toml")
     require(workspace["workspace"]["package"]["version"] == "0.1.0", "support baseline version")
-    require(facade["package"]["version"] == "0.4.0", "mynd facade train version")
+    require(facade["package"]["version"] == "0.5.0", "mynd facade train version")
     require(
-        core["package"]["version"] == "0.2.0",
-        "mynd-core must advance independently to 0.2.0",
+        core["package"]["version"] == "0.3.0",
+        "mynd-core must advance independently to 0.3.0",
     )
     require(
         math["package"]["version"] == {"workspace": True},
@@ -178,9 +178,9 @@ def check_release_graph() -> None:
     )
     core_dependency = workspace["workspace"]["dependencies"]["mynd-core"]
     math_dependency = workspace["workspace"]["dependencies"]["mynd-math"]
-    require(core_dependency["version"] == "=0.2.0", "mynd-core dependency must stay exact")
+    require(core_dependency["version"] == "=0.3.0", "mynd-core dependency must stay exact")
     require(math_dependency["version"] == "=0.1.0", "mynd-math dependency must stay exact")
-    require(release["release"]["version"] == "0.4.0", "release plan version drift")
+    require(release["release"]["version"] == "0.5.0", "release plan version drift")
     require(
         release["crates"]["mynd-math"]["version"] == "0.1.0"
         and release["crates"]["mynd-math"]["change"] == "unchanged"
@@ -188,15 +188,15 @@ def check_release_graph() -> None:
         "unchanged mynd-math 0.1.0 must not publish",
     )
     require(
-        release["crates"]["mynd-core"]["version"] == "0.2.0"
+        release["crates"]["mynd-core"]["version"] == "0.3.0"
         and release["crates"]["mynd-core"]["change"] == "code"
         and release["crates"]["mynd-core"]["publish"] is True,
-        "mynd-core 0.2.0 must publish before the facade",
+        "mynd-core 0.3.0 must publish before the facade",
     )
     require(
-        release["crates"]["mynd"]["version"] == "0.4.0"
+        release["crates"]["mynd"]["version"] == "0.5.0"
         and release["crates"]["mynd"]["publish"] is True,
-        "mynd 0.4.0 must publish the facade re-export",
+        "mynd 0.5.0 must publish the facade re-export",
     )
 
 

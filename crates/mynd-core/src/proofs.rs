@@ -2,7 +2,10 @@ use core::convert::TryFrom;
 
 use mynd_math::MathError;
 
-use crate::{Dimensions, GeometryError, ImageRect, PlaneLayout, plane::required_len_u64};
+use crate::{
+    BitOrder, ByteOrder, ChromaSubsampling, Dimensions, GeometryError, ImageRect, PixelLayout,
+    PlaneLayout, SampleClass, SampleStorage, StorageError, StorageUnit, plane::required_len_u64,
+};
 
 #[kani::proof]
 fn dimensions_accept_exactly_nonzero_u8_axes() {
@@ -187,6 +190,112 @@ fn last_row_32_bit_boundary_is_exact() {
     });
     assert!(exact == Ok(u32::MAX));
     assert!(above == Err(GeometryError::Arithmetic(MathError::ConversionOutOfRange)));
+}
+
+#[kani::proof]
+fn byte_sample_validation_matches_full_bit_domain() {
+    let bits = kani::any::<u8>();
+    let actual = SampleStorage::new(SampleClass::UnsignedInteger, bits, StorageUnit::Byte);
+    let expected = if bits == 0 {
+        Err(StorageError::ZeroSampleBits)
+    } else if bits > 8 {
+        Err(StorageError::SampleBitsExceedStorage)
+    } else {
+        Ok(bits)
+    };
+    match (actual, expected) {
+        (Ok(sample), Ok(expected)) => {
+            assert!(sample.significant_bits() == expected);
+            assert!(sample.storage_bits() == 8);
+        }
+        (Err(actual), Err(expected)) => assert!(actual == expected),
+        _ => assert!(false),
+    }
+}
+
+#[kani::proof]
+fn packed_sample_validation_matches_full_bit_domain() {
+    let bits = kani::any::<u8>();
+    let actual = SampleStorage::new(
+        SampleClass::UnsignedInteger,
+        bits,
+        StorageUnit::Packed(BitOrder::MostSignificantFirst),
+    );
+    let expected = if bits == 0 {
+        Err(StorageError::ZeroSampleBits)
+    } else if bits > 64 {
+        Err(StorageError::PackedSampleTooWide)
+    } else {
+        Ok(bits)
+    };
+    match (actual, expected) {
+        (Ok(sample), Ok(expected)) => {
+            assert!(sample.significant_bits() == expected);
+            assert!(sample.storage_bits() == expected);
+        }
+        (Err(actual), Err(expected)) => assert!(actual == expected),
+        _ => assert!(false),
+    }
+}
+
+#[kani::proof]
+fn floating_word_requires_its_full_width() {
+    let bits = kani::any::<u8>();
+    let actual = SampleStorage::new(
+        SampleClass::FloatingPoint,
+        bits,
+        StorageUnit::Word32(ByteOrder::LittleEndian),
+    );
+    if bits == 32 {
+        assert!(actual.is_ok());
+    } else if bits == 0 {
+        assert!(actual == Err(StorageError::ZeroSampleBits));
+    } else if bits > 32 {
+        assert!(actual == Err(StorageError::SampleBitsExceedStorage));
+    } else {
+        assert!(actual == Err(StorageError::InvalidFloatingStorage));
+    }
+}
+
+#[kani::proof]
+fn gray_u8_row_bytes_match_every_nonzero_u32_width() {
+    let width = kani::any::<u32>();
+    let dimensions = Dimensions::new(width, 1);
+    let sample = SampleStorage::new(SampleClass::UnsignedInteger, 8, StorageUnit::Byte);
+    if let (Ok(dimensions), Ok(sample)) = (dimensions, sample) {
+        let layout = PixelLayout::Gray { sample };
+        match layout.plane(0) {
+            Some(plane) => assert!(plane.row_bytes(dimensions) == Ok(u64::from(width))),
+            None => assert!(false),
+        }
+    } else {
+        assert!(width == 0);
+    }
+}
+
+#[kani::proof]
+fn cs420_plane_dimensions_round_up_without_zero() {
+    let width = kani::any::<u32>();
+    let height = kani::any::<u32>();
+    let dimensions = Dimensions::new(width, height);
+    let sample = SampleStorage::new(SampleClass::UnsignedInteger, 8, StorageUnit::Byte);
+    if let (Ok(dimensions), Ok(sample)) = (dimensions, sample) {
+        let layout = PixelLayout::YcbcrPlanar {
+            luma: sample,
+            chroma: sample,
+            subsampling: ChromaSubsampling::Cs420,
+        };
+        match layout
+            .plane(1)
+            .and_then(|plane| plane.dimensions(dimensions).ok())
+        {
+            Some(chroma) => {
+                assert!(chroma.width() == width.div_ceil(2));
+                assert!(chroma.height() == height.div_ceil(2));
+            }
+            None => assert!(false),
+        }
+    }
 }
 
 fn required_len_u32_model(

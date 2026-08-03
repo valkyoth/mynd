@@ -27,7 +27,7 @@ class ReleasePlannerTests(unittest.TestCase):
 
     def test_current_plan_loads(self) -> None:
         plan = MODULE.release_plan(MODULE.DEFAULT_PLAN)
-        self.assertEqual(plan["version"], "0.4.0")
+        self.assertEqual(plan["version"], "0.5.0")
         self.assertEqual(tuple(plan["crates"]), MODULE.PUBLISH_ORDER)
 
     def test_unchanged_crate_cannot_publish(self) -> None:

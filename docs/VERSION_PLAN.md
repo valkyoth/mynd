@@ -1144,7 +1144,7 @@ Exit criteria:
 
 ### v0.5.0 - Explicit pixel layout and sample-storage domains
 
-Status: Planned.
+Status: Implementation candidate; cumulative pentest pending.
 
 Context:
 
