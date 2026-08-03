@@ -6,6 +6,15 @@ a time.
 
 ## [Unreleased]
 
+### Changed
+
+- Defined the v0.5.0-and-later release cadence: every planned version remains a
+  green GitHub tag, while cumulative pentests and crates.io publication occur
+  at each fifth minor checkpoint (`v0.5.0`, `v0.10.0`, `v0.15.0`, and so on).
+- Defined interim tags as unpentested, unpublished engineering checkpoints,
+  added cumulative pentest scope, and retained an emergency security-release
+  exception for affected published artifacts.
+
 ## [0.2.1] - Unreleased
 
 ### Added

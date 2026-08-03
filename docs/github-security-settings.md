@@ -10,4 +10,5 @@ Before a release tag:
 2. Confirm CodeQL default setup is active for the default branch.
 3. Confirm the latest CodeQL analysis and Rust CI completed successfully for
    the final release commit.
-4. Record those checks in the release pentest report.
+4. Record those checks in the pentest report for a publication checkpoint, or
+   in the release notes/check evidence for an interim engineering checkpoint.

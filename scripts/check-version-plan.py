@@ -195,6 +195,30 @@ RETIRED_OVERSIZED_TITLES = (
     "TIFF extended color and JPEG encoders",
     "Miri, sanitizers, target, feature, and stack audit",
 )
+PRODUCTION_CADENCE_ROWS = (
+    "| `v1.0.0-rc.1` | Yes | Cumulative production-candidate pentest | "
+    "Publish prerelease |",
+    "| `v1.0.0` | Yes | Reuse RC evidence only for the defined byte-for-byte "
+    "promotion; otherwise retest | Publish stable |",
+)
+
+
+def expected_cadence(version: str) -> tuple[str, str]:
+    """Return the mandatory Pentest and Crates.io cells for a 0.x handoff."""
+    _, minor_text, patch_text = version.split(".")
+    minor = int(minor_text)
+    patch = int(patch_text)
+    if minor < 5:
+        return "Yes (exact version)", f"Publish `{version}`"
+    if patch == 0 and minor % 5 == 0:
+        return "Yes (cumulative checkpoint)", f"Publish `{version}`"
+
+    next_minor = ((minor // 5) + 1) * 5
+    checkpoint = f"0.{next_minor}.0" if next_minor <= 95 else "1.0.0-rc.1"
+    return (
+        f"No; covered by `{checkpoint}`",
+        f"Not published; next `{checkpoint}`",
+    )
 
 
 def main() -> int:
@@ -244,6 +268,29 @@ def main() -> int:
     ]
     if summary_version_list != detailed_0x_list:
         errors.append("0.x summary and detailed milestone order differs")
+
+    expected_header = (
+        "| Version | Exclusive capability | Mandatory evidence | Pentest | "
+        "Crates.io |"
+    )
+    if expected_header not in lines[summary_start:summary_end]:
+        errors.append("milestone summary is missing Pentest and Crates.io columns")
+    for production_row in PRODUCTION_CADENCE_ROWS:
+        if production_row not in text:
+            errors.append("production admission cadence is missing or changed")
+    for line in lines[summary_start:summary_end]:
+        match = SUMMARY.match(line)
+        if match is None:
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) != 5:
+            errors.append(f"{match.group(1)} summary row must have five columns")
+            continue
+        expected_pentest, expected_publication = expected_cadence(match.group(1))
+        if cells[3] != expected_pentest:
+            errors.append(f"{match.group(1)} has incorrect pentest cadence")
+        if cells[4] != expected_publication:
+            errors.append(f"{match.group(1)} has incorrect crates.io cadence")
     numeric_versions = [
         tuple(int(component) for component in version.split("."))
         for version in detailed_0x_list
@@ -351,10 +398,10 @@ def main() -> int:
 
         stop = (
             f"`{version} implementation stop reached. "
-            "Run pentest and record the result.`"
+            "Follow the release cadence and publication rules.`"
         )
         if not any(stop in line for line in body_lines):
-            errors.append(f"{version} is missing the pentest handoff line")
+            errors.append(f"{version} is missing the release-cadence handoff line")
 
     if errors:
         for error in errors:

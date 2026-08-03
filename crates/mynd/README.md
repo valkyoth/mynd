@@ -65,6 +65,13 @@ future capabilities are not considered available merely because they appear on
 the roadmap. Exact scope and public claim words are defined by the
 [scope and claim contract](https://github.com/valkyoth/mynd/blob/main/docs/SCOPE_AND_CLAIMS.md).
 
+Starting with `v0.5.0`, every planned version remains a green GitHub tag, while
+external pentests and crates.io publication occur at cumulative five-minor
+checkpoints (`v0.5.0`, `v0.10.0`, `v0.15.0`, and so on). Interim tags are
+explicitly unpentested engineering checkpoints and are not published. See the
+[release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
+for the checkpoint assigned to every version.
+
 ## Design goals
 
 - `no_std` from the first release, with `alloc` and `std` kept behind explicit

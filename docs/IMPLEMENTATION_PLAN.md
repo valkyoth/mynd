@@ -134,7 +134,8 @@ Each minor release adds one bounded capability:
    evidence.
 7. Audit panics, arithmetic, allocations, loops, offsets, logging, and package
    contents.
-8. Update support claims, release notes, crate versions, and pentest scope.
+8. Update support claims, release notes, crate versions, and the release's
+   pentest/publication-cadence status.
 
 No second capability enters the release until the first is testable and its
 security delta is reviewable.
@@ -209,7 +210,8 @@ and fixes the exact implementation admitted to assurance.
 Versions 0.99.0-0.99.18 are evidence-only campaigns over that unchanged input:
 fuzzing/truncation, focused Kani proof families, Miri/sanitizers/target/feature
 coverage, conformance/differential/color/performance/DoS freeze, reproducible
-packaging, external pentest, and the final public API freeze.
+packaging, preparation for the cumulative `v1.0.0-rc.1` external pentest, and
+the final public API freeze.
 
 The CLI is a separate `std` tool and never silently chooses unlimited budgets.
 It writes outputs transactionally so failed conversion does not leave a result
@@ -282,5 +284,7 @@ Version 1.0.0 is published only when:
 - maintainers accept normal semantic-versioning obligations.
 
 Existence of v0.99.18 does not automatically authorize 1.0.0. The exact
-v1.0.0-rc.1 archives must pass their own pentest and reproducibility decision,
-and v1.0.0 is a byte-for-byte promotion only.
+v1.0.0-rc.1 archives must pass the cumulative pentest and reproducibility
+decision covering every delta since v0.95.0. Version v1.0.0 is a byte-for-byte
+promotion only; any implementation or artifact change requires another
+appropriate review and retest.

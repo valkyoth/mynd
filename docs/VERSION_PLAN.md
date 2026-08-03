@@ -9,9 +9,10 @@ test-bearing behavior. Roadmap entries are not support claims; only implemented
 behavior recorded in FORMAT_SUPPORT.md may be advertised.
 
 This plan is granular because every image byte is hostile input. Each handoff
-must be small enough to implement, test, review, pentest, and stop cleanly
-before tagging. Split work whenever one safe review pass is insufficient.
-Schedule pressure never permits scope to roll silently into the next version.
+must be small enough to implement, test, review, and stop cleanly before
+tagging. Pentests are cumulative publication checkpoints under the cadence
+below. Split work whenever one safe review pass is insufficient. Schedule
+pressure never permits scope to roll silently into the next version.
 
 ## Release sizing invariant
 
@@ -25,9 +26,10 @@ part of its security proof to a later tag.
 Field groups remain together only when one normative transition table and one
 test matrix cover them. Format audits may aggregate already implemented,
 unchanged surfaces, but cannot add behavior. If implementation review, fuzz
-triage, proof work, or pentest scope cannot finish as one coherent decision,
-the handoff must split before code begins. The summary and detailed handoffs
-are machine-checked for identical, monotonically ordered version sets.
+triage, or proof work cannot finish as one coherent decision, the handoff must
+split before code begins. Cumulative pentest findings remain mapped to the
+handoff that introduced the affected surface. The summary and detailed
+handoffs are machine-checked for identical, monotonically ordered version sets.
 
 ```text
 v0.N.0       primary release in family N
@@ -52,10 +54,12 @@ SPEC_SOURCES.md, crate planning, and release automation. No implementation
 milestone may begin while those documents describe the former architecture or
 scope; until reconciliation passes, no codec support is claimed.
 
-Each .x family has one exclusive outcome. Every named patch version has its own
-artifacts, evidence, release notes, evolving pentest report, clean retest, and
-tag decision. A failed format audit delays later work; it cannot be hidden in
-the next format.
+Each .x family has one exclusive outcome. Every named version has its own
+artifacts, evidence, release notes, commit, green GitHub checks, and tag
+decision. Only rows marked `Yes` in the Pentest column require an evolving
+pentest report and clean retest, and only rows marked `Publish` in the
+Crates.io column are published. A failed format audit delays later work; it
+cannot be hidden in the next format.
 
 ## Conformance claims
 
@@ -444,11 +448,12 @@ API freeze:
 | 0.98.0-0.98.7 | Exercise diagnostics, transactional output, command isolation, batch limits, and service profiles through CLI integration. |
 | 0.98.8 | Resolve every cross-adapter facade issue, prohibit adapter-specific forks, rerun affected compatibility matrices, and establish the exact implementation admitted to assurance. |
 | 0.99.0-0.99.17 | Fuzz, prove, and audit the exact reconciled v0.98.8 implementation; any implementation or public-API correction invalidates affected evidence and returns to reconciliation. |
-| 0.99.18 | Verify and freeze the already-corrected facade, run the external pentest, and make no implementation or public-API correction. |
+| 0.99.18 | Verify and freeze the already-corrected facade, assemble the cumulative pentest handoff, and make no implementation or public-API correction. |
 
 Every v0.95.x-v0.98.7 handoff records whether it exposed facade pressure. Any
 required correction is reviewed, documented, compatibility-tested, and
-pentested in that handoff or becomes a v0.98.8 release blocker. v0.98.8 exits
+included in the next cumulative pentest or becomes a v0.98.8 release blocker.
+v0.98.8 exits
 only with zero unresolved implementation or public-API issues and no adapter
 forking or bypassing the shared facade. The v0.99.x assurance campaign applies
 to that exact reconciled implementation. A later implementation or public-API
@@ -460,8 +465,9 @@ v0.99.18 only verifies and freezes the already-corrected facade.
 Container milestones initially preserve bounded raw Exif, ICC, and XMP
 transport. Structured v1 inspection is added later through a shared TIFF/Exif
 IFD parser, a CIPA Exif 3.1 selected-field profile, opaque MakerNotes, bounded
-string values, explicit thumbnail limits, and independently pentested XMP
-packet, XML/Namespaces, and RDF/XMP data-model layers. CIPA DC-010-2026 binds
+string values, explicit thumbnail limits, and independently reviewed XMP
+packet, XML/Namespaces, and RDF/XMP data-model layers included in the next
+cumulative pentest. CIPA DC-010-2026 binds
 Exif/XMP reconciliation; no metadata identifier is dereferenced.
 
 Exif orientation is metadata until a caller explicitly requests normalization.
@@ -529,35 +535,56 @@ filesystems, threads, wall clocks, or global allocation.
 Every release has one outcome and the Status, Context, Goal, Deliverables,
 Verification, and Exit criteria blocks below. Official/original sources,
 limits, unsupported behavior, compatibility, loss, local/adversarial evidence,
-release notes, crate metadata, package inspection, SBOM, pentest history, CI,
-and CodeQL are mandatory.
+release notes, crate metadata, package inspection, SBOM, CI, and CodeQL remain
+mandatory for every tag. Pentest history and crates.io publication are
+mandatory only at publication checkpoints.
 
-Implementation completion starts one simple release loop:
+The cadence is authoritative:
 
-1. Commit the candidate and run the pentest.
-2. Keep `security/pentest/vX.Y.Z.md` in the repository throughout the release.
-   Record a clean result or every finding, remediation, and retest in that one
-   evolving report.
-3. Repeat remediation and retesting until the report reaches `Status: PASS`.
-4. Commit the complete candidate and PASS report, then wait for GitHub CI and
-   CodeQL on that commit.
-5. If GitHub finds a problem, fix it, record the change and resulting checks or
-   retest in the same report, commit again, and repeat.
-6. Tag the final commit only after its local release gate, GitHub CI, and CodeQL
-   are green. The tag points directly at that final commit.
+| Range | GitHub tag | Pentest | Crates.io |
+| --- | --- | --- | --- |
+| Through `v0.4.0` | Every named version | Exact-version review | Every named version |
+| `v0.5.0` through `v0.95.0` | Every named version | Cumulative at `v0.5.0`, then each fifth minor checkpoint: `v0.10.0`, `v0.15.0`, ... `v0.95.0` | Only the same checkpoint versions |
+| After `v0.95.0` through `v0.99.18` | Every named version | Rolled into `v1.0.0-rc.1` | No interim publication |
+| `v1.0.0-rc.1` | Yes | Cumulative production-candidate pentest | Publish prerelease |
+| `v1.0.0` | Yes | Reuse RC evidence only for the defined byte-for-byte promotion; otherwise retest | Publish stable |
 
-The report does not need a report-only commit, a direct-parent relationship, or
-an immutable first candidate. It must honestly describe the complete history
-that led to PASS. Security-relevant changes after a clean pentest require an
-appropriate retest; CI-only corrections still belong in the report. At each
-implementation exit, print the required pentest handoff line and do not tag.
+An interim row marked `No` is a **GitHub engineering checkpoint**. It receives
+the normal security tests, review, documentation, commit, CI, CodeQL, and tag,
+but it is neither externally pentested nor published to crates.io. Its release
+notes must say so and name the next cumulative checkpoint. A Git tag requires
+a commit, so "no publication commit" never means skipping the implementation
+commit used by that tag.
+
+A checkpoint pentest covers the complete delta since the preceding published
+checkpoint: source, dependencies, generated artifacts, documentation claims,
+packaging, and every carried-forward finding. Keep
+`security/pentest/vX.Y.Z.md` for that checkpoint, repeat remediation and
+retesting until `Status: PASS`, commit the complete candidate and report, and
+wait for GitHub CI and CodeQL. If GitHub exposes a problem, record the
+correction and relevant retest in the same report and repeat. Tag and publish
+only the final green commit.
+
+This gives crates.io consumers cumulative externally reviewed checkpoints;
+interim GitHub tags deliberately have a lower assurance label and are not
+represented as published releases. A critical/high vulnerability, compromise,
+or defect in an already published artifact may trigger an out-of-cadence
+pentest and patch publication. Record why the emergency exception was used.
+
+The summary Pentest and Crates.io cells override generic security wording in a
+detailed handoff. A pentest, clean retest, permanent report, or strict
+publication-gate clause applies only when that row says `Yes`/`Publish`; a `No`
+row carries its delta to the named checkpoint instead.
 
 ## Crate versioning
 
 The mynd facade is the integration train. Changed support crates use independent
-versions; unchanged crates are not republished. Update release-crates.toml,
-the crate-version matrix, changelog, notes, package inventory, SBOM, and
-pentest metadata atomically.
+versions; unchanged crates are not republished. Support-crate versions may
+advance in interim source tags, but only the latest required unpublished
+versions are published in dependency order at the next checkpoint. Update
+release-crates.toml, the crate-version matrix, changelog, notes, package
+inventory, and SBOM for every tag; update pentest metadata only at a pentest
+checkpoint.
 
 Crates enter only at their first handoff. Intended inward layering is
 mynd-math, mynd-core, mynd-budget, mynd-io, mynd-deflate, mynd-zlib,
@@ -571,275 +598,275 @@ outer adapters include alloc/std, async, Rayon, WASM, GPU, and CLI.
 
 ## Milestone summary
 
-| Version | Exclusive capability | Mandatory evidence |
-| --- | --- | --- |
-| 0.1.0 | Existing workspace, licenses, feature boundaries, release policy | Current checks plus completed pentest cycle |
-| 0.2.0 | Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema | No contradictions across README, support matrix, and normative plans |
-| 0.2.1 | Reproducible specification corpus and legal-disposition gate | Every source classified public/offline/manual, immutable hashes, clean recreation, package exclusion, and legal review |
-| 0.3.0 | Checked conversion/add/multiply/align/range primitives | Exhaustive extrema tests and Kani arithmetic proofs |
-| 0.4.0 | Validated dimensions, rectangles, strides, planes, and output lengths | Zero/min/max, last-row, alignment, and 32-bit usize proofs |
-| 0.5.0 | Explicit pixel layout and sample-storage domains | Invalid layout/sample/plane/chroma/alpha combinations are unrepresentable |
-| 0.5.1 | Numeric determinism and floating-sample contract | Bit-exact/tolerance/backend tiers plus rounding, saturation, FMA, NaN, infinity, zero, and subnormal tests |
-| 0.5.2 | Shared color and blending specification ledger | Pinned ICC, sRGB, BT.601/709/2020, H.273, HDR, CIE, Porter-Duff, and blend sources with claim scope |
-| 0.5.3 | Scalar transfer, matrix/range, and alpha foundation | Integer/scalar reference vectors, premultiplication, range conversion, rounding, and native-sample preservation |
-| 0.5.4 | Minimal scalar animation composition kernel | Source/source-over, straight/premultiplied conversion, exact integer rounding, zero alpha, and format mapping |
-| 0.5.5 | Explicit no_std elementary-math backend | Pure-core/software/optional backend selection, domains, maximum error, FMA policy, and cross-target vectors |
-| 0.6.0 | Immutable/mutable image and plane views | Short-buffer, row-boundary, alias-policy, and Miri tests |
-| 0.7.0 | Frames, timing, canvas, disposal, blend, and frame rectangles | Off-canvas and cumulative-duration tests |
-| 0.8.0 | Allocation-free structured errors, warnings, reports, and offsets | Bounded formatting and terminal/log-injection tests |
-| 0.9.0 | DecodeLimits, EncodeLimits, monotonic work/memory ledger | Budget-sharing and bypass property tests |
-| 0.10.0 | Caller-owned scratch planner, arenas, buffer pools, and leases | Peak-memory accounting and failed-reservation tests |
-| 0.11.0 | Slice reader/writer, exact reads, fixed output, checkpoints | Every-byte truncation and rollback tests |
-| 0.12.0 | Endian I/O, subranges, counting, seek/read-at | Nested-bound escape, offset, and seek-cycle tests |
-| 0.12.1 | Source/sink capability negotiation and execution lifecycle | Capability planning plus sticky Done/Cancelled/Error and non-restoring Reset tests |
-| 0.12.2 | General encoder sizing and commit planning | Compositional length/strategy/input/sink/scratch/commit fields, replayability, two-pass identity, and pre-mutation failure |
-| 0.12.3 | Source-bound decode session planning | Exact-session/header/token/digest identity, stable-snapshot policy, complete configuration binding, and pre-output revalidation |
-| 0.13.0 | MSB/LSB bit readers and writers | Every-bit truncation, width, refill, and shift proofs |
-| 0.14.0 | Incremental decoder/encoder progress contracts | Fixed `DecodeStepReport<'a>`/`EncodeStepReport<'a>` return aliases, all eventual non-exhaustive states/commit categories, caller-planned token storage, and exact accounting |
-| 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded work, Yielded/LimitExceeded/Cancelled semantics, deterministic resume, committed prefixes, and latency tests |
-| 0.14.2 | Physically enforceable incremental decode commit modes | Planned atomic/unit/region staging, no downgrade, generation-bound tokens, and StepReport commits on every state |
-| 0.15.0 | Metadata envelopes and bounded Exif/ICC/XMP header transport | Offset/count validation without full metadata interpretation |
-| 0.15.1 | Bounded ICC v2/v4 structural parser | Tag counts/sizes/offsets/overlap, curves, LUT dimensions, recursion, opaque preservation, and fuzzing |
-| 0.15.2 | ICC matrix/TRC and chromatic-adaptation engine | Parametric curves, PCS conversion, adaptation, rendering intent, deterministic scalar vectors, and limits |
-| 0.15.3 | ICC v2 LUT pipelines and deterministic interpolation | LUT dimensions/elements, interpolation, PCS bounds, intent, numeric tolerance, and v2 profiles |
-| 0.15.4 | ICC v4 mAB/mBA and processing-element pipelines | Element counts/types/order, curves, matrices, CLUTs, recursion, interpolation, and v4 profiles |
-| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and core execution audit | Core execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, and differential tests |
-| 0.15.6 | ICC adaptive-gain tag and type structural parsing | ICC 2025 amendment and ISO 21496-1:2025 provenance, exact bounds, offsets, counts, floats, CICP fields, and patent review |
-| 0.15.7 | ICC adaptive-gain execution admission | Piecewise-cubic evaluation, headroom interpolation, numeric limits and tolerances, or an explicit legally reviewed unclaimed decision |
-| 0.15.8 | Complete declared ICC profile audit | Amendment-inclusive profile matrix, unsupported preservation, conformance, differential, fuzzing, and freeze |
-| 0.15.9 | Bounded BCP 47 language-tag profile | RFC 5646 syntax/canonicalization, RFC 4647 matching, private-use and `x-default`, length/work bounds, and cross-metadata vectors |
-| 0.16.0 | Format IDs, media types, bounded probing, static registry | Collision, ambiguity, polyglot, and disabled-feature tests |
-| 0.16.1 | Non-destructive forward-only and seekable probing | Shared caller prefix, decoder inheritance, NeedInput minima/cap, one-time byte charging, and seek restoration |
-| 0.17.0 | Fallible owned storage and std::io adapters | Allocation-failure, interrupted-I/O, and feature-matrix tests |
-| 0.17.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests |
-| 0.18.0 | Foundation candidate review and representative-codec readiness | External design review, dummy lifecycle exercise, no-default/32-bit/WASM matrix, and documented evolvability |
-| 0.19.0 | Common codec crate template and decode-plan contract | A dummy codec proves limit, scratch, progress, and rollback invariants |
-| 0.20.0 | BMP source ledger, file envelope, and dialect-matrix freeze | `.bmp`/bare-DIB separation, exact-size dispatch policy, primary-source provenance, and combination matrix |
-| 0.20.1 | BMP 12-byte core-family headers and RGBTRIPLE palettes | Unsigned dimensions, planes/depth matrix, three-byte palette bounds, offsets, and truncation |
-| 0.20.2 | BMP Windows INFO/V4/V5 and V2/V3 compatibility headers | Exact 40/108/124-byte dispatch, 52/56-byte provenance gate, field-boundary corpus, and no fallback |
-| 0.20.3 | BMP OS/2 2.x extended headers and container decision | IBM-source revision matrix, palette/layout differences, compression namespace, and BA/IC/CI/PT/CP policy |
-| 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | Per-header depth/palette/stride/orientation matrix, 1/4/8/16/24/32-bit goldens, and truncation tests |
-| 0.22.0 | BMP bitfields, alpha masks, top-down rules | External/inline mask placement, BI_ALPHABITFIELDS decision, overlap/gap/full-width, and signed-height tests |
-| 0.23.0 | BMP RLE4/RLE8 | Header/depth admission, bottom-up enforcement, escape/delta/padding/exact-output, and no-progress fuzzing |
-| 0.24.0 | BMP V4/V5 color declarations and embedded-profile transport | Calibrated/sRGB/profile/intent matrix, range/overlap validation, and linked-profile no-I/O tests |
-| 0.25.0 | BMP deterministic uncompressed encoders | Explicit output-dialect policy, exact headers/masks/palettes/padding, determinism, and round trips |
-| 0.25.1 | BMP deterministic RLE4/RLE8 encoders | Escape/padding/delta policy, deterministic packets, bounded work, and decode/encode round trips |
-| 0.25.2 | Complete declared BMP dialect audit | Exhaustive envelope/header/depth/palette/mask/compression/orientation/profile matrix, OS/2 legacy decisions, embedded payload policy, and external review |
-| 0.26.0 | QOI structural parse and bounded decoder | Magic, dimensions, channels, colorspace hint, pixel count, wraparound, end-marker, and trailing-data tests |
-| 0.27.0 | QOI deterministic encoder | Reference-vector and encode/decode conformance |
-| 0.28.0 | Bounded Netpbm tokenizer | Comment, whitespace, decimal overflow, token-length fuzzing |
-| 0.29.0 | PBM P1/P4 decode/encode | Bit order, row padding, multi-image policy |
-| 0.30.0 | PGM P2/P5 decode/encode | MAXVAL scaling, 8/16-bit, source-defined BT.709 transfer, linear/sRGB variant policy, and truncation |
-| 0.31.0 | PPM P3/P6 decode/encode | Sample scaling, BT.709 primaries/transfer/range declaration, variant policy, token bombs, and binary boundaries |
-| 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, linear opacity, header termination, unknown fields, and color/alpha declarations |
-| 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images, official-tool differential tests, and explicit PFM exclusion |
-| 0.34.0 | farbfeld decode and encode | Exact-size arithmetic, RGBA16-BE, alpha semantics |
-| 0.35.0 | Simple-codec contract and security freeze | Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review |
-| 0.36.0 | PNG signature and bounded probing | signature, ambiguity, prefix ownership, and every-byte truncation |
-| 0.36.1 | PNG chunk framing and CRC | length/type/data/CRC boundaries, overflow, and mutation fuzzing |
-| 0.36.2 | PNG chunk-order state machine | critical/ancillary transition matrix and unknown-critical rejection |
-| 0.37.0 | PNG IHDR and color-type/bit-depth validation | Full normative combination matrix |
-| 0.38.0 | Bounded mynd-zlib wrapper | RFC 1950 header/dictionary/trailer rules, Adler-32, and truncation |
-| 0.38.1 | Deflate stored blocks | RFC 1951 stored-block alignment/complement/output bounds and truncation |
-| 0.38.2 | Deflate fixed-Huffman blocks | fixed tables, distance/overlap bounds, transactional bits, and fuzzing |
-| 0.39.0 | Shared dynamic-Huffman and complete bounded mynd-deflate | Tree proofs, 32 KiB window, distance/overlap fuzzing, output bombs, and reusable crate audit |
-| 0.40.0 | PNG row-filter reconstruction | all five filters at every admitted byte width with prior-row boundaries |
-| 0.40.1 | PNG noninterlaced 8-bit core color decoding | grayscale, truecolor, grayscale-alpha, and truecolor-alpha golden vectors |
-| 0.41.0 | Packed 1/2/4-bit and 16-bit PNG samples | Scaling, endian, tail-bit tests |
-| 0.42.0 | Adam7 decode and progressive row events | Pass geometry proofs and tiny-image corpus |
-| 0.43.0 | PNG PLTE and tRNS semantics | palette cardinality/index/transparency matrices and invalid combinations |
-| 0.43.1 | PNG bKGD, hIST, sBIT, and sPLT chunks | per-chunk length/value/order matrices and bounded suggested palettes |
-| 0.44.0 | PNG cHRM, gAMA, and sRGB declarations | PNG Third Edition value rules and declaration-precedence matrix |
-| 0.44.1 | PNG iCCP transport and ICC precedence | profile-name/Deflate limits, ICC bombs, and conflict precedence |
-| 0.44.2 | PNG cICP and HDR/WCG metadata | cICP, mDCV, and cLLI order/dependency/value rules with HDR vectors |
-| 0.45.0 | PNG bounded text chunks | tEXt, zTXt, and iTXt keyword/language/compression/UTF-8 limits |
-| 0.45.1 | PNG eXIf, pHYs, and tIME metadata | chunk-specific order, length, value, and metadata-transport tests |
-| 0.45.2 | PNG unknown and private chunk policy | critical rejection, ancillary preservation, and safe-to-copy editor matrix |
-| 0.46.0 | APNG control and frame-chunk sequencing | acTL/fcTL/fdAT order, sequence numbers, rectangles, timing, and limits |
-| 0.46.1 | APNG frame decoding and composition | default-image cases, source/source-over, disposal, streaming, and bombs |
-| 0.46.2 | PNG deterministic encoding | Third Edition emission, row filters, Deflate, metadata, and determinism |
-| 0.46.3 | APNG deterministic encoding | frame sequencing, rectangles, timing, disposal/blend, and round trips |
-| 0.46.4 | Complete PNG/APNG conformance and security audit | Third Edition mapping, conformance/differential corpus, and long fuzzing |
-| 0.47.0 | GIF87a/89a structure, palettes, sub-blocks, descriptors | Logical-screen fields, color resolution/sort/background/aspect policy, block termination, and palette bounds |
-| 0.48.0 | GIF LZW | Dictionary/code-width proofs and fuzzing |
-| 0.49.0 | GIF single-frame decode and deinterlace | Exact pixels and four-pass geometry tests |
-| 0.50.0 | GIF GCE, transparency, frame composition, all disposal modes | Snapshot caps and animation bomb corpus |
-| 0.51.0 | GIF named-extension parsing | Comment, Plain Text, Application, and unknown extension boundaries |
-| 0.51.1 | GIF compatibility and termination policy | Netscape loop, EOI/trailer, extra pixels, delay, and disposal decisions |
-| 0.51.2 | GIF raw-frame and composited-frame APIs | coordinates, disposal sequencing, valid prefixes, and frame ranges |
-| 0.51.3 | GIF exact palettes and bounded histogram | unique-color limits, entry layout, ordering, overflow, and caller palettes |
-| 0.51.4 | GIF deterministic palette generation and remapping | median-cut policy, remap, bounded dithering, budgets, and goldens |
-| 0.51.5 | GIF LZW encoder | dictionary growth/reset/saturation, widths, end code, proofs, and round trips |
-| 0.51.6 | Single-frame GIF encoder | palette/table/transparency/sub-block integration and deterministic output |
-| 0.51.7 | Animated GIF encoder | canvas/frame limits, timing, loop, disposal, ranges, and round trips |
-| 0.51.8 | Complete GIF conformance and security audit | normative/de-facto matrix, differential corpus, fuzzing, and animation bombs |
-| 0.52.0 | JPEG marker and segment framing | standalone/length-bearing marker boundaries and size mutation fuzzing |
-| 0.52.1 | JPEG quantization and entropy-table declarations | DQT/DHT/DAC/DRI types, precision, counts, redefinition, and dependencies |
-| 0.52.2 | JPEG frame declarations | SOF process/precision/components/sampling/dimensions and DNL policy |
-| 0.52.3 | JPEG scan declarations and ordering | SOS selectors/ranges, multiscan/abbreviated-table state, and invalid transitions |
-| 0.53.0 | JPEG Huffman entropy and byte stuffing | canonical table proofs, marker boundaries, and every-bit truncation |
-| 0.53.1 | JPEG restart and bounded MCU coefficient accounting | restart reset/sequence, MCU geometry, coefficient bounds, and work budgets |
-| 0.54.0 | JPEG scalar IDCT and grayscale reconstruction | IDCT coefficient bounds, normative tolerance, grayscale blocks, restart corpus, and deterministic scalar vectors |
-| 0.54.1 | JPEG component sampling and bounded upsampling | Sampling factors, MCU geometry, edge extension, upsampling policy, limits, and reference vectors |
-| 0.54.2 | JPEG native YCbCr and rendered RGB output tiers | Native plane/coefficients versus shared-color rendering, JFIF declarations, tolerances, and error separation |
-| 0.55.0 | Extended sequential and 12-bit DCT processes | Precision and coefficient-range evidence |
-| 0.56.0 | JPEG progressive DC scans | first/refinement DC scan state, predictors, restart, and malformed order |
-| 0.56.1 | JPEG progressive AC scans | spectral selection, EOB runs, coefficient bounds, and restart behavior |
-| 0.56.2 | JPEG successive-approximation integration audit | complete scan-script matrix, native coefficients, work limits, and fuzzing |
-| 0.57.0 | Lossless predictive JPEG process | Predictor, point transform, precision tests |
-| 0.58.0 | JPEG arithmetic coding | Conditioning-table and arithmetic-state proofs |
-| 0.59.0 | JPEG differential processes | Reference-frame dependencies, differential scan state, reconstruction bounds, and malformed graphs |
-| 0.59.1 | JPEG hierarchical processes | Frame hierarchy, expansion, dependencies, reconstruction limits, native output, and differential evidence |
-| 0.60.0 | JPEG JFIF and Adobe color declarations | T.871 APP0 plus Adobe RGB/CMYK/YCCK interpretation and precedence |
-| 0.60.1 | JPEG Exif APP1 transport | identifier, length, nested offset, duplicate, and preservation policies |
-| 0.60.2 | JPEG ICC APP2 assembly and color precedence | chunk numbering/completeness/duplicates, profile limits, and color vectors |
-| 0.60.3 | JPEG COM and registered/unknown APPn policy | T.86 registry mapping, SPIFF decision, bounded COM/APPn preservation, duplicates, and inert metadata |
-| 0.61.0 | Baseline JPEG encoder | Deterministic valid baseline emission, quality controls, coefficient limits, and round trips |
-| 0.61.1 | Progressive JPEG encoder | Scan scripts, successive approximation, deterministic tables, restart policy, and round trips |
-| 0.61.2 | Extended-sequential JPEG encoder | precision/process-valid emission, tables, restart, and differential tests |
-| 0.61.3 | Lossless JPEG encoder | predictor/point-transform emission, precision, restart, and round trips |
-| 0.61.4 | Arithmetic JPEG encoder admission | independent arithmetic evidence or an explicit unclaimed decision |
-| 0.61.5 | Differential JPEG encoder admission | independent differential-process evidence or an explicit unclaimed decision |
-| 0.61.6 | Hierarchical JPEG encoder admission | independent hierarchy evidence or an explicit unclaimed decision |
-| 0.62.0 | Complete declared T.81 conformance and security audit | Reference software, official material, long fuzz campaign |
-| 0.63.0 | WebP RIFF framing and simple-file dispatch | RIFF/WEBP size, padding, VP8/VP8L simple payload, and trailing policy |
-| 0.63.1 | WebP VP8X feature and chunk-order state machine | feature bits, canvas, chunk multiplicity/order, and invalid combinations |
-| 0.63.2 | WebP ICCP, EXIF, XMP, and unknown chunks | bounded metadata, feature consistency, preservation, and unknown policy |
-| 0.64.0 | VP8 Boolean-decoder primitive | range/value normalization, refill, termination, and arithmetic-state fuzzing |
-| 0.64.1 | VP8 partition and frame-header parsing | partition sizes/counts, key/inter headers, segmentation, and bounds |
-| 0.64.2 | VP8 probability-update and token state | coefficient/mode probability updates, defaults, reset, and work accounting |
-| 0.65.0 | VP8 prediction and coefficient reconstruction | Macroblock/reference bounds, prediction modes, token reconstruction, partition limits, and scalar differential tests |
-| 0.65.1 | VP8 inverse transforms and reconstructed macroblocks | Transform arithmetic, coefficient ranges, clipping, prediction integration, and scalar reference vectors |
-| 0.65.2 | VP8 loop filtering and complete still reconstruction | Filter levels/edges, macroblock bounds, native YCbCr output, rendered output, and differential corpus |
-| 0.66.0 | WebP ALPH decoding | ALPH filter/compression/preprocessing modes, dimensions, and bombs |
-| 0.66.1 | VP8 native YCbCr and rendered RGB integration | matrix/range assumptions, alpha association, output tiers, and color vectors |
-| 0.67.0 | VP8L prefix-code parsing and decoding | simple/normal code validation, tables, symbols, and every-bit truncation |
-| 0.67.1 | VP8L LZ77 distance and copy engine | distance mapping, overlap, history/output bounds, progress, and bombs |
-| 0.67.2 | VP8L color-cache engine | cache-bit bounds, hashing, initialization, access, and deterministic vectors |
-| 0.68.0 | VP8L transform declarations and meta-prefix images | transform order/count, dimensions, recursion, prefix images, and limits |
-| 0.68.1 | VP8L predictor transform | all predictor modes, edge rules, modular arithmetic, and goldens |
-| 0.68.2 | VP8L color transform | transform-image geometry, delta arithmetic, bounds, and golden vectors |
-| 0.68.3 | VP8L subtract-green transform | modular channel arithmetic, order, and exact pixel vectors |
-| 0.68.4 | VP8L color-indexing transform | palette image, packing widths, dimension reduction, indexes, and bounds |
-| 0.68.5 | VP8L complete lossless reconstruction audit | all transforms plus prefix/LZ/cache integration, exact pixels, bombs, and fuzzing |
-| 0.69.0 | WebP animation decoding | ANIM background/loop plus ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing |
-| 0.69.1 | VP8L deterministic encoder | Prefix/LZ/cache/transform validity, quality-effort controls, bounded search, determinism, and round trips |
-| 0.69.2 | VP8 deterministic encoder | Prediction/partition/token validity, quality-effort controls, bounded heuristics, backend determinism, and differential tests |
-| 0.69.3 | Animated WebP encoder | ANMF ordering/rectangles, mixed frame modes, blend/dispose, metadata, and round trips |
-| 0.69.4 | Complete WebP conformance and security audit | RFC/VP8/VP8L mappings, still/animated split, ALPH/metadata, encoder modes, long fuzzing, and external review |
-| 0.70.0 | Shared bounded mynd-ifd graph and typed-value engine | count/offset arithmetic, cycles, overlaps, typed values, and fuzzing |
-| 0.70.1 | TIFF 6.0 tag schema and dependency validation | required/defaulted tags, types/counts, duplicate policy, and dependencies |
-| 0.71.0 | TIFF baseline uncompressed strips | bilevel/Gray/palette/RGB strip geometry, FillOrder, and truncation |
-| 0.71.1 | TIFF PackBits strip decoding | packet boundaries, no-op bytes, row/strip output bounds, and bombs |
-| 0.72.0 | TIFF LZW decoding | TIFF code-width dialect, clear/end codes, dictionary limits, and bombs |
-| 0.72.1 | TIFF Deflate decoding | old/new compression-tag policy, zlib integration, and output limits |
-| 0.72.2 | TIFF horizontal Predictor 2 | integer sample widths, planar/contiguous rows, endian, and overflow |
-| 0.72.3 | TIFF floating-point Predictor 3 profile | Adobe Technical Note 3 byte reordering/differencing vectors and profile matrix |
-| 0.73.0 | TIFF CCITT modified-Huffman RLE | run tables, FillOrder, EOL policy, row bounds, and differential corpus |
-| 0.73.1 | TIFF CCITT Group 3 fax decoding | T4 options, 1D/2D transitions, EOL/RTC, damaged rows, and limits |
-| 0.73.2 | TIFF CCITT Group 4 fax decoding | T6 transitions, EOFB, reference-line bounds, and malformed streams |
-| 0.74.0 | TIFF tiled image layout | tile geometry, edge tiles, sparse/overlap policy, offsets, and byte counts |
-| 0.74.1 | TIFF planar image layout | plane ordering, per-plane strips/tiles, sample dependencies, and limits |
-| 0.74.2 | TIFF multipage and SubIFD traversal | next-IFD/SubIFD graphs, cycles, aggregate page limits, and valid prefixes |
-| 0.75.0 | TIFF YCbCr samples and tag dependencies | Coefficients, reference black/white, subsampling, positioning, strip/tile geometry, and color vectors |
-| 0.75.1 | TIFF CMYK and CIELab native samples | Photometric dependencies, signed/sample domains, planar layouts, declarations, and native golden vectors |
-| 0.75.2 | TIFF alpha, ICC, and rendered-color integration | ExtraSamples association, ICC precedence, shared rendering, and tolerances |
-| 0.75.3 | TIFF signed-integer and IEEE floating sample domains | SampleFormat/depth combinations, endian, NaN/infinity policy, and native output |
-| 0.75.4 | TIFF Orientation presentation policy | all eight values, native coordinates, opt-in normalization, region mapping, and metadata effects |
-| 0.75.5 | TIFF calibrated color declarations | WhitePoint, PrimaryChromaticities, TransferFunction, ReferenceBlackWhite, precedence, and unsupported combinations |
-| 0.76.0 | Corrected JPEG-in-TIFF decoding | old/new JPEG distinction, table ownership, strip/tile boundaries, and corpus |
-| 0.76.1 | TIFF Exif IFD integration | Exif/GPS/Interop graph namespaces, nested offsets, cycles, and limits |
-| 0.76.2 | TIFF admitted-extension profile freeze | each extension has pinned provenance and an explicit support disposition |
-| 0.77.0 | TIFF baseline uncompressed-strip encoder | endian tags/strips/exact sizes/determinism and round trips |
-| 0.77.1 | TIFF PackBits encoder | packet/run/row boundaries, exact lengths, determinism, and round trips |
-| 0.77.2 | TIFF LZW encoder | dialect widths, clear/end behavior, proofs, determinism, and round trips |
-| 0.77.3 | TIFF Deflate encoder | mynd-deflate/zlib integration, output limits, validity, and round trips |
-| 0.77.4 | TIFF horizontal Predictor 2 encoder | integer widths, endian, planar/contiguous rows, and round trips |
-| 0.77.5 | TIFF floating-point Predictor 3 encoder admission | Adobe-profile widths and vectors or an explicit unclaimed decision |
-| 0.77.6 | TIFF CCITT RLE encoder | run-code validity, FillOrder, row termination, and differential tests |
-| 0.77.7 | TIFF CCITT Group 3 encoder | T4 options, 1D/2D transitions, EOL/RTC, and differential tests |
-| 0.77.8 | TIFF CCITT Group 4 encoder | T6 transitions, EOFB, reference rows, and differential tests |
-| 0.77.9 | TIFF tiled-image encoder | tile geometry, edge tiles, offsets/byte counts, and deterministic output |
-| 0.77.10 | TIFF planar-image encoder | plane ordering, per-plane storage, dependencies, and round trips |
-| 0.77.11 | TIFF multipage and SubIFD encoder | IFD graph, next/SubIFD links, aggregate limits, and deterministic output |
-| 0.77.12 | TIFF extended sample/color encoder | photometric/SampleFormat/ExtraSamples/YCbCr/ICC dependencies and claims |
-| 0.77.13 | Corrected JPEG-in-TIFF encoder | new-style table ownership, strip/tile boundaries, validity, and round trips |
-| 0.77.14 | Complete declared TIFF profile audit | compression/layout/sample/color/extension matrix, conformance, fuzzing, and review |
-| 0.78.0 | Cross-format native-sample and color-declaration integration | decode_native consistency, declaration precedence, preserved profiles, and no premature rendered-color claim |
-| 0.79.0 | Shared bounded TIFF/Exif IFD inspection | Offset graphs, entry counts, cycles, value bounds, MakerNote opacity, and fuzzing |
-| 0.80.0 | Selected bounded Exif field interpretation | dimensions, timestamps, strings, types/counts, encoding, and conflicts |
-| 0.80.1 | Bounded Exif thumbnail extraction | thumbnail offsets/lengths, nested format limits, overlap, and bomb resistance |
-| 0.80.2 | Explicit Exif orientation policy | all eight orientations, coordinate mapping, opt-in transform, and metadata effect |
-| 0.80.3 | Exif 3.1 and Exif-for-XMP profile freeze | DC-008/DC-010 2026 mappings, selected/opaque/unsupported fields, container consistency, and differential audit |
-| 0.81.0 | XMP packet framing and bounded raw transport | xpacket boundaries, encoding, padding, read-only flag, exact preservation, truncation, and no external I/O |
-| 0.81.1 | Bounded XML 1.0 and Namespaces profile for XMP | token/nesting/name/attribute/text limits, encoding rules, disabled DTD/entities/resolvers, and malicious XML corpus |
-| 0.81.2 | Bounded RDF/XML and XMP data-model inspection | RDF productions, arrays/structures/qualifiers, namespaces, aliases, duplicate policy, and graph budgets |
-| 0.81.3 | XMP and legacy-metadata conflict/rewrite policy | XMP Part 3 plus CIPA DC-010 reconciliation, preserve/discard/rewrite, duplicates, and round trips |
-| 0.81.4 | Transformation-aware metadata effect planning | preserved/rewritten/invalidated/decision results for every operation |
-| 0.82.0 | YCbCr matrices, ranges, subsampling, and chroma siting | JPEG/WebP/TIFF reference vectors |
-| 0.83.0 | Gray, CMYK, and YCCK conversion | black-generation/Adobe policy, native-to-rendered vectors, and gamut limits |
-| 0.83.1 | CIELab and declared wide-gamut conversion | white-point/adaptation/range rules, out-of-gamut policy, and reference vectors |
-| 0.84.0 | Straight/premultiplied alpha conversion | Zero-alpha, rounding, and invariant tests |
-| 0.85.0 | Explicit color-conversion planning | information-loss declaration, numeric tier, stages, scratch, and work plan |
-| 0.85.1 | Sample-depth conversion | all admitted integer/float depths, scaling, rounding, saturation, and alpha |
-| 0.85.2 | Deterministic advanced dithering | ordered/error-diffusion kernels, edge/error bounds, budgets, and goldens |
-| 0.85.3 | Final cross-format rendered-color conformance audit | PNG/JPEG/WebP/TIFF profiles, precedence, tolerances, and differential results |
-| 0.86.0 | Crop, flip, rotate, transpose | In-place overlap and rectangle proofs |
-| 0.87.0 | Checked affine geometry and border modes | Finite-matrix and coordinate-overflow proofs |
-| 0.88.0 | Nearest and bilinear resampling | Pixel-center and edge-policy golden tests |
-| 0.89.0 | Bicubic resampling | Coefficient normalization and overshoot policy |
-| 0.90.0 | Lanczos3 resampling | Tap planning, ring-buffer limits, reference vectors |
-| 0.91.0 | Remaining Porter-Duff compositing operators | Shared source/source-over compatibility, remaining operators, linear domain, alpha, overlap, and invariants |
-| 0.92.0 | Declared artistic blend modes | formula/domain/clamping/NaN/alpha matrices and interoperability vectors |
-| 0.92.1 | Clipped pixel, span, and fill primitives | signed/overflowing coordinates, clipping, layout, alpha, and work budgets |
-| 0.92.2 | Rectangle and overlap-safe blit primitives | empty/degenerate rectangles, clipping, overlap directions, and alias policy |
-| 0.92.3 | Deterministic integer line primitives | octants, endpoints, degenerates, clipping symmetry, and golden rasters |
-| 0.92.4 | Deterministic integer circle and ellipse primitives | quadrants, degenerates, clipping symmetry, overflow, and golden rasters |
-| 0.92.5 | Bounded raster-drawing contract and security audit | layout/color/alpha/overlap/work tests and explicit support matrix |
-| 0.93.0 | Optional safe SIMD or audited external backends | Scalar differential, tail/alignment, dependency/unsafe-boundary, Miri, and sanitizer evidence |
-| 0.94.0 | Streaming and tiled processing graph | Scratch bounds, fusion equivalence, cancellation, and honest random-access disclosure |
-| 0.94.1 | Metadata- and header-only decoding | no-pixel paths, source-position policy, metadata budgets, and format matrix |
-| 0.94.2 | Region-selective decoding | coordinate spaces, chroma/halo planning, committed regions, and fallbacks |
-| 0.94.3 | Frame-range selective decoding | raw/composited selection, dependency closure, disposal state, and bombs |
-| 0.94.4 | Reduced-resolution and progressive-preview decoding | JPEG reduced IDCT, TIFF selection, progressive events, and numeric evidence |
-| 0.94.5 | Processing and selective-decoding contract freeze | fusion equivalence, peak limits, cancellation, DoS, and support matrix |
-| 0.94.6 | Unified borrowed inspection and decode_into facade | hints/mismatch, static dispatch, output tiers, limits, and disabled features |
-| 0.94.7 | Unified encoder and transcoding facade | capability plans, conversion orchestration, metadata effects, and transactions |
-| 0.94.8 | Fallible owned APIs and facade-candidate integration audit | allocation failure, representative codecs, feature matrix, and candidate baseline |
-| 0.95.0 | Runtime-neutral async source/sink adapters | Backpressure, cancellation, partial-I/O tests |
-| 0.95.1 | WASM/browser streaming adapters | wasm32-unknown-unknown, JS-size, memory-growth tests |
-| 0.96.0 | Caller-provided parallel scheduling interface | Determinism, budget partition, cancellation |
-| 0.96.1 | Optional Rayon/service adapter | No core dependency or automatic global pool |
-| 0.97.0 | GPU-compatible descriptors and upload-layout hooks | Stable layout contract; no device ownership in core |
-| 0.97.1 | Optional backend adapters | CPU/GPU differential results and synchronization policy |
-| 0.98.0 | mynd-cli inspect command | escaped bounded metadata, stable schema, hostile terminals, and exit codes |
-| 0.98.1 | mynd-cli validate command | strict/compatibility modes, bounded diagnostics, exit codes, and no output mutation |
-| 0.98.2 | mynd-cli decode command | transactional files, output-tier/color disclosure, limits, and cancellation |
-| 0.98.3 | mynd-cli encode command | format capability validation, metadata policy, transactions, and determinism |
-| 0.98.4 | mynd-cli convert command | explicit conversion plan, information-loss confirmation, and atomic replacement |
-| 0.98.5 | mynd-cli frame command | raw/composited selection, frame/range limits, filenames, and animation bombs |
-| 0.98.6 | mynd-cli bounded batch profile | aggregate budgets, hostile filenames, collision policy, and cancellation |
-| 0.98.7 | mynd-cli bounded service profile | request isolation, aggregate/live budgets, cancellation, and no ambient authority |
-| 0.98.8 | Cross-adapter facade reconciliation | Zero unresolved implementation or public-API issues and one exact assurance input |
-| 0.99.0 | cargo-fuzz harness and corpus integration | every parser/entropy/metadata/dispatcher target builds with provenance |
-| 0.99.1 | Long-running fuzz and truncation campaign | coverage report, minimized persistent corpus, and no stalls/panics |
-| 0.99.2 | Kani checked-arithmetic and geometry proofs | conversion/size/stride/rectangle assumptions and unwind bounds |
-| 0.99.3 | Kani view and buffer-state proofs | bounds, alias policy, commit visibility, and state invariants |
-| 0.99.4 | Kani byte- and bit-I/O proofs | cursor/refill/shift/rollback/progress invariants |
-| 0.99.5 | Kani Deflate and zlib state proofs | table/distance/window/checksum/output/progress invariants |
-| 0.99.6 | Kani GIF and TIFF LZW state proofs | dialect dictionary/width/reset/end/output/progress invariants |
-| 0.99.7 | Kani JPEG entropy state proofs | Huffman/arithmetic/stuffing/restart/coefficient/progress invariants |
-| 0.99.8 | Kani WebP entropy state proofs | VP8 Boolean and VP8L prefix/LZ/cache/output/progress invariants |
-| 0.99.9 | Kani TIFF fax and IFD state proofs | run/transition/reference-row and graph/count/progress invariants |
-| 0.99.10 | Miri audit | all supported feature sets and mutation/view/adapter paths pass Miri |
-| 0.99.11 | Sanitizer audit | address, leak, memory, and undefined-behavior sanitizer matrix |
-| 0.99.12 | Supported-Rust, target, and feature audit | Rust 1.90.0-1.97.1, targets, no-default, alloc/std, WASM, and combinations |
-| 0.99.13 | Stack and code-size audit | per-target stack ceilings, recursion absence, and binary-size budgets |
-| 0.99.14 | Official conformance and differential freeze | every format claim mapped with no unexplained reference disagreement |
-| 0.99.15 | Cross-format color conformance freeze | native/rendered profiles, precedence, tolerances, and reference vectors |
-| 0.99.16 | Performance and denial-of-service freeze | valid throughput plus hostile rejection-time/work/memory regression limits |
-| 0.99.17 | Reproducible package, SBOM, and provenance freeze | byte-reproducible archives, dependency identity, signatures, and attestations |
-| 0.99.18 | External pentest and final public API freeze | unchanged v0.98.8 input, complete evidence, no critical/high, and clean retest |
+| Version | Exclusive capability | Mandatory evidence | Pentest | Crates.io |
+| --- | --- | --- | --- | --- |
+| 0.1.0 | Existing workspace, licenses, feature boundaries, release policy | Current checks plus completed pentest cycle | Yes (exact version) | Publish `0.1.0` |
+| 0.2.0 | Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema | No contradictions across README, support matrix, and normative plans | Yes (exact version) | Publish `0.2.0` |
+| 0.2.1 | Reproducible specification corpus and legal-disposition gate | Every source classified public/offline/manual, immutable hashes, clean recreation, package exclusion, and legal review | Yes (exact version) | Publish `0.2.1` |
+| 0.3.0 | Checked conversion/add/multiply/align/range primitives | Exhaustive extrema tests and Kani arithmetic proofs | Yes (exact version) | Publish `0.3.0` |
+| 0.4.0 | Validated dimensions, rectangles, strides, planes, and output lengths | Zero/min/max, last-row, alignment, and 32-bit usize proofs | Yes (exact version) | Publish `0.4.0` |
+| 0.5.0 | Explicit pixel layout and sample-storage domains | Invalid layout/sample/plane/chroma/alpha combinations are unrepresentable | Yes (cumulative checkpoint) | Publish `0.5.0` |
+| 0.5.1 | Numeric determinism and floating-sample contract | Bit-exact/tolerance/backend tiers plus rounding, saturation, FMA, NaN, infinity, zero, and subnormal tests | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.5.2 | Shared color and blending specification ledger | Pinned ICC, sRGB, BT.601/709/2020, H.273, HDR, CIE, Porter-Duff, and blend sources with claim scope | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.5.3 | Scalar transfer, matrix/range, and alpha foundation | Integer/scalar reference vectors, premultiplication, range conversion, rounding, and native-sample preservation | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.5.4 | Minimal scalar animation composition kernel | Source/source-over, straight/premultiplied conversion, exact integer rounding, zero alpha, and format mapping | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.5.5 | Explicit no_std elementary-math backend | Pure-core/software/optional backend selection, domains, maximum error, FMA policy, and cross-target vectors | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.6.0 | Immutable/mutable image and plane views | Short-buffer, row-boundary, alias-policy, and Miri tests | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.7.0 | Frames, timing, canvas, disposal, blend, and frame rectangles | Off-canvas and cumulative-duration tests | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.8.0 | Allocation-free structured errors, warnings, reports, and offsets | Bounded formatting and terminal/log-injection tests | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.9.0 | DecodeLimits, EncodeLimits, monotonic work/memory ledger | Budget-sharing and bypass property tests | No; covered by `0.10.0` | Not published; next `0.10.0` |
+| 0.10.0 | Caller-owned scratch planner, arenas, buffer pools, and leases | Peak-memory accounting and failed-reservation tests | Yes (cumulative checkpoint) | Publish `0.10.0` |
+| 0.11.0 | Slice reader/writer, exact reads, fixed output, checkpoints | Every-byte truncation and rollback tests | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.12.0 | Endian I/O, subranges, counting, seek/read-at | Nested-bound escape, offset, and seek-cycle tests | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.12.1 | Source/sink capability negotiation and execution lifecycle | Capability planning plus sticky Done/Cancelled/Error and non-restoring Reset tests | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.12.2 | General encoder sizing and commit planning | Compositional length/strategy/input/sink/scratch/commit fields, replayability, two-pass identity, and pre-mutation failure | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.12.3 | Source-bound decode session planning | Exact-session/header/token/digest identity, stable-snapshot policy, complete configuration binding, and pre-output revalidation | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.13.0 | MSB/LSB bit readers and writers | Every-bit truncation, width, refill, and shift proofs | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.14.0 | Incremental decoder/encoder progress contracts | Fixed `DecodeStepReport<'a>`/`EncodeStepReport<'a>` return aliases, all eventual non-exhaustive states/commit categories, caller-planned token storage, and exact accounting | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.14.1 | Cooperative execution quantum and cancellation latency | Bounded work, Yielded/LimitExceeded/Cancelled semantics, deterministic resume, committed prefixes, and latency tests | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.14.2 | Physically enforceable incremental decode commit modes | Planned atomic/unit/region staging, no downgrade, generation-bound tokens, and StepReport commits on every state | No; covered by `0.15.0` | Not published; next `0.15.0` |
+| 0.15.0 | Metadata envelopes and bounded Exif/ICC/XMP header transport | Offset/count validation without full metadata interpretation | Yes (cumulative checkpoint) | Publish `0.15.0` |
+| 0.15.1 | Bounded ICC v2/v4 structural parser | Tag counts/sizes/offsets/overlap, curves, LUT dimensions, recursion, opaque preservation, and fuzzing | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.2 | ICC matrix/TRC and chromatic-adaptation engine | Parametric curves, PCS conversion, adaptation, rendering intent, deterministic scalar vectors, and limits | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.3 | ICC v2 LUT pipelines and deterministic interpolation | LUT dimensions/elements, interpolation, PCS bounds, intent, numeric tolerance, and v2 profiles | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.4 | ICC v4 mAB/mBA and processing-element pipelines | Element counts/types/order, curves, matrices, CLUTs, recursion, interpolation, and v4 profiles | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.5 | ICC PCS Lab/XYZ, intent selection, and core execution audit | Core execution-profile matrix, PCS/intents/adaptation, preservable Unsupported profiles, and differential tests | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.6 | ICC adaptive-gain tag and type structural parsing | ICC 2025 amendment and ISO 21496-1:2025 provenance, exact bounds, offsets, counts, floats, CICP fields, and patent review | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.7 | ICC adaptive-gain execution admission | Piecewise-cubic evaluation, headroom interpolation, numeric limits and tolerances, or an explicit legally reviewed unclaimed decision | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.8 | Complete declared ICC profile audit | Amendment-inclusive profile matrix, unsupported preservation, conformance, differential, fuzzing, and freeze | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.15.9 | Bounded BCP 47 language-tag profile | RFC 5646 syntax/canonicalization, RFC 4647 matching, private-use and `x-default`, length/work bounds, and cross-metadata vectors | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.16.0 | Format IDs, media types, bounded probing, static registry | Collision, ambiguity, polyglot, and disabled-feature tests | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.16.1 | Non-destructive forward-only and seekable probing | Shared caller prefix, decoder inheritance, NeedInput minima/cap, one-time byte charging, and seek restoration | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.17.0 | Fallible owned storage and std::io adapters | Allocation-failure, interrupted-I/O, and feature-matrix tests | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.17.1 | Reentrancy, concurrency, and auto-trait contract | Send/Sync assertions, independent-workspace concurrency, disjoint output, immutable registry, and scratch ownership tests | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.18.0 | Foundation candidate review and representative-codec readiness | External design review, dummy lifecycle exercise, no-default/32-bit/WASM matrix, and documented evolvability | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.19.0 | Common codec crate template and decode-plan contract | A dummy codec proves limit, scratch, progress, and rollback invariants | No; covered by `0.20.0` | Not published; next `0.20.0` |
+| 0.20.0 | BMP source ledger, file envelope, and dialect-matrix freeze | `.bmp`/bare-DIB separation, exact-size dispatch policy, primary-source provenance, and combination matrix | Yes (cumulative checkpoint) | Publish `0.20.0` |
+| 0.20.1 | BMP 12-byte core-family headers and RGBTRIPLE palettes | Unsigned dimensions, planes/depth matrix, three-byte palette bounds, offsets, and truncation | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.20.2 | BMP Windows INFO/V4/V5 and V2/V3 compatibility headers | Exact 40/108/124-byte dispatch, 52/56-byte provenance gate, field-boundary corpus, and no fallback | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.20.3 | BMP OS/2 2.x extended headers and container decision | IBM-source revision matrix, palette/layout differences, compression namespace, and BA/IC/CI/PT/CP policy | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.21.0 | BMP BI_RGB depths, palettes, padding, row orientation | Per-header depth/palette/stride/orientation matrix, 1/4/8/16/24/32-bit goldens, and truncation tests | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.22.0 | BMP bitfields, alpha masks, top-down rules | External/inline mask placement, BI_ALPHABITFIELDS decision, overlap/gap/full-width, and signed-height tests | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.23.0 | BMP RLE4/RLE8 | Header/depth admission, bottom-up enforcement, escape/delta/padding/exact-output, and no-progress fuzzing | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.24.0 | BMP V4/V5 color declarations and embedded-profile transport | Calibrated/sRGB/profile/intent matrix, range/overlap validation, and linked-profile no-I/O tests | No; covered by `0.25.0` | Not published; next `0.25.0` |
+| 0.25.0 | BMP deterministic uncompressed encoders | Explicit output-dialect policy, exact headers/masks/palettes/padding, determinism, and round trips | Yes (cumulative checkpoint) | Publish `0.25.0` |
+| 0.25.1 | BMP deterministic RLE4/RLE8 encoders | Escape/padding/delta policy, deterministic packets, bounded work, and decode/encode round trips | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.25.2 | Complete declared BMP dialect audit | Exhaustive envelope/header/depth/palette/mask/compression/orientation/profile matrix, OS/2 legacy decisions, embedded payload policy, and external review | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.26.0 | QOI structural parse and bounded decoder | Magic, dimensions, channels, colorspace hint, pixel count, wraparound, end-marker, and trailing-data tests | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.27.0 | QOI deterministic encoder | Reference-vector and encode/decode conformance | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.28.0 | Bounded Netpbm tokenizer | Comment, whitespace, decimal overflow, token-length fuzzing | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.29.0 | PBM P1/P4 decode/encode | Bit order, row padding, multi-image policy | No; covered by `0.30.0` | Not published; next `0.30.0` |
+| 0.30.0 | PGM P2/P5 decode/encode | MAXVAL scaling, 8/16-bit, source-defined BT.709 transfer, linear/sRGB variant policy, and truncation | Yes (cumulative checkpoint) | Publish `0.30.0` |
+| 0.31.0 | PPM P3/P6 decode/encode | Sample scaling, BT.709 primaries/transfer/range declaration, variant policy, token bombs, and binary boundaries | No; covered by `0.35.0` | Not published; next `0.35.0` |
+| 0.32.0 | PAM P7, if the public claim is “Netpbm” | Tuple types, depth, linear opacity, header termination, unknown fields, and color/alpha declarations | No; covered by `0.35.0` | Not published; next `0.35.0` |
+| 0.33.0 | Combined PNM/PAM stream and conformance audit | Concatenated images, official-tool differential tests, and explicit PFM exclusion | No; covered by `0.35.0` | Not published; next `0.35.0` |
+| 0.34.0 | farbfeld decode and encode | Exact-size arithmetic, RGBA16-BE, alpha semantics | No; covered by `0.35.0` | Not published; next `0.35.0` |
+| 0.35.0 | Simple-codec contract and security freeze | Cross-codec probe fuzzing, 32-bit memory tests, simple-codec contract freeze, and external delta review | Yes (cumulative checkpoint) | Publish `0.35.0` |
+| 0.36.0 | PNG signature and bounded probing | signature, ambiguity, prefix ownership, and every-byte truncation | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.36.1 | PNG chunk framing and CRC | length/type/data/CRC boundaries, overflow, and mutation fuzzing | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.36.2 | PNG chunk-order state machine | critical/ancillary transition matrix and unknown-critical rejection | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.37.0 | PNG IHDR and color-type/bit-depth validation | Full normative combination matrix | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.38.0 | Bounded mynd-zlib wrapper | RFC 1950 header/dictionary/trailer rules, Adler-32, and truncation | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.38.1 | Deflate stored blocks | RFC 1951 stored-block alignment/complement/output bounds and truncation | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.38.2 | Deflate fixed-Huffman blocks | fixed tables, distance/overlap bounds, transactional bits, and fuzzing | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.39.0 | Shared dynamic-Huffman and complete bounded mynd-deflate | Tree proofs, 32 KiB window, distance/overlap fuzzing, output bombs, and reusable crate audit | No; covered by `0.40.0` | Not published; next `0.40.0` |
+| 0.40.0 | PNG row-filter reconstruction | all five filters at every admitted byte width with prior-row boundaries | Yes (cumulative checkpoint) | Publish `0.40.0` |
+| 0.40.1 | PNG noninterlaced 8-bit core color decoding | grayscale, truecolor, grayscale-alpha, and truecolor-alpha golden vectors | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.41.0 | Packed 1/2/4-bit and 16-bit PNG samples | Scaling, endian, tail-bit tests | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.42.0 | Adam7 decode and progressive row events | Pass geometry proofs and tiny-image corpus | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.43.0 | PNG PLTE and tRNS semantics | palette cardinality/index/transparency matrices and invalid combinations | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.43.1 | PNG bKGD, hIST, sBIT, and sPLT chunks | per-chunk length/value/order matrices and bounded suggested palettes | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.44.0 | PNG cHRM, gAMA, and sRGB declarations | PNG Third Edition value rules and declaration-precedence matrix | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.44.1 | PNG iCCP transport and ICC precedence | profile-name/Deflate limits, ICC bombs, and conflict precedence | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.44.2 | PNG cICP and HDR/WCG metadata | cICP, mDCV, and cLLI order/dependency/value rules with HDR vectors | No; covered by `0.45.0` | Not published; next `0.45.0` |
+| 0.45.0 | PNG bounded text chunks | tEXt, zTXt, and iTXt keyword/language/compression/UTF-8 limits | Yes (cumulative checkpoint) | Publish `0.45.0` |
+| 0.45.1 | PNG eXIf, pHYs, and tIME metadata | chunk-specific order, length, value, and metadata-transport tests | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.45.2 | PNG unknown and private chunk policy | critical rejection, ancillary preservation, and safe-to-copy editor matrix | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.46.0 | APNG control and frame-chunk sequencing | acTL/fcTL/fdAT order, sequence numbers, rectangles, timing, and limits | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.46.1 | APNG frame decoding and composition | default-image cases, source/source-over, disposal, streaming, and bombs | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.46.2 | PNG deterministic encoding | Third Edition emission, row filters, Deflate, metadata, and determinism | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.46.3 | APNG deterministic encoding | frame sequencing, rectangles, timing, disposal/blend, and round trips | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.46.4 | Complete PNG/APNG conformance and security audit | Third Edition mapping, conformance/differential corpus, and long fuzzing | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.47.0 | GIF87a/89a structure, palettes, sub-blocks, descriptors | Logical-screen fields, color resolution/sort/background/aspect policy, block termination, and palette bounds | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.48.0 | GIF LZW | Dictionary/code-width proofs and fuzzing | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.49.0 | GIF single-frame decode and deinterlace | Exact pixels and four-pass geometry tests | No; covered by `0.50.0` | Not published; next `0.50.0` |
+| 0.50.0 | GIF GCE, transparency, frame composition, all disposal modes | Snapshot caps and animation bomb corpus | Yes (cumulative checkpoint) | Publish `0.50.0` |
+| 0.51.0 | GIF named-extension parsing | Comment, Plain Text, Application, and unknown extension boundaries | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.1 | GIF compatibility and termination policy | Netscape loop, EOI/trailer, extra pixels, delay, and disposal decisions | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.2 | GIF raw-frame and composited-frame APIs | coordinates, disposal sequencing, valid prefixes, and frame ranges | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.3 | GIF exact palettes and bounded histogram | unique-color limits, entry layout, ordering, overflow, and caller palettes | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.4 | GIF deterministic palette generation and remapping | median-cut policy, remap, bounded dithering, budgets, and goldens | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.5 | GIF LZW encoder | dictionary growth/reset/saturation, widths, end code, proofs, and round trips | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.6 | Single-frame GIF encoder | palette/table/transparency/sub-block integration and deterministic output | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.7 | Animated GIF encoder | canvas/frame limits, timing, loop, disposal, ranges, and round trips | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.51.8 | Complete GIF conformance and security audit | normative/de-facto matrix, differential corpus, fuzzing, and animation bombs | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.52.0 | JPEG marker and segment framing | standalone/length-bearing marker boundaries and size mutation fuzzing | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.52.1 | JPEG quantization and entropy-table declarations | DQT/DHT/DAC/DRI types, precision, counts, redefinition, and dependencies | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.52.2 | JPEG frame declarations | SOF process/precision/components/sampling/dimensions and DNL policy | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.52.3 | JPEG scan declarations and ordering | SOS selectors/ranges, multiscan/abbreviated-table state, and invalid transitions | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.53.0 | JPEG Huffman entropy and byte stuffing | canonical table proofs, marker boundaries, and every-bit truncation | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.53.1 | JPEG restart and bounded MCU coefficient accounting | restart reset/sequence, MCU geometry, coefficient bounds, and work budgets | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.54.0 | JPEG scalar IDCT and grayscale reconstruction | IDCT coefficient bounds, normative tolerance, grayscale blocks, restart corpus, and deterministic scalar vectors | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.54.1 | JPEG component sampling and bounded upsampling | Sampling factors, MCU geometry, edge extension, upsampling policy, limits, and reference vectors | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.54.2 | JPEG native YCbCr and rendered RGB output tiers | Native plane/coefficients versus shared-color rendering, JFIF declarations, tolerances, and error separation | No; covered by `0.55.0` | Not published; next `0.55.0` |
+| 0.55.0 | Extended sequential and 12-bit DCT processes | Precision and coefficient-range evidence | Yes (cumulative checkpoint) | Publish `0.55.0` |
+| 0.56.0 | JPEG progressive DC scans | first/refinement DC scan state, predictors, restart, and malformed order | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.56.1 | JPEG progressive AC scans | spectral selection, EOB runs, coefficient bounds, and restart behavior | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.56.2 | JPEG successive-approximation integration audit | complete scan-script matrix, native coefficients, work limits, and fuzzing | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.57.0 | Lossless predictive JPEG process | Predictor, point transform, precision tests | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.58.0 | JPEG arithmetic coding | Conditioning-table and arithmetic-state proofs | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.59.0 | JPEG differential processes | Reference-frame dependencies, differential scan state, reconstruction bounds, and malformed graphs | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.59.1 | JPEG hierarchical processes | Frame hierarchy, expansion, dependencies, reconstruction limits, native output, and differential evidence | No; covered by `0.60.0` | Not published; next `0.60.0` |
+| 0.60.0 | JPEG JFIF and Adobe color declarations | T.871 APP0 plus Adobe RGB/CMYK/YCCK interpretation and precedence | Yes (cumulative checkpoint) | Publish `0.60.0` |
+| 0.60.1 | JPEG Exif APP1 transport | identifier, length, nested offset, duplicate, and preservation policies | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.60.2 | JPEG ICC APP2 assembly and color precedence | chunk numbering/completeness/duplicates, profile limits, and color vectors | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.60.3 | JPEG COM and registered/unknown APPn policy | T.86 registry mapping, SPIFF decision, bounded COM/APPn preservation, duplicates, and inert metadata | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.0 | Baseline JPEG encoder | Deterministic valid baseline emission, quality controls, coefficient limits, and round trips | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.1 | Progressive JPEG encoder | Scan scripts, successive approximation, deterministic tables, restart policy, and round trips | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.2 | Extended-sequential JPEG encoder | precision/process-valid emission, tables, restart, and differential tests | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.3 | Lossless JPEG encoder | predictor/point-transform emission, precision, restart, and round trips | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.4 | Arithmetic JPEG encoder admission | independent arithmetic evidence or an explicit unclaimed decision | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.5 | Differential JPEG encoder admission | independent differential-process evidence or an explicit unclaimed decision | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.61.6 | Hierarchical JPEG encoder admission | independent hierarchy evidence or an explicit unclaimed decision | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.62.0 | Complete declared T.81 conformance and security audit | Reference software, official material, long fuzz campaign | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.63.0 | WebP RIFF framing and simple-file dispatch | RIFF/WEBP size, padding, VP8/VP8L simple payload, and trailing policy | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.63.1 | WebP VP8X feature and chunk-order state machine | feature bits, canvas, chunk multiplicity/order, and invalid combinations | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.63.2 | WebP ICCP, EXIF, XMP, and unknown chunks | bounded metadata, feature consistency, preservation, and unknown policy | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.64.0 | VP8 Boolean-decoder primitive | range/value normalization, refill, termination, and arithmetic-state fuzzing | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.64.1 | VP8 partition and frame-header parsing | partition sizes/counts, key/inter headers, segmentation, and bounds | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.64.2 | VP8 probability-update and token state | coefficient/mode probability updates, defaults, reset, and work accounting | No; covered by `0.65.0` | Not published; next `0.65.0` |
+| 0.65.0 | VP8 prediction and coefficient reconstruction | Macroblock/reference bounds, prediction modes, token reconstruction, partition limits, and scalar differential tests | Yes (cumulative checkpoint) | Publish `0.65.0` |
+| 0.65.1 | VP8 inverse transforms and reconstructed macroblocks | Transform arithmetic, coefficient ranges, clipping, prediction integration, and scalar reference vectors | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.65.2 | VP8 loop filtering and complete still reconstruction | Filter levels/edges, macroblock bounds, native YCbCr output, rendered output, and differential corpus | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.66.0 | WebP ALPH decoding | ALPH filter/compression/preprocessing modes, dimensions, and bombs | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.66.1 | VP8 native YCbCr and rendered RGB integration | matrix/range assumptions, alpha association, output tiers, and color vectors | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.67.0 | VP8L prefix-code parsing and decoding | simple/normal code validation, tables, symbols, and every-bit truncation | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.67.1 | VP8L LZ77 distance and copy engine | distance mapping, overlap, history/output bounds, progress, and bombs | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.67.2 | VP8L color-cache engine | cache-bit bounds, hashing, initialization, access, and deterministic vectors | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.0 | VP8L transform declarations and meta-prefix images | transform order/count, dimensions, recursion, prefix images, and limits | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.1 | VP8L predictor transform | all predictor modes, edge rules, modular arithmetic, and goldens | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.2 | VP8L color transform | transform-image geometry, delta arithmetic, bounds, and golden vectors | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.3 | VP8L subtract-green transform | modular channel arithmetic, order, and exact pixel vectors | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.4 | VP8L color-indexing transform | palette image, packing widths, dimension reduction, indexes, and bounds | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.68.5 | VP8L complete lossless reconstruction audit | all transforms plus prefix/LZ/cache integration, exact pixels, bombs, and fuzzing | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.69.0 | WebP animation decoding | ANIM background/loop plus ANMF rectangles, duration, blend/dispose, frame limits, and animation fuzzing | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.69.1 | VP8L deterministic encoder | Prefix/LZ/cache/transform validity, quality-effort controls, bounded search, determinism, and round trips | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.69.2 | VP8 deterministic encoder | Prediction/partition/token validity, quality-effort controls, bounded heuristics, backend determinism, and differential tests | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.69.3 | Animated WebP encoder | ANMF ordering/rectangles, mixed frame modes, blend/dispose, metadata, and round trips | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.69.4 | Complete WebP conformance and security audit | RFC/VP8/VP8L mappings, still/animated split, ALPH/metadata, encoder modes, long fuzzing, and external review | No; covered by `0.70.0` | Not published; next `0.70.0` |
+| 0.70.0 | Shared bounded mynd-ifd graph and typed-value engine | count/offset arithmetic, cycles, overlaps, typed values, and fuzzing | Yes (cumulative checkpoint) | Publish `0.70.0` |
+| 0.70.1 | TIFF 6.0 tag schema and dependency validation | required/defaulted tags, types/counts, duplicate policy, and dependencies | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.71.0 | TIFF baseline uncompressed strips | bilevel/Gray/palette/RGB strip geometry, FillOrder, and truncation | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.71.1 | TIFF PackBits strip decoding | packet boundaries, no-op bytes, row/strip output bounds, and bombs | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.72.0 | TIFF LZW decoding | TIFF code-width dialect, clear/end codes, dictionary limits, and bombs | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.72.1 | TIFF Deflate decoding | old/new compression-tag policy, zlib integration, and output limits | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.72.2 | TIFF horizontal Predictor 2 | integer sample widths, planar/contiguous rows, endian, and overflow | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.72.3 | TIFF floating-point Predictor 3 profile | Adobe Technical Note 3 byte reordering/differencing vectors and profile matrix | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.73.0 | TIFF CCITT modified-Huffman RLE | run tables, FillOrder, EOL policy, row bounds, and differential corpus | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.73.1 | TIFF CCITT Group 3 fax decoding | T4 options, 1D/2D transitions, EOL/RTC, damaged rows, and limits | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.73.2 | TIFF CCITT Group 4 fax decoding | T6 transitions, EOFB, reference-line bounds, and malformed streams | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.74.0 | TIFF tiled image layout | tile geometry, edge tiles, sparse/overlap policy, offsets, and byte counts | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.74.1 | TIFF planar image layout | plane ordering, per-plane strips/tiles, sample dependencies, and limits | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.74.2 | TIFF multipage and SubIFD traversal | next-IFD/SubIFD graphs, cycles, aggregate page limits, and valid prefixes | No; covered by `0.75.0` | Not published; next `0.75.0` |
+| 0.75.0 | TIFF YCbCr samples and tag dependencies | Coefficients, reference black/white, subsampling, positioning, strip/tile geometry, and color vectors | Yes (cumulative checkpoint) | Publish `0.75.0` |
+| 0.75.1 | TIFF CMYK and CIELab native samples | Photometric dependencies, signed/sample domains, planar layouts, declarations, and native golden vectors | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.75.2 | TIFF alpha, ICC, and rendered-color integration | ExtraSamples association, ICC precedence, shared rendering, and tolerances | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.75.3 | TIFF signed-integer and IEEE floating sample domains | SampleFormat/depth combinations, endian, NaN/infinity policy, and native output | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.75.4 | TIFF Orientation presentation policy | all eight values, native coordinates, opt-in normalization, region mapping, and metadata effects | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.75.5 | TIFF calibrated color declarations | WhitePoint, PrimaryChromaticities, TransferFunction, ReferenceBlackWhite, precedence, and unsupported combinations | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.76.0 | Corrected JPEG-in-TIFF decoding | old/new JPEG distinction, table ownership, strip/tile boundaries, and corpus | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.76.1 | TIFF Exif IFD integration | Exif/GPS/Interop graph namespaces, nested offsets, cycles, and limits | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.76.2 | TIFF admitted-extension profile freeze | each extension has pinned provenance and an explicit support disposition | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.0 | TIFF baseline uncompressed-strip encoder | endian tags/strips/exact sizes/determinism and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.1 | TIFF PackBits encoder | packet/run/row boundaries, exact lengths, determinism, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.2 | TIFF LZW encoder | dialect widths, clear/end behavior, proofs, determinism, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.3 | TIFF Deflate encoder | mynd-deflate/zlib integration, output limits, validity, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.4 | TIFF horizontal Predictor 2 encoder | integer widths, endian, planar/contiguous rows, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.5 | TIFF floating-point Predictor 3 encoder admission | Adobe-profile widths and vectors or an explicit unclaimed decision | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.6 | TIFF CCITT RLE encoder | run-code validity, FillOrder, row termination, and differential tests | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.7 | TIFF CCITT Group 3 encoder | T4 options, 1D/2D transitions, EOL/RTC, and differential tests | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.8 | TIFF CCITT Group 4 encoder | T6 transitions, EOFB, reference rows, and differential tests | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.9 | TIFF tiled-image encoder | tile geometry, edge tiles, offsets/byte counts, and deterministic output | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.10 | TIFF planar-image encoder | plane ordering, per-plane storage, dependencies, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.11 | TIFF multipage and SubIFD encoder | IFD graph, next/SubIFD links, aggregate limits, and deterministic output | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.12 | TIFF extended sample/color encoder | photometric/SampleFormat/ExtraSamples/YCbCr/ICC dependencies and claims | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.13 | Corrected JPEG-in-TIFF encoder | new-style table ownership, strip/tile boundaries, validity, and round trips | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.77.14 | Complete declared TIFF profile audit | compression/layout/sample/color/extension matrix, conformance, fuzzing, and review | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.78.0 | Cross-format native-sample and color-declaration integration | decode_native consistency, declaration precedence, preserved profiles, and no premature rendered-color claim | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.79.0 | Shared bounded TIFF/Exif IFD inspection | Offset graphs, entry counts, cycles, value bounds, MakerNote opacity, and fuzzing | No; covered by `0.80.0` | Not published; next `0.80.0` |
+| 0.80.0 | Selected bounded Exif field interpretation | dimensions, timestamps, strings, types/counts, encoding, and conflicts | Yes (cumulative checkpoint) | Publish `0.80.0` |
+| 0.80.1 | Bounded Exif thumbnail extraction | thumbnail offsets/lengths, nested format limits, overlap, and bomb resistance | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.80.2 | Explicit Exif orientation policy | all eight orientations, coordinate mapping, opt-in transform, and metadata effect | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.80.3 | Exif 3.1 and Exif-for-XMP profile freeze | DC-008/DC-010 2026 mappings, selected/opaque/unsupported fields, container consistency, and differential audit | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.81.0 | XMP packet framing and bounded raw transport | xpacket boundaries, encoding, padding, read-only flag, exact preservation, truncation, and no external I/O | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.81.1 | Bounded XML 1.0 and Namespaces profile for XMP | token/nesting/name/attribute/text limits, encoding rules, disabled DTD/entities/resolvers, and malicious XML corpus | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.81.2 | Bounded RDF/XML and XMP data-model inspection | RDF productions, arrays/structures/qualifiers, namespaces, aliases, duplicate policy, and graph budgets | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.81.3 | XMP and legacy-metadata conflict/rewrite policy | XMP Part 3 plus CIPA DC-010 reconciliation, preserve/discard/rewrite, duplicates, and round trips | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.81.4 | Transformation-aware metadata effect planning | preserved/rewritten/invalidated/decision results for every operation | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.82.0 | YCbCr matrices, ranges, subsampling, and chroma siting | JPEG/WebP/TIFF reference vectors | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.83.0 | Gray, CMYK, and YCCK conversion | black-generation/Adobe policy, native-to-rendered vectors, and gamut limits | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.83.1 | CIELab and declared wide-gamut conversion | white-point/adaptation/range rules, out-of-gamut policy, and reference vectors | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.84.0 | Straight/premultiplied alpha conversion | Zero-alpha, rounding, and invariant tests | No; covered by `0.85.0` | Not published; next `0.85.0` |
+| 0.85.0 | Explicit color-conversion planning | information-loss declaration, numeric tier, stages, scratch, and work plan | Yes (cumulative checkpoint) | Publish `0.85.0` |
+| 0.85.1 | Sample-depth conversion | all admitted integer/float depths, scaling, rounding, saturation, and alpha | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.85.2 | Deterministic advanced dithering | ordered/error-diffusion kernels, edge/error bounds, budgets, and goldens | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.85.3 | Final cross-format rendered-color conformance audit | PNG/JPEG/WebP/TIFF profiles, precedence, tolerances, and differential results | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.86.0 | Crop, flip, rotate, transpose | In-place overlap and rectangle proofs | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.87.0 | Checked affine geometry and border modes | Finite-matrix and coordinate-overflow proofs | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.88.0 | Nearest and bilinear resampling | Pixel-center and edge-policy golden tests | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.89.0 | Bicubic resampling | Coefficient normalization and overshoot policy | No; covered by `0.90.0` | Not published; next `0.90.0` |
+| 0.90.0 | Lanczos3 resampling | Tap planning, ring-buffer limits, reference vectors | Yes (cumulative checkpoint) | Publish `0.90.0` |
+| 0.91.0 | Remaining Porter-Duff compositing operators | Shared source/source-over compatibility, remaining operators, linear domain, alpha, overlap, and invariants | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.0 | Declared artistic blend modes | formula/domain/clamping/NaN/alpha matrices and interoperability vectors | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.1 | Clipped pixel, span, and fill primitives | signed/overflowing coordinates, clipping, layout, alpha, and work budgets | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.2 | Rectangle and overlap-safe blit primitives | empty/degenerate rectangles, clipping, overlap directions, and alias policy | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.3 | Deterministic integer line primitives | octants, endpoints, degenerates, clipping symmetry, and golden rasters | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.4 | Deterministic integer circle and ellipse primitives | quadrants, degenerates, clipping symmetry, overflow, and golden rasters | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.92.5 | Bounded raster-drawing contract and security audit | layout/color/alpha/overlap/work tests and explicit support matrix | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.93.0 | Optional safe SIMD or audited external backends | Scalar differential, tail/alignment, dependency/unsafe-boundary, Miri, and sanitizer evidence | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.0 | Streaming and tiled processing graph | Scratch bounds, fusion equivalence, cancellation, and honest random-access disclosure | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.1 | Metadata- and header-only decoding | no-pixel paths, source-position policy, metadata budgets, and format matrix | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.2 | Region-selective decoding | coordinate spaces, chroma/halo planning, committed regions, and fallbacks | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.3 | Frame-range selective decoding | raw/composited selection, dependency closure, disposal state, and bombs | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.4 | Reduced-resolution and progressive-preview decoding | JPEG reduced IDCT, TIFF selection, progressive events, and numeric evidence | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.5 | Processing and selective-decoding contract freeze | fusion equivalence, peak limits, cancellation, DoS, and support matrix | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.6 | Unified borrowed inspection and decode_into facade | hints/mismatch, static dispatch, output tiers, limits, and disabled features | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.7 | Unified encoder and transcoding facade | capability plans, conversion orchestration, metadata effects, and transactions | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.94.8 | Fallible owned APIs and facade-candidate integration audit | allocation failure, representative codecs, feature matrix, and candidate baseline | No; covered by `0.95.0` | Not published; next `0.95.0` |
+| 0.95.0 | Runtime-neutral async source/sink adapters | Backpressure, cancellation, partial-I/O tests | Yes (cumulative checkpoint) | Publish `0.95.0` |
+| 0.95.1 | WASM/browser streaming adapters | wasm32-unknown-unknown, JS-size, memory-growth tests | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.96.0 | Caller-provided parallel scheduling interface | Determinism, budget partition, cancellation | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.96.1 | Optional Rayon/service adapter | No core dependency or automatic global pool | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.97.0 | GPU-compatible descriptors and upload-layout hooks | Stable layout contract; no device ownership in core | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.97.1 | Optional backend adapters | CPU/GPU differential results and synchronization policy | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.0 | mynd-cli inspect command | escaped bounded metadata, stable schema, hostile terminals, and exit codes | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.1 | mynd-cli validate command | strict/compatibility modes, bounded diagnostics, exit codes, and no output mutation | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.2 | mynd-cli decode command | transactional files, output-tier/color disclosure, limits, and cancellation | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.3 | mynd-cli encode command | format capability validation, metadata policy, transactions, and determinism | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.4 | mynd-cli convert command | explicit conversion plan, information-loss confirmation, and atomic replacement | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.5 | mynd-cli frame command | raw/composited selection, frame/range limits, filenames, and animation bombs | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.6 | mynd-cli bounded batch profile | aggregate budgets, hostile filenames, collision policy, and cancellation | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.7 | mynd-cli bounded service profile | request isolation, aggregate/live budgets, cancellation, and no ambient authority | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.98.8 | Cross-adapter facade reconciliation | Zero unresolved implementation or public-API issues and one exact assurance input | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.0 | cargo-fuzz harness and corpus integration | every parser/entropy/metadata/dispatcher target builds with provenance | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.1 | Long-running fuzz and truncation campaign | coverage report, minimized persistent corpus, and no stalls/panics | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.2 | Kani checked-arithmetic and geometry proofs | conversion/size/stride/rectangle assumptions and unwind bounds | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.3 | Kani view and buffer-state proofs | bounds, alias policy, commit visibility, and state invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.4 | Kani byte- and bit-I/O proofs | cursor/refill/shift/rollback/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.5 | Kani Deflate and zlib state proofs | table/distance/window/checksum/output/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.6 | Kani GIF and TIFF LZW state proofs | dialect dictionary/width/reset/end/output/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.7 | Kani JPEG entropy state proofs | Huffman/arithmetic/stuffing/restart/coefficient/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.8 | Kani WebP entropy state proofs | VP8 Boolean and VP8L prefix/LZ/cache/output/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.9 | Kani TIFF fax and IFD state proofs | run/transition/reference-row and graph/count/progress invariants | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.10 | Miri audit | all supported feature sets and mutation/view/adapter paths pass Miri | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.11 | Sanitizer audit | address, leak, memory, and undefined-behavior sanitizer matrix | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.12 | Supported-Rust, target, and feature audit | Rust 1.90.0-1.97.1, targets, no-default, alloc/std, WASM, and combinations | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.13 | Stack and code-size audit | per-target stack ceilings, recursion absence, and binary-size budgets | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.14 | Official conformance and differential freeze | every format claim mapped with no unexplained reference disagreement | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.15 | Cross-format color conformance freeze | native/rendered profiles, precedence, tolerances, and reference vectors | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.16 | Performance and denial-of-service freeze | valid throughput plus hostile rejection-time/work/memory regression limits | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.17 | Reproducible package, SBOM, and provenance freeze | byte-reproducible archives, dependency identity, signatures, and attestations | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
+| 0.99.18 | Cumulative pentest handoff and final public API freeze | unchanged v0.98.8 input, complete evidence bundle, frozen scope, and no unresolved implementation defect | No; covered by `1.0.0-rc.1` | Not published; next `1.0.0-rc.1` |
 
 ## Phase: Foundations
 
@@ -853,7 +880,7 @@ Context:
 
 This is the exclusive foundations handoff for
 existing workspace, licenses, feature boundaries, release policy. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -871,7 +898,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -891,11 +918,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.1.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.1.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.2.0 - Unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema
 
@@ -905,7 +934,7 @@ Context:
 
 This is the exclusive foundations handoff for
 unified scope, claim taxonomy, standards/errata ledger, corpus provenance schema. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -927,7 +956,7 @@ Deliverables:
   its dedicated codec boundary, original specification source, and v0.34.0
   decode/encode handoff explicitly.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -947,11 +976,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.2.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.2.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
@@ -981,7 +1012,7 @@ Deliverables:
   or purchased references.
 - Prove a clean checkout can recreate every automatic offline source while
   manual acquisition never accepts terms, uses credentials, or bypasses payment.
-- Update source policy, release notes, SBOM inputs, and the pentest scaffold.
+- Update source policy, release notes, SBOM inputs, and the cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -998,9 +1029,9 @@ Exit criteria:
   dependency.
 - Legal review approves every public copy and confirms offline/manual material
   is ignored; all critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
+- CI and CodeQL default setup are green, at a publication checkpoint the permanent report records PASS, and
   the exact-version release gate accepts the reviewed corpus.
-- `v0.2.1 implementation stop reached. Run pentest and record the result.`
+- `v0.2.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
@@ -1010,7 +1041,7 @@ Context:
 
 This is the exclusive foundations handoff for
 checked conversion/add/multiply/align/range primitives. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1028,7 +1059,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1048,11 +1079,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.3.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.3.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
@@ -1062,7 +1095,7 @@ Context:
 
 This is the exclusive foundations handoff for
 validated dimensions, rectangles, strides, planes, and output lengths. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1080,7 +1113,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1100,11 +1133,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.4.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.4.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.0 - Explicit pixel layout and sample-storage domains
 
@@ -1114,7 +1149,7 @@ Context:
 
 This is the exclusive foundations handoff for
 explicit pixel layout and sample-storage domains. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1132,7 +1167,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1152,11 +1187,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.1 - Numeric determinism and floating-sample contract
 
@@ -1166,7 +1203,7 @@ Context:
 
 This is the exclusive foundations handoff for
 numeric determinism and floating-sample contract. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1184,7 +1221,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1204,11 +1241,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.2 - Shared color and blending specification ledger
 
@@ -1218,7 +1257,7 @@ Context:
 
 This is the exclusive foundations handoff for
 shared color and blending specification ledger. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1236,7 +1275,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1256,11 +1295,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.3 - Scalar transfer, matrix/range, and alpha foundation
 
@@ -1270,7 +1311,7 @@ Context:
 
 This is the exclusive foundations handoff for
 scalar transfer, matrix/range, and alpha foundation. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1288,7 +1329,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1308,11 +1349,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.4 - Minimal scalar animation composition kernel
 
@@ -1322,7 +1365,7 @@ Context:
 
 This is the exclusive foundations handoff for
 minimal scalar animation composition kernel. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1341,7 +1384,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - APNG and WebP must reuse this source/source-over kernel; GIF maps its skip/replace semantics without duplicating alpha math.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1361,11 +1404,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.5.5 - Explicit no_std elementary-math backend
 
@@ -1374,8 +1419,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for explicit no_std elementary-math backend. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -1395,7 +1440,7 @@ Deliverables:
 - Define domain reduction, exceptional inputs, maximum error, rounding, FMA use, and reproducible backend selection on WASM and targets without hardware floating point.
 - Offer a deterministic software backend where supported; selecting another backend changes the recorded conformance evidence explicitly.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1415,11 +1460,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.5.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.5.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.6.0 - Immutable/mutable image and plane views
 
@@ -1429,7 +1476,7 @@ Context:
 
 This is the exclusive foundations handoff for
 immutable/mutable image and plane views. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1447,7 +1494,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1467,11 +1514,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.6.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.6.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.7.0 - Frames, timing, canvas, disposal, blend, and frame rectangles
 
@@ -1481,7 +1530,7 @@ Context:
 
 This is the exclusive foundations handoff for
 frames, timing, canvas, disposal, blend, and frame rectangles. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1499,7 +1548,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1519,11 +1568,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.7.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.7.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.8.0 - Allocation-free structured errors, warnings, reports, and offsets
 
@@ -1533,7 +1584,7 @@ Context:
 
 This is the exclusive foundations handoff for
 allocation-free structured errors, warnings, reports, and offsets. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1551,7 +1602,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1571,11 +1622,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.8.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.8.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.9.0 - DecodeLimits, EncodeLimits, monotonic work/memory ledger
 
@@ -1585,7 +1638,7 @@ Context:
 
 This is the exclusive foundations handoff for
 decodelimits, encodelimits, monotonic work/memory ledger. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1603,7 +1656,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1623,11 +1676,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.9.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.9.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.10.0 - Caller-owned scratch planner, arenas, buffer pools, and leases
 
@@ -1637,7 +1692,7 @@ Context:
 
 This is the exclusive foundations handoff for
 caller-owned scratch planner, arenas, buffer pools, and leases. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1655,7 +1710,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1675,11 +1730,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.10.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.10.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.11.0 - Slice reader/writer, exact reads, fixed output, checkpoints
 
@@ -1689,7 +1746,7 @@ Context:
 
 This is the exclusive foundations handoff for
 slice reader/writer, exact reads, fixed output, checkpoints. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1707,7 +1764,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1727,11 +1784,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.11.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.11.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.12.0 - Endian I/O, subranges, counting, seek/read-at
 
@@ -1741,7 +1800,7 @@ Context:
 
 This is the exclusive foundations handoff for
 endian i/o, subranges, counting, seek/read-at. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1759,7 +1818,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1779,11 +1838,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.12.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.12.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.12.1 - Source/sink capability negotiation and execution lifecycle
 
@@ -1793,7 +1854,7 @@ Context:
 
 This is the exclusive foundations handoff for
 source/sink capability negotiation and execution lifecycle. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1816,7 +1877,7 @@ Deliverables:
   destination contents, nor cumulative budget; indefinite streams refine plans
   only inside original limits.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1836,11 +1897,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.12.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.12.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.12.2 - General encoder sizing and commit planning
 
@@ -1849,8 +1912,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for general encoder sizing and commit planning. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -1871,7 +1934,7 @@ Deliverables:
 - Bind counting/emission to identical configuration, metadata policy, source pixels, and numeric backend while charging both passes to input/work budgets.
 - Report unavailable input or sink capabilities before output mutation and define commit boundaries plus recoverability for forward-only sinks.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1891,11 +1954,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.12.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.12.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.12.3 - Source-bound decode session planning
 
@@ -1904,8 +1969,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for source-bound decode session planning. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -1926,7 +1991,7 @@ Deliverables:
 - Cover codec/profile declarations, source epoch/prefix, limits, compatibility, native/rendered choice, output layout/color, numeric backend, metadata policy, and commit mode.
 - Require a stable-snapshot promise for consistent mutable-source rereads, retain critical declarations, and revalidate before output while continuing all parser checks.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1947,11 +2012,13 @@ Exit criteria:
   limitations, numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.12.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.12.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.13.0 - MSB/LSB bit readers and writers
 
@@ -1961,7 +2028,7 @@ Context:
 
 This is the exclusive foundations handoff for
 msb/lsb bit readers and writers. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -1979,7 +2046,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -1999,11 +2066,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.13.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.13.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.14.0 - Incremental decoder/encoder progress contracts
 
@@ -2013,7 +2082,7 @@ Context:
 
 This is the exclusive foundations handoff for
 incremental decoder/encoder progress contracts. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2046,7 +2115,7 @@ Deliverables:
 - Done, Cancelled, and Error are sticky; post-terminal step is deterministic, Reset clears local state without refunding cumulative budget, and warnings cannot repair Error.
 - NeedInput/NeedOutput report exact counts and only committed output; no borrow outlives a call unless represented in the type; Done requires terminator/trailing policy.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2072,11 +2141,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.14.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.14.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.14.1 - Cooperative execution quantum and cancellation latency
 
@@ -2085,8 +2156,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for cooperative execution quantum and cancellation latency. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -2109,7 +2180,7 @@ Deliverables:
 - Quantum exhaustion returns Yielded { work_consumed }; a zero grant yields without input/output changes and resume never repeats or skips semantic work.
 - Distinguish resumable Yielded, sticky terminal LimitExceeded, and terminal caller Cancelled requiring explicit Reset without budget refund.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2129,11 +2200,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.14.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.14.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.14.2 - Physically enforceable incremental decode commit modes
 
@@ -2142,8 +2215,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for physically enforceable incremental decode commit modes. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -2167,7 +2240,7 @@ Deliverables:
   NeedOutput, Yielded, Done, Cancelled, LimitExceeded, and Error.
 - Charge region-token count/storage and bind tokens to the session, destination, and generation so reset or reuse rejects them.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2188,11 +2261,13 @@ Exit criteria:
   limitations, numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.14.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.14.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 
 ### v0.15.0 - Metadata envelopes and bounded Exif/ICC/XMP header transport
@@ -2203,7 +2278,7 @@ Context:
 
 This is the exclusive foundations handoff for
 metadata envelopes and bounded exif/icc/xmp header transport. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2221,7 +2296,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2241,11 +2316,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.1 - Bounded ICC v2/v4 structural parser
 
@@ -2255,7 +2332,7 @@ Context:
 
 This is the exclusive foundations handoff for
 bounded icc v2/v4 structural parser. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2273,7 +2350,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2293,11 +2370,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.2 - ICC matrix/TRC and chromatic-adaptation engine
 
@@ -2307,7 +2386,7 @@ Context:
 
 This is the exclusive foundations handoff for
 icc matrix/trc and chromatic-adaptation engine. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2325,7 +2404,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2345,11 +2424,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.3 - ICC v2 LUT pipelines and deterministic interpolation
 
@@ -2359,7 +2440,7 @@ Context:
 
 This is the exclusive foundations handoff for
 icc v2 lut pipelines and deterministic interpolation. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2377,7 +2458,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2397,11 +2478,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.4 - ICC v4 mAB/mBA and processing-element pipelines
 
@@ -2411,7 +2494,7 @@ Context:
 
 This is the exclusive foundations handoff for
 icc v4 mab/mba and processing-element pipelines. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2429,7 +2512,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2449,11 +2532,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.5 - ICC PCS Lab/XYZ, intent selection, and core execution audit
 
@@ -2463,7 +2548,7 @@ Context:
 
 This is the exclusive foundations handoff for
 icc pcs lab/xyz, intent selection, and core execution audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2486,7 +2571,7 @@ Deliverables:
   unsupported class. Structurally valid non-executable profiles return
   Unsupported while remaining preservable.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2506,11 +2591,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.15.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.15.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.6 - ICC adaptive-gain tag and type structural parsing
 
@@ -2552,8 +2639,8 @@ Exit criteria:
   curve through any public API.
 - The legal/IP decision and unsupported behavior are explicit; all
   critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green and the permanent report records PASS.
-- `v0.15.6 implementation stop reached. Run pentest and record the result.`
+- CI and CodeQL default setup are green and at a publication checkpoint the permanent report records PASS.
+- `v0.15.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.7 - ICC adaptive-gain execution admission
 
@@ -2594,8 +2681,8 @@ Exit criteria:
 - The support matrix states exactly whether ADGC execution is supported and
   never conflates preservation, parsing, and execution.
 - All critical/high findings are fixed and cleanly retested; CI and CodeQL
-  default setup are green and the permanent report records PASS.
-- `v0.15.7 implementation stop reached. Run pentest and record the result.`
+  default setup are green and at a publication checkpoint the permanent report records PASS.
+- `v0.15.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.8 - Complete declared ICC profile audit
 
@@ -2618,7 +2705,7 @@ Deliverables:
 - Run conformance and differential profiles across matrix/TRC, v2 LUT,
   mAB/mBA, PCS, intents, adaptation, malformed profiles, and ADGC policy.
 - Freeze numeric tolerances, corpus provenance, public API, limits, package
-  contents, release notes, SBOM, and exact-version pentest scope.
+  contents, release notes, SBOM, and cadence-assigned pentest scope.
 
 Verification:
 
@@ -2631,8 +2718,8 @@ Exit criteria:
 - No wildcard ICC claim remains and valid unimplemented profiles are
   preservable Unsupported.
 - All critical/high findings are fixed and cleanly retested; CI and CodeQL
-  default setup are green and the permanent report records PASS.
-- `v0.15.8 implementation stop reached. Run pentest and record the result.`
+  default setup are green and at a publication checkpoint the permanent report records PASS.
+- `v0.15.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.15.9 - Bounded BCP 47 language-tag profile
 
@@ -2672,7 +2759,7 @@ Exit criteria:
   that a syntactically valid tag is currently registered.
 - Pentest covers the exact parser; all critical/high findings are fixed and
   cleanly retested, and CI/CodeQL are green.
-- `v0.15.9 implementation stop reached. Run pentest and record the result.`
+- `v0.15.9 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.16.0 - Format IDs, media types, bounded probing, static registry
 
@@ -2682,7 +2769,7 @@ Context:
 
 This is the exclusive foundations handoff for
 format ids, media types, bounded probing, static registry. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2700,7 +2787,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2720,11 +2807,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.16.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.16.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.16.1 - Non-destructive forward-only and seekable probing
 
@@ -2733,8 +2822,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for non-destructive forward-only and seekable probing. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -2754,7 +2843,7 @@ Deliverables:
 - NeedInput reports minimum additional bytes and the absolute cap; physical bytes are charged once while repeated probe work remains charged.
 - Ambiguous/rejected probing returns the intact prefix, and seekable probing restores the original logical position or reports failure.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2775,11 +2864,13 @@ Exit criteria:
   limitations, numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.16.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.16.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.17.0 - Fallible owned storage and std::io adapters
 
@@ -2789,7 +2880,7 @@ Context:
 
 This is the exclusive foundations handoff for
 fallible owned storage and std::io adapters. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2807,7 +2898,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2827,11 +2918,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.17.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.17.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.17.1 - Reentrancy, concurrency, and auto-trait contract
 
@@ -2840,8 +2933,8 @@ Status: Planned.
 Context:
 
 This is the exclusive foundations handoff for reentrancy, concurrency, and auto-trait contract. Its API
-and attack-surface delta must be implemented, tested, reviewed, and pentested
-independently. Later capabilities remain unavailable or explicitly fail closed.
+and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release
+cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -2861,7 +2954,7 @@ Deliverables:
 - Permit one plan to execute concurrently only with independent typed workspaces, parent-backed child grants, disjoint destinations, and exclusive scratch.
 - Document which states may move between threads and require reusable registries/transforms to be immutable and reentrant where claimed.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2881,11 +2974,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.17.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.17.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 
 ### v0.18.0 - Foundation candidate review and representative-codec readiness
@@ -2896,7 +2991,7 @@ Context:
 
 This is the exclusive foundations handoff for
 foundation candidate review and representative-codec readiness. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2915,7 +3010,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - This is a candidate review, not a permanent public API freeze. Representative real codecs may still drive compatible redesign before v0.94.8.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2935,11 +3030,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.18.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.18.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 
 ## Phase: Simple and lossless codecs
@@ -2954,7 +3051,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 common codec crate template and decode-plan contract. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -2973,7 +3070,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Codec contracts expose decode_native and decode_rendered separately and negotiate source/sink capabilities during planning.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -2993,11 +3090,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.19.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.19.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.20.0 - BMP source ledger, file envelope, and dialect-matrix freeze
 
@@ -3009,7 +3108,7 @@ This is the exclusive simple and lossless codecs handoff for
 bmp source provenance, file-envelope validation, and the dialect-matrix freeze.
 No dialect parser or pixel decoder may begin until this release defines exact
 entry points and combinations. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3042,7 +3141,7 @@ Deliverables:
   inconsistent headers fail before allocation/output and never fall back to a
   shorter known structure.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3066,11 +3165,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.20.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.20.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.20.1 - BMP 12-byte core-family headers and RGBTRIPLE palettes
 
@@ -3104,7 +3205,7 @@ Deliverables:
   distinct semantics where the bytes cannot distinguish them.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
   corpus provenance, security documentation, changelog, notes, packages, SBOM,
-  and the exact-version pentest-report scaffold.
+  and the cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3130,9 +3231,10 @@ Exit criteria:
   candidate commit.
 - Pentest covers header confusion, palette sizing, offsets, truncation, and
   inherited invariants; all critical/high findings are fixed and retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.20.1 implementation stop reached. Run pentest and record the result.`
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.20.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.20.2 - BMP Windows INFO/V4/V5 and V2/V3 compatibility headers
 
@@ -3168,7 +3270,7 @@ Deliverables:
   claim their color semantics before v0.24.0.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
   corpus provenance, security documentation, changelog, notes, packages, SBOM,
-  and the exact-version pentest-report scaffold.
+  and the cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3195,9 +3297,10 @@ Exit criteria:
   candidate commit.
 - Pentest covers size confusion, mask placement, signed extrema, overlaps, and
   inherited invariants; all critical/high findings are fixed and retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.20.2 implementation stop reached. Run pentest and record the result.`
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.20.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.20.3 - BMP OS/2 2.x extended headers and container decision
 
@@ -3232,7 +3335,7 @@ Deliverables:
   Unsupported before following offsets or allocating frame tables.
 - Update SPEC_MAPPING, support/source/architecture records, crate boundaries,
   corpus provenance, security documentation, changelog, notes, packages, SBOM,
-  and the exact-version pentest-report scaffold.
+  and the cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3260,9 +3363,10 @@ Exit criteria:
 - Pentest covers family confusion, offset graphs, compression dispatch,
   truncation, and inherited invariants; all critical/high findings are fixed
   and retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.20.3 implementation stop reached. Run pentest and record the result.`
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.20.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.21.0 - BMP BI_RGB depths, palettes, padding, row orientation
 
@@ -3272,7 +3376,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp bi_rgb depths, palettes, padding, row orientation. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3299,7 +3403,7 @@ Deliverables:
   whose source admits it; reject signed-height minimum and compressed top-down
   forms without applying absolute value unsafely.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3321,11 +3425,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.21.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.21.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.22.0 - BMP bitfields, alpha masks, top-down rules
 
@@ -3335,7 +3441,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp bitfields, alpha masks, top-down rules. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3362,7 +3468,7 @@ Deliverables:
 - Record an explicit, source-backed `BI_ALPHABITFIELDS`/Windows CE compatibility
   decision rather than aliasing its numeric value to an OS/2 compression mode.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3384,11 +3490,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.22.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.22.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.23.0 - BMP RLE4/RLE8
 
@@ -3398,7 +3506,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp rle4/rle8. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3423,7 +3531,7 @@ Deliverables:
   end-of-bitmap handling, exact committed output, and deterministic trailing
   data policy.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3445,11 +3553,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.23.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.23.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.24.0 - BMP V4/V5 color declarations and embedded-profile transport
 
@@ -3459,7 +3569,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp v4/v5 color declarations and embedded-profile transport. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3484,7 +3594,7 @@ Deliverables:
   profile end, pixel/palette/mask overlap, placement rules, and declared size.
   Linked profile bytes remain inert data and can never trigger file or network I/O.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3506,11 +3616,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.24.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.24.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.25.0 - BMP deterministic uncompressed encoders
 
@@ -3520,7 +3632,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp deterministic uncompressed encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3544,7 +3656,7 @@ Deliverables:
   emission. Emit only depth, orientation, alpha, color, and metadata
   combinations supported by that selected revision, with reserved bytes zeroed.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3566,11 +3678,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.25.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.25.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.25.1 - BMP deterministic RLE4/RLE8 encoders
 
@@ -3580,7 +3694,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bmp deterministic rle4/rle8 encoders. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3603,7 +3717,7 @@ Deliverables:
   bitmap termination, absolute-run padding, delta policy, and size fields before
   emission; encoder search spends the caller's work budget.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3625,11 +3739,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.25.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.25.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.25.2 - Complete declared BMP dialect audit
 
@@ -3639,7 +3755,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 complete declared bmp dialect audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3668,7 +3784,7 @@ Deliverables:
   classify every disagreement, and retain cross-family/polyglot cases that try
   to reinterpret one header or compression namespace as another.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3693,11 +3809,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.25.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.25.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.26.0 - QOI structural parse and bounded decoder
 
@@ -3707,7 +3825,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 qoi structural parse and bounded decoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3725,7 +3843,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3746,11 +3864,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.26.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.26.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.27.0 - QOI deterministic encoder
 
@@ -3760,7 +3880,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 qoi deterministic encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3778,7 +3898,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3798,11 +3918,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.27.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.27.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.28.0 - Bounded Netpbm tokenizer
 
@@ -3812,7 +3934,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 bounded netpbm tokenizer. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3830,7 +3952,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3850,11 +3972,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.28.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.28.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.29.0 - PBM P1/P4 decode/encode
 
@@ -3864,7 +3988,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 pbm p1/p4 decode/encode. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3882,7 +4006,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3902,11 +4026,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.29.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.29.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.30.0 - PGM P2/P5 decode/encode
 
@@ -3916,7 +4042,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 pgm p2/p5 decode/encode. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3934,7 +4060,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -3956,11 +4082,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.30.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.30.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.31.0 - PPM P3/P6 decode/encode
 
@@ -3970,7 +4098,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 ppm p3/p6 decode/encode. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -3988,7 +4116,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4009,11 +4137,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.31.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.31.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.32.0 - PAM P7, if the public claim is “Netpbm”
 
@@ -4023,7 +4153,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 pam p7, if the public claim is “netpbm”. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4041,7 +4171,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4062,11 +4192,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.32.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.32.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.33.0 - Combined PNM/PAM stream and conformance audit
 
@@ -4076,7 +4208,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 combined pnm/pam stream and conformance audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4097,7 +4229,7 @@ Deliverables:
   floating-point/endian/row-order semantics, is not an official Netpbm format,
   and remains explicitly unsupported before 1.0.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4118,11 +4250,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.33.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.33.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.34.0 - farbfeld decode and encode
 
@@ -4132,7 +4266,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 farbfeld decode and encode. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4150,7 +4284,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4170,11 +4304,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.34.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.34.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.35.0 - Simple-codec contract and security freeze
 
@@ -4184,7 +4320,7 @@ Context:
 
 This is the exclusive simple and lossless codecs handoff for
 simple-codec contract and security freeze. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4202,7 +4338,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4222,11 +4358,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.35.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.35.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 
 ## Phase: Complex formats
@@ -4239,11 +4377,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG signature and bounded probing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for PNG signature and bounded probing. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete PNG signature and bounded probing with bounded behavior, explicit claims, and pentest and release evidence.
+Complete PNG signature and bounded probing with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4251,7 +4389,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4265,9 +4403,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.36.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.36.1 - PNG chunk framing and CRC
 
@@ -4275,11 +4413,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG chunk framing and CRC. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for PNG chunk framing and CRC. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete PNG chunk framing and CRC with bounded behavior, explicit claims, and pentest and release evidence.
+Complete PNG chunk framing and CRC with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4287,7 +4425,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4301,9 +4439,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.36.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.36.2 - PNG chunk-order state machine
 
@@ -4311,11 +4449,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG chunk-order state machine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for PNG chunk-order state machine. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete PNG chunk-order state machine with bounded behavior, explicit claims, and pentest and release evidence.
+Complete PNG chunk-order state machine with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4323,7 +4461,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4337,9 +4475,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.36.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.36.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.37.0 - PNG IHDR and color-type/bit-depth validation
 
@@ -4349,7 +4487,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 png ihdr and color-type/bit-depth validation. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4367,7 +4505,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4387,11 +4525,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.37.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.37.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.38.0 - Bounded mynd-zlib wrapper
 
@@ -4399,11 +4539,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for Bounded mynd-zlib wrapper. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for Bounded mynd-zlib wrapper. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Bounded mynd-zlib wrapper with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Bounded mynd-zlib wrapper with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4411,7 +4551,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4425,9 +4565,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.38.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.38.1 - Deflate stored blocks
 
@@ -4435,11 +4575,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for Deflate stored blocks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for Deflate stored blocks. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Deflate stored blocks with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Deflate stored blocks with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4447,7 +4587,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4461,9 +4601,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.38.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.38.2 - Deflate fixed-Huffman blocks
 
@@ -4471,11 +4611,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for Deflate fixed-Huffman blocks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive PNG/APNG handoff for Deflate fixed-Huffman blocks. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Deflate fixed-Huffman blocks with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Deflate fixed-Huffman blocks with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -4483,7 +4623,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4497,9 +4637,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.38.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.38.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.39.0 - Shared dynamic-Huffman and complete bounded mynd-deflate
 
@@ -4509,7 +4649,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 shared dynamic-huffman and complete bounded mynd-deflate. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4528,7 +4668,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - GIF LZW and TIFF LZW remain distinct engines and policies.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4548,11 +4688,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.39.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.39.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.40.0 - PNG row-filter reconstruction
 
@@ -4560,7 +4702,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG row-filter reconstruction. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG row-filter reconstruction. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4577,7 +4719,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4598,11 +4740,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.40.0 implementation stop reached. Run pentest and record the result.`
+- `v0.40.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.40.1 - PNG noninterlaced 8-bit core color decoding
 
@@ -4610,7 +4752,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG noninterlaced 8-bit core color decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG noninterlaced 8-bit core color decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4627,7 +4769,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4648,11 +4790,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.40.1 implementation stop reached. Run pentest and record the result.`
+- `v0.40.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.41.0 - Packed 1/2/4-bit and 16-bit PNG samples
 
@@ -4662,7 +4804,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 packed 1/2/4-bit and 16-bit png samples. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4680,7 +4822,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4700,11 +4842,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.41.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.41.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.42.0 - Adam7 decode and progressive row events
 
@@ -4714,7 +4858,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 adam7 decode and progressive row events. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -4732,7 +4876,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4752,11 +4896,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.42.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.42.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.43.0 - PNG PLTE and tRNS semantics
 
@@ -4764,7 +4910,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG PLTE and tRNS semantics. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG PLTE and tRNS semantics. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4781,7 +4927,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4802,11 +4948,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.43.0 implementation stop reached. Run pentest and record the result.`
+- `v0.43.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.43.1 - PNG bKGD, hIST, sBIT, and sPLT chunks
 
@@ -4814,7 +4960,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG bKGD, hIST, sBIT, and sPLT chunks. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG bKGD, hIST, sBIT, and sPLT chunks. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4831,7 +4977,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4852,11 +4998,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.43.1 implementation stop reached. Run pentest and record the result.`
+- `v0.43.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.44.0 - PNG cHRM, gAMA, and sRGB declarations
 
@@ -4864,7 +5010,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG cHRM, gAMA, and sRGB declarations. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG cHRM, gAMA, and sRGB declarations. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4881,7 +5027,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4902,11 +5048,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.44.0 implementation stop reached. Run pentest and record the result.`
+- `v0.44.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.44.1 - PNG iCCP transport and ICC precedence
 
@@ -4914,7 +5060,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG iCCP transport and ICC precedence. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG iCCP transport and ICC precedence. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4931,7 +5077,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -4952,11 +5098,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.44.1 implementation stop reached. Run pentest and record the result.`
+- `v0.44.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.44.2 - PNG cICP and HDR/WCG metadata
 
@@ -4964,7 +5110,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG cICP and HDR/WCG metadata. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG cICP and HDR/WCG metadata. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -4981,7 +5127,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5002,11 +5148,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.44.2 implementation stop reached. Run pentest and record the result.`
+- `v0.44.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.45.0 - PNG bounded text chunks
 
@@ -5014,7 +5160,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG bounded text chunks. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG bounded text chunks. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5031,7 +5177,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5052,11 +5198,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.45.0 implementation stop reached. Run pentest and record the result.`
+- `v0.45.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.45.1 - PNG eXIf, pHYs, and tIME metadata
 
@@ -5064,7 +5210,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG eXIf, pHYs, and tIME metadata. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG eXIf, pHYs, and tIME metadata. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5081,7 +5227,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5102,11 +5248,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.45.1 implementation stop reached. Run pentest and record the result.`
+- `v0.45.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.45.2 - PNG unknown and private chunk policy
 
@@ -5114,7 +5260,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG unknown and private chunk policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG unknown and private chunk policy. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5131,7 +5277,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5152,11 +5298,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.45.2 implementation stop reached. Run pentest and record the result.`
+- `v0.45.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.46.0 - APNG control and frame-chunk sequencing
 
@@ -5164,7 +5310,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for APNG control and frame-chunk sequencing. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for APNG control and frame-chunk sequencing. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5181,7 +5327,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5202,11 +5348,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.46.0 implementation stop reached. Run pentest and record the result.`
+- `v0.46.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.46.1 - APNG frame decoding and composition
 
@@ -5214,7 +5360,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for APNG frame decoding and composition. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for APNG frame decoding and composition. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5231,7 +5377,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5252,11 +5398,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.46.1 implementation stop reached. Run pentest and record the result.`
+- `v0.46.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.46.2 - PNG deterministic encoding
 
@@ -5264,7 +5410,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for PNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for PNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5281,7 +5427,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5302,11 +5448,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.46.2 implementation stop reached. Run pentest and record the result.`
+- `v0.46.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.46.3 - APNG deterministic encoding
 
@@ -5314,7 +5460,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for APNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for APNG deterministic encoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5331,7 +5477,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5352,11 +5498,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.46.3 implementation stop reached. Run pentest and record the result.`
+- `v0.46.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.46.4 - Complete PNG/APNG conformance and security audit
 
@@ -5364,7 +5510,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive PNG/APNG handoff for complete PNG/APNG conformance and security audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive PNG/APNG handoff for complete PNG/APNG conformance and security audit. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -5381,7 +5527,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5402,11 +5548,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.46.4 implementation stop reached. Run pentest and record the result.`
+- `v0.46.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.47.0 - GIF87a/89a structure, palettes, sub-blocks, descriptors
 
@@ -5416,7 +5562,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 gif87a/89a structure, palettes, sub-blocks, descriptors. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -5434,7 +5580,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5455,11 +5601,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.47.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.47.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.48.0 - GIF LZW
 
@@ -5469,7 +5617,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 gif lzw. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -5487,7 +5635,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5507,11 +5655,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.48.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.48.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.49.0 - GIF single-frame decode and deinterlace
 
@@ -5521,7 +5671,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 gif single-frame decode and deinterlace. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -5539,7 +5689,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5559,11 +5709,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.49.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.49.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.50.0 - GIF GCE, transparency, frame composition, all disposal modes
 
@@ -5573,7 +5725,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 gif gce, transparency, frame composition, all disposal modes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -5591,7 +5743,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5611,11 +5763,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.50.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.50.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.0 - GIF named-extension parsing
 
@@ -5623,11 +5777,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF named-extension parsing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF named-extension parsing. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF named-extension parsing with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF named-extension parsing with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5635,7 +5789,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5649,9 +5803,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.1 - GIF compatibility and termination policy
 
@@ -5659,11 +5813,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF compatibility and termination policy. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF compatibility and termination policy. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF compatibility and termination policy with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF compatibility and termination policy with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5671,7 +5825,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5685,9 +5839,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.2 - GIF raw-frame and composited-frame APIs
 
@@ -5695,11 +5849,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF raw-frame and composited-frame APIs. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF raw-frame and composited-frame APIs. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF raw-frame and composited-frame APIs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF raw-frame and composited-frame APIs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5707,7 +5861,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5721,9 +5875,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.3 - GIF exact palettes and bounded histogram
 
@@ -5731,11 +5885,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF exact palettes and bounded histogram. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF exact palettes and bounded histogram. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF exact palettes and bounded histogram with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF exact palettes and bounded histogram with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5743,7 +5897,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5757,9 +5911,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.4 - GIF deterministic palette generation and remapping
 
@@ -5767,11 +5921,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF deterministic palette generation and remapping. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF deterministic palette generation and remapping. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF deterministic palette generation and remapping with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF deterministic palette generation and remapping with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5779,7 +5933,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5793,9 +5947,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.5 - GIF LZW encoder
 
@@ -5803,11 +5957,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for GIF LZW encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for GIF LZW encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete GIF LZW encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete GIF LZW encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5815,7 +5969,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5829,9 +5983,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.6 - Single-frame GIF encoder
 
@@ -5839,11 +5993,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for Single-frame GIF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for Single-frame GIF encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Single-frame GIF encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Single-frame GIF encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5851,7 +6005,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5865,9 +6019,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.6 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.7 - Animated GIF encoder
 
@@ -5875,11 +6029,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for Animated GIF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for Animated GIF encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Animated GIF encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Animated GIF encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5887,7 +6041,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5901,9 +6055,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.7 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.51.8 - Complete GIF conformance and security audit
 
@@ -5911,11 +6065,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive GIF handoff for Complete GIF conformance and security audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive GIF handoff for Complete GIF conformance and security audit. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Complete GIF conformance and security audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Complete GIF conformance and security audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5923,7 +6077,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5937,9 +6091,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.51.8 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.51.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.52.0 - JPEG marker and segment framing
 
@@ -5947,11 +6101,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG marker and segment framing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive classic-JPEG handoff for JPEG marker and segment framing. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete JPEG marker and segment framing with bounded behavior, explicit claims, and pentest and release evidence.
+Complete JPEG marker and segment framing with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5959,7 +6113,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -5973,9 +6127,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.52.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.52.1 - JPEG quantization and entropy-table declarations
 
@@ -5983,11 +6137,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG quantization and entropy-table declarations. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive classic-JPEG handoff for JPEG quantization and entropy-table declarations. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete JPEG quantization and entropy-table declarations with bounded behavior, explicit claims, and pentest and release evidence.
+Complete JPEG quantization and entropy-table declarations with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -5995,7 +6149,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6009,9 +6163,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.52.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.52.2 - JPEG frame declarations
 
@@ -6019,11 +6173,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG frame declarations. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive classic-JPEG handoff for JPEG frame declarations. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete JPEG frame declarations with bounded behavior, explicit claims, and pentest and release evidence.
+Complete JPEG frame declarations with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -6031,7 +6185,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6045,9 +6199,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.52.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.52.3 - JPEG scan declarations and ordering
 
@@ -6055,11 +6209,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG scan declarations and ordering. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive classic-JPEG handoff for JPEG scan declarations and ordering. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete JPEG scan declarations and ordering with bounded behavior, explicit claims, and pentest and release evidence.
+Complete JPEG scan declarations and ordering with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -6067,7 +6221,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6081,9 +6235,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.52.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.52.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.53.0 - JPEG Huffman entropy and byte stuffing
 
@@ -6091,7 +6245,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG Huffman entropy and byte stuffing. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG Huffman entropy and byte stuffing. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6108,7 +6262,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6129,11 +6283,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.53.0 implementation stop reached. Run pentest and record the result.`
+- `v0.53.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.53.1 - JPEG restart and bounded MCU coefficient accounting
 
@@ -6141,7 +6295,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG restart and bounded MCU coefficient accounting. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG restart and bounded MCU coefficient accounting. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6158,7 +6312,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6179,11 +6333,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.53.1 implementation stop reached. Run pentest and record the result.`
+- `v0.53.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.54.0 - JPEG scalar IDCT and grayscale reconstruction
 
@@ -6193,7 +6347,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg scalar idct and grayscale reconstruction. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6211,7 +6365,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6231,11 +6385,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.54.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.54.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.54.1 - JPEG component sampling and bounded upsampling
 
@@ -6245,7 +6401,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg component sampling and bounded upsampling. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6263,7 +6419,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6283,11 +6439,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.54.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.54.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.54.2 - JPEG native YCbCr and rendered RGB output tiers
 
@@ -6297,7 +6455,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg native ycbcr and rendered rgb output tiers. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6316,7 +6474,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Entropy/native-sample failures and shared color-rendering failures remain distinct.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6336,11 +6494,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.54.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.54.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.55.0 - Extended sequential and 12-bit DCT processes
 
@@ -6350,7 +6510,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 extended sequential and 12-bit dct processes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6368,7 +6528,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6388,11 +6548,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.55.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.55.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.56.0 - JPEG progressive DC scans
 
@@ -6400,7 +6562,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG progressive DC scans. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG progressive DC scans. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6417,7 +6579,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6438,11 +6600,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.56.0 implementation stop reached. Run pentest and record the result.`
+- `v0.56.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.56.1 - JPEG progressive AC scans
 
@@ -6450,7 +6612,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG progressive AC scans. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG progressive AC scans. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6467,7 +6629,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6488,11 +6650,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.56.1 implementation stop reached. Run pentest and record the result.`
+- `v0.56.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.56.2 - JPEG successive-approximation integration audit
 
@@ -6500,7 +6662,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG successive-approximation integration audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG successive-approximation integration audit. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6517,7 +6679,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6538,11 +6700,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.56.2 implementation stop reached. Run pentest and record the result.`
+- `v0.56.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.57.0 - Lossless predictive JPEG process
 
@@ -6552,7 +6714,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 lossless predictive jpeg process. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6570,7 +6732,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6590,11 +6752,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.57.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.57.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.58.0 - JPEG arithmetic coding
 
@@ -6604,7 +6768,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg arithmetic coding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6622,7 +6786,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6642,11 +6806,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.58.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.58.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.59.0 - JPEG differential processes
 
@@ -6656,7 +6822,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg differential processes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6674,7 +6840,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6694,11 +6860,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.59.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.59.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.59.1 - JPEG hierarchical processes
 
@@ -6708,7 +6876,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 jpeg hierarchical processes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6726,7 +6894,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6746,11 +6914,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.59.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.59.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.60.0 - JPEG JFIF and Adobe color declarations
 
@@ -6758,7 +6928,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG JFIF and Adobe color declarations. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG JFIF and Adobe color declarations. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6775,7 +6945,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6796,11 +6966,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.60.0 implementation stop reached. Run pentest and record the result.`
+- `v0.60.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.60.1 - JPEG Exif APP1 transport
 
@@ -6808,7 +6978,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG Exif APP1 transport. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG Exif APP1 transport. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6825,7 +6995,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6846,11 +7016,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.60.1 implementation stop reached. Run pentest and record the result.`
+- `v0.60.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.60.2 - JPEG ICC APP2 assembly and color precedence
 
@@ -6858,7 +7028,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for JPEG ICC APP2 assembly and color precedence. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for JPEG ICC APP2 assembly and color precedence. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -6875,7 +7045,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6896,11 +7066,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.60.2 implementation stop reached. Run pentest and record the result.`
+- `v0.60.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.60.3 - JPEG COM and registered/unknown APPn policy
 
@@ -6938,7 +7108,7 @@ Exit criteria:
   wildcard claim remains.
 - Pentest covers the exact metadata surface; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.60.3 implementation stop reached. Run pentest and record the result.`
+- `v0.60.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.0 - Baseline JPEG encoder
 
@@ -6948,7 +7118,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 baseline jpeg encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -6966,7 +7136,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -6986,11 +7156,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.61.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.61.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.1 - Progressive JPEG encoder
 
@@ -7000,7 +7172,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 progressive jpeg encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -7018,7 +7190,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7038,11 +7210,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.61.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.61.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.2 - Extended-sequential JPEG encoder
 
@@ -7050,7 +7224,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for extended-sequential JPEG encoder. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for extended-sequential JPEG encoder. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -7067,7 +7241,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7088,11 +7262,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.61.2 implementation stop reached. Run pentest and record the result.`
+- `v0.61.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.3 - Lossless JPEG encoder
 
@@ -7100,7 +7274,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for lossless JPEG encoder. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for lossless JPEG encoder. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -7117,7 +7291,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7138,11 +7312,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.61.3 implementation stop reached. Run pentest and record the result.`
+- `v0.61.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.4 - Arithmetic JPEG encoder admission
 
@@ -7150,7 +7324,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for arithmetic JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for arithmetic JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -7167,7 +7341,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7188,11 +7362,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.61.4 implementation stop reached. Run pentest and record the result.`
+- `v0.61.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.5 - Differential JPEG encoder admission
 
@@ -7200,7 +7374,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for differential JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for differential JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -7217,7 +7391,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7238,11 +7412,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.61.5 implementation stop reached. Run pentest and record the result.`
+- `v0.61.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.61.6 - Hierarchical JPEG encoder admission
 
@@ -7250,7 +7424,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive classic-JPEG handoff for hierarchical JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive classic-JPEG handoff for hierarchical JPEG encoder admission. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -7267,7 +7441,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7288,11 +7462,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.61.6 implementation stop reached. Run pentest and record the result.`
+- `v0.61.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.62.0 - Complete declared T.81 conformance and security audit
 
@@ -7302,7 +7476,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 complete declared t.81 conformance and security audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -7320,7 +7494,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7340,11 +7514,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.62.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.62.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.63.0 - WebP RIFF framing and simple-file dispatch
 
@@ -7352,11 +7528,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for WebP RIFF framing and simple-file dispatch. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for WebP RIFF framing and simple-file dispatch. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete WebP RIFF framing and simple-file dispatch with bounded behavior, explicit claims, and pentest and release evidence.
+Complete WebP RIFF framing and simple-file dispatch with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7364,7 +7540,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7378,9 +7554,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.63.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.63.1 - WebP VP8X feature and chunk-order state machine
 
@@ -7388,11 +7564,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for WebP VP8X feature and chunk-order state machine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for WebP VP8X feature and chunk-order state machine. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete WebP VP8X feature and chunk-order state machine with bounded behavior, explicit claims, and pentest and release evidence.
+Complete WebP VP8X feature and chunk-order state machine with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7400,7 +7576,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7414,9 +7590,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.63.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.63.2 - WebP ICCP, EXIF, XMP, and unknown chunks
 
@@ -7424,11 +7600,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for WebP ICCP, EXIF, XMP, and unknown chunks. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for WebP ICCP, EXIF, XMP, and unknown chunks. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete WebP ICCP, EXIF, XMP, and unknown chunks with bounded behavior, explicit claims, and pentest and release evidence.
+Complete WebP ICCP, EXIF, XMP, and unknown chunks with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7436,7 +7612,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7450,9 +7626,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.63.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.63.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.64.0 - VP8 Boolean-decoder primitive
 
@@ -7460,11 +7636,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8 Boolean-decoder primitive. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8 Boolean-decoder primitive. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8 Boolean-decoder primitive with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8 Boolean-decoder primitive with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7472,7 +7648,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7486,9 +7662,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.64.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.64.1 - VP8 partition and frame-header parsing
 
@@ -7496,11 +7672,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8 partition and frame-header parsing. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8 partition and frame-header parsing. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8 partition and frame-header parsing with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8 partition and frame-header parsing with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7508,7 +7684,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7522,9 +7698,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.64.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.64.2 - VP8 probability-update and token state
 
@@ -7532,11 +7708,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8 probability-update and token state. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8 probability-update and token state. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8 probability-update and token state with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8 probability-update and token state with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7544,7 +7720,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7558,9 +7734,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.64.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.64.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.65.0 - VP8 prediction and coefficient reconstruction
 
@@ -7570,7 +7746,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 vp8 prediction and coefficient reconstruction. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -7588,7 +7764,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7608,11 +7784,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.65.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.65.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.65.1 - VP8 inverse transforms and reconstructed macroblocks
 
@@ -7622,7 +7800,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 vp8 inverse transforms and reconstructed macroblocks. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -7640,7 +7818,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7660,11 +7838,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.65.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.65.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.65.2 - VP8 loop filtering and complete still reconstruction
 
@@ -7674,7 +7854,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 vp8 loop filtering and complete still reconstruction. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -7693,7 +7873,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Expose native YCbCr independently from rendered RGB.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7713,11 +7893,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.65.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.65.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.66.0 - WebP ALPH decoding
 
@@ -7725,11 +7907,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for WebP ALPH decoding. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for WebP ALPH decoding. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete WebP ALPH decoding with bounded behavior, explicit claims, and pentest and release evidence.
+Complete WebP ALPH decoding with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7737,7 +7919,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7751,9 +7933,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.66.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.66.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.66.1 - VP8 native YCbCr and rendered RGB integration
 
@@ -7761,11 +7943,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8 native YCbCr and rendered RGB integration. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8 native YCbCr and rendered RGB integration. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8 native YCbCr and rendered RGB integration with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8 native YCbCr and rendered RGB integration with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7773,7 +7955,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7787,9 +7969,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.66.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.66.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.67.0 - VP8L prefix-code parsing and decoding
 
@@ -7797,11 +7979,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L prefix-code parsing and decoding. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L prefix-code parsing and decoding. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L prefix-code parsing and decoding with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L prefix-code parsing and decoding with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7809,7 +7991,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7823,9 +8005,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.67.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.67.1 - VP8L LZ77 distance and copy engine
 
@@ -7833,11 +8015,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L LZ77 distance and copy engine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L LZ77 distance and copy engine. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L LZ77 distance and copy engine with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L LZ77 distance and copy engine with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7845,7 +8027,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7859,9 +8041,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.67.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.67.2 - VP8L color-cache engine
 
@@ -7869,11 +8051,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L color-cache engine. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L color-cache engine. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L color-cache engine with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L color-cache engine with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7881,7 +8063,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7895,9 +8077,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.67.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.67.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.0 - VP8L transform declarations and meta-prefix images
 
@@ -7905,11 +8087,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L transform declarations and meta-prefix images. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L transform declarations and meta-prefix images. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L transform declarations and meta-prefix images with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L transform declarations and meta-prefix images with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7917,7 +8099,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7931,9 +8113,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.1 - VP8L predictor transform
 
@@ -7941,11 +8123,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L predictor transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L predictor transform. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L predictor transform with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L predictor transform with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7953,7 +8135,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -7967,9 +8149,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.2 - VP8L color transform
 
@@ -7977,11 +8159,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L color transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L color transform. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L color transform with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L color transform with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -7991,7 +8173,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
 - Map the normative VP8L color transform explicitly; it is distinct
   from the entropy color cache.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8005,9 +8187,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.3 - VP8L subtract-green transform
 
@@ -8015,11 +8197,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L subtract-green transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L subtract-green transform. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L subtract-green transform with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L subtract-green transform with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -8027,7 +8209,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8041,9 +8223,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.4 - VP8L color-indexing transform
 
@@ -8051,11 +8233,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L color-indexing transform. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L color-indexing transform. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L color-indexing transform with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L color-indexing transform with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -8063,7 +8245,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8077,9 +8259,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.68.5 - VP8L complete lossless reconstruction audit
 
@@ -8087,11 +8269,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive WebP handoff for VP8L complete lossless reconstruction audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive WebP handoff for VP8L complete lossless reconstruction audit. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete VP8L complete lossless reconstruction audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete VP8L complete lossless reconstruction audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -8099,7 +8281,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8113,9 +8295,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.68.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.68.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.69.0 - WebP animation decoding
 
@@ -8125,7 +8307,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 webp animation decoding. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -8144,7 +8326,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - WebP blend/disposal mapping reuses the shared v0.5.4 animation kernel.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8165,11 +8347,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.69.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.69.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.69.1 - VP8L deterministic encoder
 
@@ -8179,7 +8363,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 vp8l deterministic encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -8197,7 +8381,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8217,11 +8401,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.69.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.69.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.69.2 - VP8 deterministic encoder
 
@@ -8231,7 +8417,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 vp8 deterministic encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -8249,7 +8435,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8269,11 +8455,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.69.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.69.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.69.3 - Animated WebP encoder
 
@@ -8283,7 +8471,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 animated webp encoder. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -8301,7 +8489,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8321,11 +8509,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.69.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.69.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.69.4 - Complete WebP conformance and security audit
 
@@ -8335,7 +8525,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 complete webp conformance and security audit. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -8353,7 +8543,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8373,11 +8563,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.69.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.69.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.70.0 - Shared bounded mynd-ifd graph and typed-value engine
 
@@ -8385,7 +8577,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for shared bounded mynd-ifd graph and typed-value engine. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for shared bounded mynd-ifd graph and typed-value engine. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8402,7 +8594,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8423,11 +8615,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.70.0 implementation stop reached. Run pentest and record the result.`
+- `v0.70.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.70.1 - TIFF 6.0 tag schema and dependency validation
 
@@ -8435,7 +8627,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF 6.0 tag schema and dependency validation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF 6.0 tag schema and dependency validation. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8452,7 +8644,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8473,11 +8665,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.70.1 implementation stop reached. Run pentest and record the result.`
+- `v0.70.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.71.0 - TIFF baseline uncompressed strips
 
@@ -8485,7 +8677,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF baseline uncompressed strips. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF baseline uncompressed strips. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8502,7 +8694,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8523,11 +8715,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.71.0 implementation stop reached. Run pentest and record the result.`
+- `v0.71.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.71.1 - TIFF PackBits strip decoding
 
@@ -8535,7 +8727,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF PackBits strip decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF PackBits strip decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8552,7 +8744,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8573,11 +8765,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.71.1 implementation stop reached. Run pentest and record the result.`
+- `v0.71.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.72.0 - TIFF LZW decoding
 
@@ -8585,7 +8777,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF LZW decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF LZW decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8602,7 +8794,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8623,11 +8815,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.72.0 implementation stop reached. Run pentest and record the result.`
+- `v0.72.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.72.1 - TIFF Deflate decoding
 
@@ -8635,7 +8827,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF Deflate decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF Deflate decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8652,7 +8844,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8673,11 +8865,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.72.1 implementation stop reached. Run pentest and record the result.`
+- `v0.72.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.72.2 - TIFF horizontal Predictor 2
 
@@ -8685,7 +8877,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF horizontal Predictor 2. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF horizontal Predictor 2. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8702,7 +8894,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8723,11 +8915,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.72.2 implementation stop reached. Run pentest and record the result.`
+- `v0.72.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.72.3 - TIFF floating-point Predictor 3 profile
 
@@ -8735,7 +8927,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 profile. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8754,7 +8946,7 @@ Deliverables:
 - Treat Predictor 3 as a separately sourced Adobe extension, not an
   implicit TIFF 6.0 baseline claim; unsupported sample widths fail closed.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8775,11 +8967,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.72.3 implementation stop reached. Run pentest and record the result.`
+- `v0.72.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.73.0 - TIFF CCITT modified-Huffman RLE
 
@@ -8787,7 +8979,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT modified-Huffman RLE. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT modified-Huffman RLE. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8804,7 +8996,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8825,11 +9017,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.73.0 implementation stop reached. Run pentest and record the result.`
+- `v0.73.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.73.1 - TIFF CCITT Group 3 fax decoding
 
@@ -8837,7 +9029,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT Group 3 fax decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT Group 3 fax decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8854,7 +9046,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8875,11 +9067,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.73.1 implementation stop reached. Run pentest and record the result.`
+- `v0.73.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.73.2 - TIFF CCITT Group 4 fax decoding
 
@@ -8887,7 +9079,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT Group 4 fax decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF CCITT Group 4 fax decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8904,7 +9096,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8925,11 +9117,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.73.2 implementation stop reached. Run pentest and record the result.`
+- `v0.73.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.74.0 - TIFF tiled image layout
 
@@ -8937,7 +9129,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF tiled image layout. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF tiled image layout. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -8954,7 +9146,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -8975,11 +9167,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.74.0 implementation stop reached. Run pentest and record the result.`
+- `v0.74.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.74.1 - TIFF planar image layout
 
@@ -8987,7 +9179,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF planar image layout. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF planar image layout. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9004,7 +9196,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9025,11 +9217,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.74.1 implementation stop reached. Run pentest and record the result.`
+- `v0.74.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.74.2 - TIFF multipage and SubIFD traversal
 
@@ -9037,7 +9229,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF multipage and SubIFD traversal. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF multipage and SubIFD traversal. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9054,7 +9246,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9075,11 +9267,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.74.2 implementation stop reached. Run pentest and record the result.`
+- `v0.74.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.0 - TIFF YCbCr samples and tag dependencies
 
@@ -9089,7 +9281,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 tiff ycbcr samples and tag dependencies. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -9107,7 +9299,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9127,11 +9319,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.75.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.75.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.1 - TIFF CMYK and CIELab native samples
 
@@ -9141,7 +9335,7 @@ Context:
 
 This is the exclusive complex formats handoff for
 tiff cmyk and cielab native samples. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -9159,7 +9353,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9179,11 +9373,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.75.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.75.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.2 - TIFF alpha, ICC, and rendered-color integration
 
@@ -9191,7 +9387,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF alpha, ICC, and rendered-color integration. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF alpha, ICC, and rendered-color integration. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9208,7 +9404,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9229,11 +9425,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.75.2 implementation stop reached. Run pentest and record the result.`
+- `v0.75.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.3 - TIFF signed-integer and IEEE floating sample domains
 
@@ -9241,7 +9437,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF signed-integer and IEEE floating sample domains. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF signed-integer and IEEE floating sample domains. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9258,7 +9454,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9279,11 +9475,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.75.3 implementation stop reached. Run pentest and record the result.`
+- `v0.75.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.4 - TIFF Orientation presentation policy
 
@@ -9321,7 +9517,7 @@ Exit criteria:
   coordinate space.
 - Pentest covers the exact presentation surface; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.75.4 implementation stop reached. Run pentest and record the result.`
+- `v0.75.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.75.5 - TIFF calibrated color declarations
 
@@ -9360,7 +9556,7 @@ Exit criteria:
   no absent or contradictory declaration silently becomes sRGB.
 - Pentest covers the exact color surface; all critical/high findings are fixed
   and cleanly retested, and CI/CodeQL are green.
-- `v0.75.5 implementation stop reached. Run pentest and record the result.`
+- `v0.75.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.76.0 - Corrected JPEG-in-TIFF decoding
 
@@ -9368,7 +9564,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for corrected JPEG-in-TIFF decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for corrected JPEG-in-TIFF decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9385,7 +9581,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9406,11 +9602,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.76.0 implementation stop reached. Run pentest and record the result.`
+- `v0.76.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.76.1 - TIFF Exif IFD integration
 
@@ -9418,7 +9614,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF Exif IFD integration. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF Exif IFD integration. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9435,7 +9631,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9456,11 +9652,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.76.1 implementation stop reached. Run pentest and record the result.`
+- `v0.76.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.76.2 - TIFF admitted-extension profile freeze
 
@@ -9468,7 +9664,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF admitted-extension profile freeze. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive TIFF handoff for TIFF admitted-extension profile freeze. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -9485,7 +9681,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9506,11 +9702,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.76.2 implementation stop reached. Run pentest and record the result.`
+- `v0.76.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.0 - TIFF baseline uncompressed-strip encoder
 
@@ -9518,11 +9714,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF baseline uncompressed-strip encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF baseline uncompressed-strip encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF baseline uncompressed-strip encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF baseline uncompressed-strip encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9530,7 +9726,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9544,9 +9740,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.1 - TIFF PackBits encoder
 
@@ -9554,11 +9750,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF PackBits encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF PackBits encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF PackBits encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF PackBits encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9566,7 +9762,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9580,9 +9776,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.2 - TIFF LZW encoder
 
@@ -9590,11 +9786,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF LZW encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF LZW encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF LZW encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF LZW encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9602,7 +9798,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9616,9 +9812,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.3 - TIFF Deflate encoder
 
@@ -9626,11 +9822,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF Deflate encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF Deflate encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF Deflate encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF Deflate encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9638,7 +9834,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9652,9 +9848,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.4 - TIFF horizontal Predictor 2 encoder
 
@@ -9662,11 +9858,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF horizontal Predictor 2 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF horizontal Predictor 2 encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF horizontal Predictor 2 encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF horizontal Predictor 2 encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9674,7 +9870,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9688,9 +9884,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.5 - TIFF floating-point Predictor 3 encoder admission
 
@@ -9698,11 +9894,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 encoder admission. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF floating-point Predictor 3 encoder admission. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF floating-point Predictor 3 encoder admission with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF floating-point Predictor 3 encoder admission with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9710,7 +9906,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9724,9 +9920,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.6 - TIFF CCITT RLE encoder
 
@@ -9734,11 +9930,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT RLE encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF CCITT RLE encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF CCITT RLE encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF CCITT RLE encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9746,7 +9942,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9760,9 +9956,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.6 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.7 - TIFF CCITT Group 3 encoder
 
@@ -9770,11 +9966,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT Group 3 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF CCITT Group 3 encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF CCITT Group 3 encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF CCITT Group 3 encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9782,7 +9978,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9796,9 +9992,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.7 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.8 - TIFF CCITT Group 4 encoder
 
@@ -9806,11 +10002,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF CCITT Group 4 encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF CCITT Group 4 encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF CCITT Group 4 encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF CCITT Group 4 encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9818,7 +10014,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9832,9 +10028,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.8 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.9 - TIFF tiled-image encoder
 
@@ -9842,11 +10038,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF tiled-image encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF tiled-image encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF tiled-image encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF tiled-image encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9854,7 +10050,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9868,9 +10064,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.9 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.9 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.10 - TIFF planar-image encoder
 
@@ -9878,11 +10074,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF planar-image encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF planar-image encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF planar-image encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF planar-image encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9890,7 +10086,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9904,9 +10100,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.10 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.10 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.11 - TIFF multipage and SubIFD encoder
 
@@ -9914,11 +10110,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF multipage and SubIFD encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF multipage and SubIFD encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF multipage and SubIFD encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF multipage and SubIFD encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9926,7 +10122,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9940,9 +10136,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.11 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.11 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.12 - TIFF extended sample/color encoder
 
@@ -9950,11 +10146,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for TIFF extended sample/color encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for TIFF extended sample/color encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete TIFF extended sample/color encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete TIFF extended sample/color encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9962,7 +10158,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -9976,9 +10172,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.12 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.12 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.13 - Corrected JPEG-in-TIFF encoder
 
@@ -9986,11 +10182,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for Corrected JPEG-in-TIFF encoder. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for Corrected JPEG-in-TIFF encoder. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Corrected JPEG-in-TIFF encoder with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Corrected JPEG-in-TIFF encoder with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -9998,7 +10194,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10012,9 +10208,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.13 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.13 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.77.14 - Complete declared TIFF profile audit
 
@@ -10022,11 +10218,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive TIFF handoff for Complete declared TIFF profile audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive TIFF handoff for Complete declared TIFF profile audit. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Complete declared TIFF profile audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Complete declared TIFF profile audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -10034,7 +10230,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10048,9 +10244,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.77.14 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.77.14 implementation stop reached. Follow the release cadence and publication rules.`
 
 ## Phase: Color, metadata, processing, and facade
 
@@ -10066,7 +10262,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 cross-format native-sample and color-declaration integration. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -10085,7 +10281,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - This is not rendered-color conformance; it validates native samples and declarations before the remaining shared conversions.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10105,11 +10301,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.78.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.78.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.79.0 - Shared bounded TIFF/Exif IFD inspection
 
@@ -10119,7 +10317,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 shared bounded tiff/exif ifd inspection. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -10137,7 +10335,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10157,11 +10355,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.79.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.79.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.80.0 - Selected bounded Exif field interpretation
 
@@ -10169,7 +10369,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for selected bounded Exif field interpretation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for selected bounded Exif field interpretation. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10186,7 +10386,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10207,11 +10407,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.80.0 implementation stop reached. Run pentest and record the result.`
+- `v0.80.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.80.1 - Bounded Exif thumbnail extraction
 
@@ -10219,7 +10419,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for bounded Exif thumbnail extraction. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for bounded Exif thumbnail extraction. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10236,7 +10436,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10257,11 +10457,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.80.1 implementation stop reached. Run pentest and record the result.`
+- `v0.80.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.80.2 - Explicit Exif orientation policy
 
@@ -10269,7 +10469,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for explicit Exif orientation policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for explicit Exif orientation policy. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10286,7 +10486,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10307,11 +10507,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.80.2 implementation stop reached. Run pentest and record the result.`
+- `v0.80.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.80.3 - Exif 3.1 and Exif-for-XMP profile freeze
 
@@ -10337,7 +10537,7 @@ Deliverables:
 - Differentially test JPEG, TIFF, and raw Exif envelopes and publish the exact
   metadata profile used by later XMP policy.
 - Freeze limits, warnings, support tables, sources, release notes, SBOM, and
-  exact-version pentest scope.
+  cadence-assigned pentest scope.
 
 Verification:
 
@@ -10351,7 +10551,7 @@ Exit criteria:
   Unsupported.
 - Pentest covers the exact profile; all critical/high findings are fixed and
   cleanly retested, and CI/CodeQL are green.
-- `v0.80.3 implementation stop reached. Run pentest and record the result.`
+- `v0.80.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.81.0 - XMP packet framing and bounded raw transport
 
@@ -10382,7 +10582,7 @@ Deliverables:
 - No XML parser, resolver, filesystem, network, schema, or namespace behavior
   is reachable in this release.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10404,11 +10604,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.81.0 implementation stop reached. Run pentest and record the result.`
+- `v0.81.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.81.1 - Bounded XML 1.0 and Namespaces profile for XMP
 
@@ -10448,7 +10648,7 @@ Exit criteria:
   claim is forbidden.
 - Pentest covers the exact parser state machine; all critical/high findings are
   fixed and cleanly retested, and CI/CodeQL are green.
-- `v0.81.1 implementation stop reached. Run pentest and record the result.`
+- `v0.81.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.81.2 - Bounded RDF/XML and XMP data-model inspection
 
@@ -10489,7 +10689,7 @@ Exit criteria:
   RDF store or validating XML processor.
 - Pentest covers the exact graph surface; all critical/high findings are fixed
   and cleanly retested, and CI/CodeQL are green.
-- `v0.81.2 implementation stop reached. Run pentest and record the result.`
+- `v0.81.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.81.3 - XMP and legacy-metadata conflict/rewrite policy
 
@@ -10497,7 +10697,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for XMP and legacy-metadata conflict/rewrite policy. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for XMP and legacy-metadata conflict/rewrite policy. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10514,7 +10714,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10535,11 +10735,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.81.3 implementation stop reached. Run pentest and record the result.`
+- `v0.81.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.81.4 - Transformation-aware metadata effect planning
 
@@ -10547,7 +10747,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for transformation-aware metadata effect planning. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for transformation-aware metadata effect planning. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10564,7 +10764,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10585,11 +10785,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.81.4 implementation stop reached. Run pentest and record the result.`
+- `v0.81.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.82.0 - YCbCr matrices, ranges, subsampling, and chroma siting
 
@@ -10599,7 +10799,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 ycbcr matrices, ranges, subsampling, and chroma siting. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -10617,7 +10817,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10637,11 +10837,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.82.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.82.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.83.0 - Gray, CMYK, and YCCK conversion
 
@@ -10649,7 +10851,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for gray, CMYK, and YCCK conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for gray, CMYK, and YCCK conversion. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10666,7 +10868,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10687,11 +10889,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.83.0 implementation stop reached. Run pentest and record the result.`
+- `v0.83.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.83.1 - CIELab and declared wide-gamut conversion
 
@@ -10699,7 +10901,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for CIELab and declared wide-gamut conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for CIELab and declared wide-gamut conversion. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10716,7 +10918,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10737,11 +10939,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.83.1 implementation stop reached. Run pentest and record the result.`
+- `v0.83.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.84.0 - Straight/premultiplied alpha conversion
 
@@ -10751,7 +10953,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 straight/premultiplied alpha conversion. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -10769,7 +10971,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10789,11 +10991,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.84.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.84.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.85.0 - Explicit color-conversion planning
 
@@ -10801,7 +11005,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for explicit color-conversion planning. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for explicit color-conversion planning. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10818,7 +11022,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10839,11 +11043,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.85.0 implementation stop reached. Run pentest and record the result.`
+- `v0.85.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.85.1 - Sample-depth conversion
 
@@ -10851,7 +11055,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for sample-depth conversion. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for sample-depth conversion. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10868,7 +11072,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10889,11 +11093,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.85.1 implementation stop reached. Run pentest and record the result.`
+- `v0.85.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.85.2 - Deterministic advanced dithering
 
@@ -10901,7 +11105,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for deterministic advanced dithering. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for deterministic advanced dithering. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10918,7 +11122,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10939,11 +11143,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.85.2 implementation stop reached. Run pentest and record the result.`
+- `v0.85.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.85.3 - Final cross-format rendered-color conformance audit
 
@@ -10951,7 +11155,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for final cross-format rendered-color conformance audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for final cross-format rendered-color conformance audit. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -10968,7 +11172,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -10989,11 +11193,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.85.3 implementation stop reached. Run pentest and record the result.`
+- `v0.85.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.86.0 - Crop, flip, rotate, transpose
 
@@ -11003,7 +11207,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 crop, flip, rotate, transpose. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11021,7 +11225,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11041,11 +11245,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.86.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.86.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.87.0 - Checked affine geometry and border modes
 
@@ -11055,7 +11261,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 checked affine geometry and border modes. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11073,7 +11279,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11093,11 +11299,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.87.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.87.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.88.0 - Nearest and bilinear resampling
 
@@ -11107,7 +11315,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 nearest and bilinear resampling. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11125,7 +11333,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11145,11 +11353,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.88.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.88.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.89.0 - Bicubic resampling
 
@@ -11159,7 +11369,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 bicubic resampling. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11177,7 +11387,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11197,11 +11407,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.89.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.89.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.90.0 - Lanczos3 resampling
 
@@ -11211,7 +11423,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 lanczos3 resampling. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11229,7 +11441,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11249,11 +11461,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.90.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.90.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.91.0 - Remaining Porter-Duff compositing operators
 
@@ -11263,7 +11477,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 remaining porter-duff compositing operators. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11282,7 +11496,7 @@ Deliverables:
   determinism, lifecycle, and resource-accounting fixtures.
 - Source and source-over remain the audited shared animation primitive; this release adds the other Porter-Duff operators.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11302,11 +11516,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.91.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.91.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.0 - Declared artistic blend modes
 
@@ -11314,11 +11530,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Declared artistic blend modes. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Declared artistic blend modes. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Declared artistic blend modes with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Declared artistic blend modes with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11326,7 +11542,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11340,9 +11556,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.1 - Clipped pixel, span, and fill primitives
 
@@ -11350,11 +11566,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Clipped pixel, span, and fill primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Clipped pixel, span, and fill primitives. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Clipped pixel, span, and fill primitives with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Clipped pixel, span, and fill primitives with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11362,7 +11578,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11376,9 +11592,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.2 - Rectangle and overlap-safe blit primitives
 
@@ -11386,11 +11602,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Rectangle and overlap-safe blit primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Rectangle and overlap-safe blit primitives. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Rectangle and overlap-safe blit primitives with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Rectangle and overlap-safe blit primitives with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11398,7 +11614,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11412,9 +11628,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.3 - Deterministic integer line primitives
 
@@ -11422,11 +11638,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer line primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer line primitives. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Deterministic integer line primitives with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Deterministic integer line primitives with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11434,7 +11650,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11448,9 +11664,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.4 - Deterministic integer circle and ellipse primitives
 
@@ -11458,11 +11674,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer circle and ellipse primitives. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Deterministic integer circle and ellipse primitives. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Deterministic integer circle and ellipse primitives with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Deterministic integer circle and ellipse primitives with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11470,7 +11686,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11484,9 +11700,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.92.5 - Bounded raster-drawing contract and security audit
 
@@ -11494,11 +11710,11 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for Bounded raster-drawing contract and security audit. Its independently reviewable delta must be implemented, tested, reviewed, and pentested before later capability is admitted.
+This is the exclusive color, metadata, processing, and facade handoff for Bounded raster-drawing contract and security audit. Its independently reviewable delta must be implemented, tested, and reviewed before later capability is admitted; pentesting follows the release cadence table.
 
 Goal:
 
-Complete Bounded raster-drawing contract and security audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Bounded raster-drawing contract and security audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -11508,7 +11724,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
 - Freeze 1.0 drawing to the named raster primitives; fonts, text
   shaping, vector paths, strokes, and antialiasing remain unclaimed.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11522,9 +11738,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.92.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.92.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.93.0 - Optional safe SIMD or audited external backends
 
@@ -11534,7 +11750,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 optional safe simd or audited external backends. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11555,7 +11771,7 @@ Deliverables:
   Rust or an explicitly audited optional external backend with no transitive
   activation; disabling it preserves the scalar implementation.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11575,11 +11791,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.93.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.93.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.0 - Streaming and tiled processing graph
 
@@ -11589,7 +11807,7 @@ Context:
 
 This is the exclusive color, metadata, processing, and facade handoff for
 streaming and tiled processing graph. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -11610,7 +11828,7 @@ Deliverables:
   bicubic, affine borders, chroma planes, and premultiplied-alpha filtering
   across whole-image, scanline-band, and independently scheduled tile runs.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11630,11 +11848,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.94.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.94.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.1 - Metadata- and header-only decoding
 
@@ -11642,7 +11862,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for metadata- and header-only decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for metadata- and header-only decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11659,7 +11879,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11680,11 +11900,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.1 implementation stop reached. Run pentest and record the result.`
+- `v0.94.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.2 - Region-selective decoding
 
@@ -11692,7 +11912,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for region-selective decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for region-selective decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11709,7 +11929,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11730,11 +11950,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.2 implementation stop reached. Run pentest and record the result.`
+- `v0.94.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.3 - Frame-range selective decoding
 
@@ -11742,7 +11962,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for frame-range selective decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for frame-range selective decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11759,7 +11979,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11780,11 +12000,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.3 implementation stop reached. Run pentest and record the result.`
+- `v0.94.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.4 - Reduced-resolution and progressive-preview decoding
 
@@ -11792,7 +12012,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for reduced-resolution and progressive-preview decoding. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for reduced-resolution and progressive-preview decoding. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11809,7 +12029,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11830,11 +12050,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.4 implementation stop reached. Run pentest and record the result.`
+- `v0.94.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.5 - Processing and selective-decoding contract freeze
 
@@ -11842,7 +12062,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for processing and selective-decoding contract freeze. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for processing and selective-decoding contract freeze. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11859,7 +12079,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11880,11 +12100,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.5 implementation stop reached. Run pentest and record the result.`
+- `v0.94.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.6 - Unified borrowed inspection and decode_into facade
 
@@ -11892,7 +12112,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for unified borrowed inspection and decode_into facade. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for unified borrowed inspection and decode_into facade. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11909,7 +12129,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11930,11 +12150,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.6 implementation stop reached. Run pentest and record the result.`
+- `v0.94.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.7 - Unified encoder and transcoding facade
 
@@ -11942,7 +12162,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for unified encoder and transcoding facade. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for unified encoder and transcoding facade. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -11959,7 +12179,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -11980,11 +12200,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.7 implementation stop reached. Run pentest and record the result.`
+- `v0.94.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.94.8 - Fallible owned APIs and facade-candidate integration audit
 
@@ -11992,7 +12212,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive color, metadata, processing, and facade handoff for fallible owned APIs and facade-candidate integration audit. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive color, metadata, processing, and facade handoff for fallible owned APIs and facade-candidate integration audit. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12011,7 +12231,7 @@ Deliverables:
 - Establish the audited candidate baseline exercised by synchronous codecs;
   adapter-driven corrections remain open only through v0.98.8.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12032,11 +12252,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.94.8 implementation stop reached. Run pentest and record the result.`
+- `v0.94.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ## Phase: Integration and assurance
 
@@ -12054,7 +12274,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 runtime-neutral async source/sink adapters. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12072,7 +12292,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12092,11 +12312,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.95.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.95.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.95.1 - WASM/browser streaming adapters
 
@@ -12106,7 +12328,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 wasm/browser streaming adapters. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12124,7 +12346,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12144,11 +12366,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.95.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.95.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.96.0 - Caller-provided parallel scheduling interface
 
@@ -12158,7 +12382,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 caller-provided parallel scheduling interface. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12176,7 +12400,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12196,11 +12420,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.96.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.96.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.96.1 - Optional Rayon/service adapter
 
@@ -12210,7 +12436,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 optional rayon/service adapter. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12228,7 +12454,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12248,11 +12474,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.96.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.96.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.97.0 - GPU-compatible descriptors and upload-layout hooks
 
@@ -12262,7 +12490,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 gpu-compatible descriptors and upload-layout hooks. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12280,7 +12508,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12300,11 +12528,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.97.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.97.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.97.1 - Optional backend adapters
 
@@ -12314,7 +12544,7 @@ Context:
 
 This is the exclusive integration and assurance handoff for
 optional backend adapters. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -12332,7 +12562,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12352,11 +12582,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v0.97.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v0.97.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.0 - mynd-cli inspect command
 
@@ -12364,7 +12596,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli inspect command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli inspect command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12381,7 +12613,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12402,11 +12634,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.0 implementation stop reached. Run pentest and record the result.`
+- `v0.98.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.1 - mynd-cli validate command
 
@@ -12414,7 +12646,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli validate command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli validate command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12431,7 +12663,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12452,11 +12684,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.1 implementation stop reached. Run pentest and record the result.`
+- `v0.98.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.2 - mynd-cli decode command
 
@@ -12464,7 +12696,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli decode command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli decode command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12481,7 +12713,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12502,11 +12734,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.2 implementation stop reached. Run pentest and record the result.`
+- `v0.98.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.3 - mynd-cli encode command
 
@@ -12514,7 +12746,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli encode command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli encode command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12531,7 +12763,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12552,11 +12784,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.3 implementation stop reached. Run pentest and record the result.`
+- `v0.98.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.4 - mynd-cli convert command
 
@@ -12564,7 +12796,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli convert command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli convert command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12581,7 +12813,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12602,11 +12834,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.4 implementation stop reached. Run pentest and record the result.`
+- `v0.98.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.5 - mynd-cli frame command
 
@@ -12614,7 +12846,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli frame command. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli frame command. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12631,7 +12863,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12652,11 +12884,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.5 implementation stop reached. Run pentest and record the result.`
+- `v0.98.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.6 - mynd-cli bounded batch profile
 
@@ -12664,7 +12896,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli bounded batch profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli bounded batch profile. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12681,7 +12913,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12702,11 +12934,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.6 implementation stop reached. Run pentest and record the result.`
+- `v0.98.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.7 - mynd-cli bounded service profile
 
@@ -12714,7 +12946,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for mynd-cli bounded service profile. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for mynd-cli bounded service profile. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12731,7 +12963,7 @@ Deliverables:
 - Add positive, boundary, malformed, truncation, mutation, regression,
   determinism, lifecycle, and resource-accounting fixtures.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12752,11 +12984,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.7 implementation stop reached. Run pentest and record the result.`
+- `v0.98.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.98.8 - Cross-adapter facade reconciliation
 
@@ -12764,7 +12996,7 @@ Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for cross-adapter facade reconciliation. Its API and attack-surface delta must be implemented, tested, reviewed, and pentested independently. Later capabilities remain unavailable or explicitly fail closed.
+This is the exclusive integration and assurance handoff for cross-adapter facade reconciliation. Its API and attack-surface delta must be implemented, tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain unavailable or explicitly fail closed.
 
 Goal:
 
@@ -12785,7 +13017,7 @@ Deliverables:
 - Record the exact source identity, dependencies, packages, claims, and
   test manifests that every v0.99.x campaign must use.
 - Update changelog, notes, crate versions, packages, SBOM, and the
-  exact-version pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12806,11 +13038,11 @@ Exit criteria:
   limit-exceeded behavior is explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the
   exact candidate commit.
-- Pentest covers the new surface and inherited invariants; all
-  critical/high findings are fixed and cleanly retested.
+- At a pentest checkpoint, the cumulative review covers the new surface and
+  inherited invariants; all critical/high findings are fixed and cleanly retested.
 - CI and CodeQL default setup are green, the permanent report records
   PASS, and the version release gate accepts the final release candidate.
-- `v0.98.8 implementation stop reached. Run pentest and record the result.`
+- `v0.98.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.0 - cargo-fuzz harness and corpus integration
 
@@ -12822,7 +13054,7 @@ This is the exclusive integration and assurance handoff for cargo-fuzz harness a
 
 Goal:
 
-Complete cargo-fuzz harness and corpus integration with bounded behavior, explicit claims, and pentest and release evidence.
+Complete cargo-fuzz harness and corpus integration with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -12830,7 +13062,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12844,9 +13076,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.1 - Long-running fuzz and truncation campaign
 
@@ -12858,7 +13090,7 @@ This is the exclusive integration and assurance handoff for Long-running fuzz an
 
 Goal:
 
-Complete Long-running fuzz and truncation campaign with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Long-running fuzz and truncation campaign with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -12866,7 +13098,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12880,9 +13112,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.2 - Kani checked-arithmetic and geometry proofs
 
@@ -12894,7 +13126,7 @@ This is the exclusive integration and assurance handoff for Kani checked-arithme
 
 Goal:
 
-Complete Kani checked-arithmetic and geometry proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani checked-arithmetic and geometry proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -12902,7 +13134,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12916,9 +13148,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.2 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.2 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.3 - Kani view and buffer-state proofs
 
@@ -12930,7 +13162,7 @@ This is the exclusive integration and assurance handoff for Kani view and buffer
 
 Goal:
 
-Complete Kani view and buffer-state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani view and buffer-state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -12938,7 +13170,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12952,9 +13184,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.3 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.3 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.4 - Kani byte- and bit-I/O proofs
 
@@ -12966,7 +13198,7 @@ This is the exclusive integration and assurance handoff for Kani byte- and bit-I
 
 Goal:
 
-Complete Kani byte- and bit-I/O proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani byte- and bit-I/O proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -12974,7 +13206,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -12988,9 +13220,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.4 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.4 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.5 - Kani Deflate and zlib state proofs
 
@@ -13002,7 +13234,7 @@ This is the exclusive integration and assurance handoff for Kani Deflate and zli
 
 Goal:
 
-Complete Kani Deflate and zlib state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani Deflate and zlib state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13010,7 +13242,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13024,9 +13256,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.5 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.5 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.6 - Kani GIF and TIFF LZW state proofs
 
@@ -13038,7 +13270,7 @@ This is the exclusive integration and assurance handoff for Kani GIF and TIFF LZ
 
 Goal:
 
-Complete Kani GIF and TIFF LZW state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani GIF and TIFF LZW state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13046,7 +13278,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13060,9 +13292,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.6 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.6 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.7 - Kani JPEG entropy state proofs
 
@@ -13074,7 +13306,7 @@ This is the exclusive integration and assurance handoff for Kani JPEG entropy st
 
 Goal:
 
-Complete Kani JPEG entropy state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani JPEG entropy state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13082,7 +13314,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13096,9 +13328,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.7 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.7 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.8 - Kani WebP entropy state proofs
 
@@ -13110,7 +13342,7 @@ This is the exclusive integration and assurance handoff for Kani WebP entropy st
 
 Goal:
 
-Complete Kani WebP entropy state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani WebP entropy state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13118,7 +13350,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13132,9 +13364,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.8 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.8 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.9 - Kani TIFF fax and IFD state proofs
 
@@ -13146,7 +13378,7 @@ This is the exclusive integration and assurance handoff for Kani TIFF fax and IF
 
 Goal:
 
-Complete Kani TIFF fax and IFD state proofs with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Kani TIFF fax and IFD state proofs with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13154,7 +13386,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13168,9 +13400,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.9 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.9 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.10 - Miri audit
 
@@ -13182,7 +13414,7 @@ This is the exclusive integration and assurance handoff for Miri audit. It runs 
 
 Goal:
 
-Complete Miri audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Miri audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13190,7 +13422,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13204,9 +13436,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.10 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.10 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.11 - Sanitizer audit
 
@@ -13218,7 +13450,7 @@ This is the exclusive integration and assurance handoff for Sanitizer audit. It 
 
 Goal:
 
-Complete Sanitizer audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Sanitizer audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13226,7 +13458,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13240,9 +13472,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.11 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.11 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.12 - Supported-Rust, target, and feature audit
 
@@ -13254,7 +13486,7 @@ This is the exclusive integration and assurance handoff for Supported-Rust, targ
 
 Goal:
 
-Complete Supported-Rust, target, and feature audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Supported-Rust, target, and feature audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13262,7 +13494,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13276,9 +13508,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.12 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.12 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.13 - Stack and code-size audit
 
@@ -13290,7 +13522,7 @@ This is the exclusive integration and assurance handoff for Stack and code-size 
 
 Goal:
 
-Complete Stack and code-size audit with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Stack and code-size audit with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13298,7 +13530,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13312,9 +13544,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.13 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.13 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.14 - Official conformance and differential freeze
 
@@ -13326,7 +13558,7 @@ This is the exclusive integration and assurance handoff for Official conformance
 
 Goal:
 
-Complete Official conformance and differential freeze with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Official conformance and differential freeze with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13334,7 +13566,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13348,9 +13580,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.14 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.14 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.15 - Cross-format color conformance freeze
 
@@ -13362,7 +13594,7 @@ This is the exclusive integration and assurance handoff for Cross-format color c
 
 Goal:
 
-Complete Cross-format color conformance freeze with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Cross-format color conformance freeze with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13370,7 +13602,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13384,9 +13616,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.15 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.15 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.16 - Performance and denial-of-service freeze
 
@@ -13398,7 +13630,7 @@ This is the exclusive integration and assurance handoff for Performance and deni
 
 Goal:
 
-Complete Performance and denial-of-service freeze with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Performance and denial-of-service freeze with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13406,7 +13638,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13420,9 +13652,9 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.16 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.16 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v0.99.17 - Reproducible package, SBOM, and provenance freeze
 
@@ -13434,7 +13666,7 @@ This is the exclusive integration and assurance handoff for Reproducible package
 
 Goal:
 
-Complete Reproducible package, SBOM, and provenance freeze with bounded behavior, explicit claims, and pentest and release evidence.
+Complete Reproducible package, SBOM, and provenance freeze with bounded behavior, explicit claims, and cadence-appropriate release evidence.
 
 Deliverables:
 
@@ -13442,7 +13674,7 @@ Deliverables:
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13456,35 +13688,42 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.17 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
+- CI and CodeQL default are green; at a publication checkpoint the permanent report records PASS.
+- `v0.99.17 implementation stop reached. Follow the release cadence and publication rules.`
 
-### v0.99.18 - External pentest and final public API freeze
+### v0.99.18 - Cumulative pentest handoff and final public API freeze
 
 Status: Planned.
 
 Context:
 
-This is the exclusive integration and assurance handoff for External pentest and final public API freeze. It runs against the exact v0.98.8 input; product implementation and public API changes are prohibited. A defect returns to v0.98.8.
+This is the exclusive integration and assurance handoff for the cumulative
+pentest handoff and final public API freeze. It runs against the exact v0.98.8
+input; product implementation and public API changes are prohibited. A defect
+returns to v0.98.8.
 
 Goal:
 
-Complete External pentest and final public API freeze with bounded behavior, explicit claims, and pentest and release evidence.
+Freeze the public API and assemble the complete evidence and scope required for
+the cumulative v1.0.0-rc.1 pentest without beginning that pentest here.
 
 Deliverables:
 
-- Complete only the release-scoped capability: External pentest and final public API freeze.
+- Complete only the release-scoped capability: Cumulative pentest handoff and
+  final public API freeze.
 - Define invariants, limits, states, errors, commits, compatibility, and unsupported cases.
 - Update SPEC_MAPPING, source/support/architecture records, crate boundaries, and security documentation.
 - Add positive, boundary, malformed, truncation, mutation, regression, determinism, lifecycle, and resource tests.
 - This is the verification-only final public API freeze; any product
   or API defect returns to v0.98.8 and invalidates affected evidence.
-- Update release notes, crate versions, packages, SBOM, and pentest scaffold.
+- Update release notes, crate versions, packages, SBOM, and the cumulative
+  pentest handoff bundle.
 
 Verification:
 
-- Required release evidence: unchanged v0.98.8 input, complete evidence, no critical/high, and clean retest.
+- Required release evidence: unchanged v0.98.8 input, complete evidence bundle,
+  frozen scope, and no unresolved implementation defect.
 - Audit arithmetic, offsets, transitions, budgets, scratch, output, metadata, and work.
 - Run applicable unit, property, truncation, round-trip, differential, conformance, fuzz, proof, Miri, sanitizer, stack, size, performance, DoS, Rust, feature, and target gates.
 - Run repository, supply-chain, latest-crate/tool, package, and SBOM gates.
@@ -13494,9 +13733,10 @@ Exit criteria:
 - The capability is complete, documented, and the only new capability.
 - Supported, unsupported, and limit-exceeded claims link to passing evidence.
 - Packages, SBOM, mappings, fixtures, and notes match the exact candidate commit.
-- Pentest covers the delta and inherited invariants; critical/high findings are fixed and cleanly retested.
-- CI and CodeQL default are green; the permanent report records PASS.
-- `v0.99.18 implementation stop reached. Run pentest and record the result.`
+- The v1.0.0-rc.1 pentest scope covers every delta after v0.95.0 and references
+  the complete evidence bundle; this handoff makes no pentest PASS claim.
+- CI and CodeQL default are green; v1.0.0-rc.1 owns the permanent report.
+- `v0.99.18 implementation stop reached. Follow the release cadence and publication rules.`
 
 ## Phase: Production admission
 
@@ -13510,7 +13750,7 @@ Context:
 
 This is the exclusive production admission handoff for
 exact versioned production candidate. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -13532,7 +13772,7 @@ Deliverables:
   including its official source record, exact-length tests, conformance
   evidence, limitations, and security review.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13554,11 +13794,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v1.0.0-rc.1 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v1.0.0-rc.1 implementation stop reached. Follow the release cadence and publication rules.`
 
 ### v1.0.0 - Byte-for-byte promotion of the approved candidate
 
@@ -13568,7 +13810,7 @@ Context:
 
 This is the exclusive production admission handoff for
 byte-for-byte promotion of the approved candidate. Its API and attack-surface delta must be implemented,
-tested, reviewed, and pentested independently. Later capabilities remain
+tested, and reviewed independently; pentesting follows the release cadence table. Later capabilities remain
 unavailable or explicitly fail closed.
 
 Goal:
@@ -13589,7 +13831,7 @@ Deliverables:
   audited farbfeld decode/encode capability accepted by v1.0.0-rc.1; promotion
   cannot add, remove, or alter its claims.
 - Update changelog, notes, crate versions, packages, SBOM, and exact-version
-  pentest-report scaffold.
+  cadence-appropriate release-evidence record.
 
 Verification:
 
@@ -13609,11 +13851,13 @@ Exit criteria:
   numeric tolerance, metadata effects, and compatibility are explicit.
 - Packages, dependencies, SBOM, mappings, fixtures, and notes match the exact
   candidate commit.
-- Pentest covers the new surface and inherited invariants; all critical/high
-  findings are fixed and cleanly retested.
-- CI and CodeQL default setup are green, the permanent report records PASS, and
-  the version release gate accepts the final release candidate.
-- `v1.0.0 implementation stop reached. Run pentest and record the result.`
+- At a pentest checkpoint, the cumulative review covers every delta since
+  the prior published checkpoint; all critical/high findings are fixed and
+  cleanly retested.
+- CI and CodeQL default setup are green for every GitHub tag; at a publication
+  checkpoint the permanent report records PASS and the strict publication gate
+  accepts the candidate.
+- `v1.0.0 implementation stop reached. Follow the release cadence and publication rules.`
 
 ## Post-1.0 admission
 
