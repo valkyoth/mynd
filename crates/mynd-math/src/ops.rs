@@ -76,6 +76,9 @@ pub const fn checked_align_up_u64(value: u64, alignment: u64) -> MathResult<u64>
     }
     let remainder = match value.checked_rem(alignment) {
         Some(remainder) => remainder,
+        // Structurally unreachable after the zero check. Retain a fail-closed
+        // arm because checked arithmetic is mandatory under the workspace
+        // arithmetic-side-effect policy.
         None => return Err(MathError::ZeroAlignment),
     };
     if remainder == 0 {
@@ -107,6 +110,9 @@ pub const fn checked_align_up_usize(value: usize, alignment: usize) -> MathResul
     }
     let remainder = match value.checked_rem(alignment) {
         Some(remainder) => remainder,
+        // Structurally unreachable after the zero check. Retain a fail-closed
+        // arm because checked arithmetic is mandatory under the workspace
+        // arithmetic-side-effect policy.
         None => return Err(MathError::ZeroAlignment),
     };
     if remainder == 0 {
