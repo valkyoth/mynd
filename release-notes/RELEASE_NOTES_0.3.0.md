@@ -1,6 +1,6 @@
 # mynd 0.3.0 Release Notes
 
-Status: release candidate; pentest not run.
+Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
 
 This release introduces Mynd's first public implementation surface: checked,
 constant-work integer arithmetic for values derived from hostile image input.
@@ -48,15 +48,16 @@ requirement-to-evidence mapping are recorded in `docs/math-primitives.md`.
   verification job.
 - Runtime dependency policy remains first-party only; `mynd-math` itself has no
   dependency or feature-enabled code path.
-- Package inspection must confirm the external logo is not included and both
-  licenses are present in `mynd-math` and `mynd` archives.
+- Package inspection confirmed that the external logo is not included, both
+  licenses and the intended tests are present, and both archives build and
+  test independently.
 
 ## Release requirements
 
 - repository, Kani, supported-Rust, platform, latest-tool, dependency,
   RustSec, package, documentation, and SBOM gates pass;
-- `security/pentest/v0.3.0.md` reaches `Status: PASS` after the exact-version
-  pentest and remediation loop;
+- the exact-version pentest and remediation loop is complete with
+  `security/pentest/v0.3.0.md` at `Status: PASS`;
 - the final committed candidate passes GitHub CI, the Kani job, and CodeQL
   before tagging;
 - publish `mynd-math` 0.1.0 before `mynd` 0.3.0; do not republish

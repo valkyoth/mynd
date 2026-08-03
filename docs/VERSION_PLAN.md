@@ -1035,7 +1035,7 @@ Exit criteria:
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
-Status: Implementation complete; awaiting exact-version pentest.
+Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
 
 Context:
 

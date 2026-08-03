@@ -6,7 +6,7 @@ a time.
 
 ## [Unreleased]
 
-## [0.3.0] - Unreleased
+## [0.3.0] - 2026-08-03
 
 ### Added
 
@@ -36,6 +36,8 @@ a time.
   are distinct failures.
 - Added exact-version v0.3.0 pentest scope for the new public arithmetic and
   crate-publication surface.
+- Completed the v0.3.0 pentest and remediation loop with a green retest, no
+  exploitable finding, and both informational observations documented.
 
 ## [0.2.1] - 2026-07-27
 
