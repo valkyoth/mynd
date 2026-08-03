@@ -1,7 +1,13 @@
-name: Release Metadata Check
+name: Release Cadence Metadata Check
 
 on:
   workflow_dispatch:
+    inputs:
+      final:
+        description: Require final tag-readiness state
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -17,4 +23,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: Validate release metadata
+        env:
+          MYND_RELEASE_FINAL: ${{ inputs.final && '1' || '0' }}
         run: scripts/validate-release-metadata.sh

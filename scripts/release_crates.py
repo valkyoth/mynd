@@ -11,17 +11,11 @@ import sys
 import time
 from pathlib import Path
 
-try:
-    import tomllib
-except ModuleNotFoundError:  # pragma: no cover - release host guard.
-    print("Python 3.11+ is required because this script uses tomllib.", file=sys.stderr)
-    raise
+from release_policy import parse_version, validated_plan
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PLAN = ROOT / "release-crates.toml"
-CHANGE_KINDS = ("code", "bugfix", "dependency", "metadata", "unchanged")
-
 PUBLISH_ORDER = (
     "mynd-math",
     "mynd-core",
@@ -63,24 +57,8 @@ def try_capture(command: list[str]) -> str | None:
     return result.stdout.strip()
 
 
-def load_toml(path: Path) -> dict:
-    with path.open("rb") as handle:
-        return tomllib.load(handle)
-
-
-def parse_version(version: str) -> tuple[int, int, int]:
-    parts = version.split(".")
-    if len(parts) != 3:
-        raise RuntimeError(f"version must be MAJOR.MINOR.PATCH: {version}")
-    try:
-        major, minor, patch = (int(part) for part in parts)
-    except ValueError as exc:
-        raise RuntimeError(f"version must be numeric: {version}") from exc
-    return (major, minor, patch)
-
-
 def release_version(plan_path: Path = DEFAULT_PLAN) -> str:
-    plan = load_toml(plan_path)
+    plan = validated_plan(plan_path)
     return plan["release"]["version"]
 
 
@@ -99,96 +77,20 @@ def workspace_packages(metadata: dict) -> dict[str, dict]:
 
 
 def release_plan(plan_path: Path) -> dict:
-    plan = load_toml(plan_path)
-    release = plan.get("release", {})
-    crates = plan.get("crates", {})
-    version = release.get("version")
-    if not isinstance(version, str):
-        raise RuntimeError("release-crates.toml is missing [release].version")
+    plan = validated_plan(plan_path)
+    release = plan["release"]
+    crates = plan["crates"]
     if set(crates) != set(PUBLISH_ORDER):
         raise RuntimeError(
             "release-crates.toml crates are not in sync with PUBLISH_ORDER: "
             f"expected {tuple(sorted(PUBLISH_ORDER))}, actual {tuple(sorted(crates))}"
         )
-    parse_version(version)
-    for package_name, entry in crates.items():
-        validate_plan_entry(package_name, entry, version)
-    return {"version": version, "crates": crates}
-
-
-def validate_plan_entry(package_name: str, entry: dict, release: str) -> None:
-    previous = entry.get("previous_version")
-    version = entry.get("version")
-    change = entry.get("change")
-    publish = entry.get("publish")
-    reason = entry.get("reason")
-    if not all(isinstance(value, str) for value in (previous, version, change, reason)):
-        raise RuntimeError(f"{package_name} has incomplete release plan metadata")
-    if change not in CHANGE_KINDS:
-        raise RuntimeError(f"{package_name} has invalid change kind {change!r}")
-    if not isinstance(publish, bool):
-        raise RuntimeError(f"{package_name} publish must be true or false")
-
-    previous_version = parse_version(previous)
-    planned_version = parse_version(version)
-    release_parts = parse_version(release)
-
-    if change == "code":
-        if package_name == "mynd":
-            code_version_is_valid = planned_version == release_parts
-            code_error = f"{package_name} has code changes, so version must be {release}"
-        else:
-            expected = (previous_version[0], previous_version[1] + 1, 0)
-            code_version_is_valid = planned_version == expected
-            code_error = (
-                f"{package_name} has code changes, so independent support-crate "
-                f"version must be {expected[0]}.{expected[1]}.{expected[2]}"
-            )
-        if not code_version_is_valid:
-            raise RuntimeError(
-                code_error
-            )
-        if not publish:
-            raise RuntimeError(f"{package_name} has code changes but publish is false")
-    elif change == "bugfix":
-        if package_name == "mynd":
-            raise RuntimeError("mynd bug fixes must use the milestone code version")
-        expected = (previous_version[0], previous_version[1], previous_version[2] + 1)
-        if planned_version != expected:
-            raise RuntimeError(
-                f"{package_name} has an API-compatible bug fix, so independent "
-                f"support-crate version must be {expected[0]}.{expected[1]}.{expected[2]}"
-            )
-        if not publish:
-            raise RuntimeError(f"{package_name} has a bug fix but publish is false")
-    elif change == "metadata":
-        if planned_version != release_parts:
-            raise RuntimeError(
-                f"{package_name} has metadata changes, so version must be {release}"
-            )
-        if not publish:
-            raise RuntimeError(
-                f"{package_name} has metadata changes but publish is false"
-            )
-    elif change == "dependency":
-        same_line = planned_version[:2] == previous_version[:2]
-        patch_bump = planned_version[2] > previous_version[2]
-        if not same_line or not patch_bump:
-            raise RuntimeError(
-                f"{package_name} dependency-only bumps must stay on the existing "
-                "minor line and increase only the patch number"
-            )
-        if not publish:
-            raise RuntimeError(
-                f"{package_name} has dependency-only changes but publish is false"
-            )
-    else:
-        if planned_version != previous_version:
-            raise RuntimeError(
-                f"{package_name} is unchanged but version differs from previous_version"
-            )
-        if publish:
-            raise RuntimeError(f"{package_name} is unchanged but publish is true")
+    return {
+        "version": release["version"],
+        "kind": release["kind"],
+        "checkpoint": release["checkpoint"],
+        "crates": crates,
+    }
 
 
 def require_clean_tree(*, allow_dirty: bool) -> None:
@@ -213,6 +115,26 @@ def verify_publish_order(packages: dict[str, dict], plan: dict) -> None:
             f"packages: expected {expected_names}, actual {actual_names}"
         )
 
+    reachable = {"mynd"}
+    pending = ["mynd"]
+    while pending:
+        package_name = pending.pop()
+        for dependency in packages[package_name]["dependencies"]:
+            dependency_name = dependency["name"]
+            if dependency_name in packages and dependency_name not in reachable:
+                reachable.add(dependency_name)
+                pending.append(dependency_name)
+    unexpected_publish = sorted(
+        package_name
+        for package_name in PUBLISH_ORDER
+        if plan["crates"][package_name]["publish"] and package_name not in reachable
+    )
+    if unexpected_publish:
+        raise RuntimeError(
+            "release plan selects crates not required by the facade: "
+            f"{unexpected_publish}"
+        )
+
     seen: set[str] = set()
     for package_name in PUBLISH_ORDER:
         package = packages[package_name]
@@ -229,6 +151,25 @@ def verify_publish_order(packages: dict[str, dict], plan: dict) -> None:
                 raise RuntimeError(
                     f"{package_name} depends on {dependency_name}, but "
                     f"{dependency_name} appears later in PUBLISH_ORDER"
+                )
+            if dependency_name not in packages or not plan["crates"][package_name]["publish"]:
+                continue
+            dependency_entry = plan["crates"][dependency_name]
+            expected_requirement = f"={dependency_entry['version']}"
+            if dependency["req"] != expected_requirement:
+                raise RuntimeError(
+                    f"{package_name} must depend exactly on {dependency_name} "
+                    f"{dependency_entry['version']}, found {dependency['req']}"
+                )
+            dependency_is_available = (
+                dependency_entry["publish"]
+                or dependency_entry["published_version"] == dependency_entry["version"]
+            )
+            if not dependency_is_available:
+                raise RuntimeError(
+                    f"{package_name} is selected for publication but dependency "
+                    f"{dependency_name} {dependency_entry['version']} is neither "
+                    "published nor selected for publication"
                 )
         seen.add(package_name)
 
@@ -279,21 +220,14 @@ def run_preflight(args: argparse.Namespace, *, release_tag_at_head: bool) -> Non
         print("Skipping preflight checks by request.")
         return
 
-    version = parse_version(args.version)
-    gate = ROOT / "scripts" / f"release_{version[0]}_{version[1]}_{version[2]}_gate.sh"
     gate_env = None
     if release_tag_at_head:
         gate_env = {"MYND_RELEASE_PUBLISH_TAG": f"v{args.version}"}
-    if gate.exists():
-        run(
-            [str(gate.relative_to(ROOT))],
-            dry_run=args.dry_run,
-            extra_env=gate_env,
-        )
-    else:
-        run(["scripts/checks.sh"], dry_run=args.dry_run)
-    run(["cargo", "deny", "check"], dry_run=args.dry_run)
-    run(["cargo", "audit"], dry_run=args.dry_run)
+    run(
+        ["scripts/release-gate.sh", args.version],
+        dry_run=args.dry_run,
+        extra_env=gate_env,
+    )
 
 
 def publish_plan(plan: dict) -> tuple[str, ...]:
@@ -312,6 +246,29 @@ def selected_steps(start_at: str, steps: tuple[str, ...]) -> tuple[str, ...]:
     except ValueError as exc:
         raise RuntimeError(f"unknown package for --start-at: {start_at}") from exc
     return steps[index:]
+
+
+def verify_registry_version(package: str, version: str, *, dry_run: bool) -> None:
+    if version == "0.0.0":
+        return
+    run(
+        ["cargo", "info", "--registry", "crates-io", f"{package}@{version}"],
+        dry_run=dry_run,
+    )
+
+
+def verify_registry_state(
+    plan: dict,
+    skipped_publish: tuple[str, ...],
+    *,
+    dry_run: bool,
+) -> None:
+    for package in PUBLISH_ORDER:
+        published = plan["crates"][package]["published_version"]
+        verify_registry_version(package, published, dry_run=dry_run)
+    for package in skipped_publish:
+        version = plan["crates"][package]["version"]
+        verify_registry_version(package, version, dry_run=dry_run)
 
 
 def wait_for_index(package: str, version: str, *, dry_run: bool) -> None:
@@ -415,7 +372,23 @@ def main() -> int:
     if args.check:
         print("release_crates.py publish order is up to date.")
         print(f"release_crates.py release plan is {args.version}.")
+        print(f"release_crates.py release kind is {plan['kind']}.")
         return 0
+
+    if plan["kind"] == "engineering":
+        print(
+            f"Refusing to publish engineering checkpoint {args.version}; "
+            f"next publication checkpoint is {plan['checkpoint']}.",
+            file=sys.stderr,
+        )
+        return 1
+    if not args.dry_run and not args.require_tag:
+        print(
+            "Refusing to publish without --require-tag; publication must use the "
+            "final green GitHub tag.",
+            file=sys.stderr,
+        )
+        return 1
 
     require_clean_tree(allow_dirty=args.allow_dirty or args.dry_run)
     release_tag_at_head = check_release_tag(
@@ -425,6 +398,7 @@ def main() -> int:
     planned_publish = publish_plan(plan)
     start_at = args.start_at or (planned_publish[0] if planned_publish else "")
     steps = selected_steps(start_at, planned_publish)
+    skipped_publish = planned_publish[: len(planned_publish) - len(steps)]
 
     print(f"Workspace root: {ROOT}")
     print(f"Release version: {args.version}")
@@ -448,6 +422,7 @@ def main() -> int:
     if no_verify_result != 0:
         return no_verify_result
 
+    verify_registry_state(plan, skipped_publish, dry_run=args.dry_run)
     run_preflight(args, release_tag_at_head=release_tag_at_head)
 
     for index, package in enumerate(steps):

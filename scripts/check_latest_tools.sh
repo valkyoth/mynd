@@ -2,6 +2,7 @@
 set -eu
 
 ci_file=".github/workflows/ci.yml"
+workflow_files="$(find .github/workflows -type f \( -name '*.yml' -o -name '*.yaml' \) | sort)"
 rust_toolchain_file="${RUST_TOOLCHAIN_FILE:-rust-toolchain.toml}"
 rust_stable_manifest_url="${RUST_STABLE_MANIFEST_URL:-https://static.rust-lang.org/dist/channel-rust-stable.toml}"
 
@@ -70,7 +71,8 @@ check_cargo_tool() {
 }
 
 checkout_pin_line() {
-    sed -n 's/.*uses: actions\/checkout@\([0-9a-f]\{40\}\) # \(v[0-9][0-9.]*\).*/\1 \2/p' "$ci_file" | head -n 1
+    sed -n 's/.*uses: actions\/checkout@\([0-9a-f]\{40\}\) # \(v[0-9][0-9.]*\).*/\1 \2/p' \
+        $workflow_files | head -n 1
 }
 
 check_all_actions_sha_pinned() {
@@ -87,7 +89,7 @@ check_all_actions_sha_pinned() {
                 ;;
         esac
     done <<EOF
-$(sed -n 's/^[[:space:]]*uses: [^@][^@]*@\([^[:space:]]*\).*/\1/p' "$ci_file")
+$(sed -n 's/^[[:space:]]*uses: [^@][^@]*@\([^[:space:]]*\).*/\1/p' $workflow_files)
 EOF
     [ "$failed" -eq 0 ]
 }

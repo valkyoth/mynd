@@ -587,6 +587,13 @@ release-crates.toml, the crate-version matrix, changelog, notes, package
 inventory, and SBOM for every tag; update pentest metadata only at a pentest
 checkpoint.
 
+Release metadata records the release kind, assigned checkpoint, preceding
+publication, each crate's version in the preceding GitHub tag, and each crate's
+latest crates.io version separately. Automation must reject publication from
+an engineering checkpoint, reject placeholder interim pentest reports, admit
+an unchanged-but-unpublished support crate at its assigned checkpoint, and
+fail closed unless the complete release gate is used.
+
 Crates enter only at their first handoff. Intended inward layering is
 mynd-math, mynd-core, mynd-budget, mynd-io, mynd-deflate, mynd-zlib,
 mynd-metadata, mynd-icc, mynd-ifd, mynd-exif, mynd-color, mynd-codec, one
@@ -1090,7 +1097,7 @@ Exit criteria:
 
 ### v0.4.0 - Validated dimensions, rectangles, strides, planes, and output lengths
 
-Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
+Status: Released 2026-08-03.
 
 Context:
 
@@ -1144,8 +1151,8 @@ Exit criteria:
 
 ### v0.5.0 - Explicit pixel layout and sample-storage domains
 
-Status: Release candidate; cumulative pentest PASS; awaiting green GitHub CI
-and CodeQL.
+Status: Released 2026-08-03 after cumulative pentest, GitHub CI, and CodeQL
+PASS.
 
 Context:
 

@@ -1,6 +1,6 @@
 # mynd 0.4.0 Release Notes
 
-Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
+Status: released 2026-08-03; pentest, GitHub CI, and CodeQL PASS.
 
 This release adds storage-neutral geometry and plane-layout foundations. It
 does not add pixel formats, buffer access, allocation, parsing, decoding,

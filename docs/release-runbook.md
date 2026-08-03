@@ -11,6 +11,12 @@ Every named version completes steps 1-6:
    and the crate version matrix.
 6. Inspect every `cargo package` archive and dependency tree.
 
+Run `scripts/release-gate.sh X.Y.Z` for the complete local gate. Release
+metadata derives whether that version is an engineering or publication
+checkpoint and fails if its pentest or publication state does not match the
+authoritative cadence. `release-crates.toml` separately records the previous
+GitHub-tag version and latest crates.io-published version for every crate.
+
 Then follow the milestone's Pentest and Crates.io columns.
 
 ## GitHub engineering checkpoint
@@ -18,7 +24,14 @@ Then follow the milestone's Pentest and Crates.io columns.
 For a row marked `Pentest: No` and `Crates.io: Not published`:
 
 1. State in its release notes that the tag is not externally pentested or
-   published, and name the next cumulative checkpoint.
+   published, and name the next cumulative checkpoint. Use these exact
+   machine-checked fields, replacing the checkpoint version as needed:
+
+   ```text
+   Release kind: GitHub engineering checkpoint
+   External pentest: No; cumulative review at v0.10.0
+   Crates.io: Not published; next publication is mynd 0.10.0
+   ```
 2. Commit the complete candidate and wait for GitHub CI and CodeQL.
 3. Fix any failure, rerun the affected local checks, commit, and repeat.
 4. Tag the final green commit. Do not create a permanent pentest report and do
@@ -29,7 +42,8 @@ For a row marked `Pentest: No` and `Crates.io: Not published`:
 For a row marked `Pentest: Yes` and `Crates.io: Publish`:
 
 1. Pentest the complete delta since the previous published checkpoint. Keep
-   `security/pentest/vX.Y.Z.md` updated with the result.
+   `security/pentest/vX.Y.Z.md` updated with the result. Its release notes use
+   `Release kind: Cumulative publication checkpoint`.
 2. Record every finding, fix it, retest, and repeat in the same report until it
    reaches `Status: PASS`.
 3. Commit the complete candidate and PASS report, then wait for GitHub CI and
@@ -37,11 +51,15 @@ For a row marked `Pentest: Yes` and `Crates.io: Publish`:
    retest in the report, commit again, and wait for green results.
 4. Run the strict publication gate against the final green commit, tag that
    commit, then use `scripts/release_crates.py --require-tag` to publish changed
-   crates in dependency order.
+   or carried-forward crates in dependency order. The script refuses an
+   engineering checkpoint and verifies that every selected crate's exact
+   first-party dependencies are already published or selected earlier.
 
 Critical/high security fixes for an already published artifact may use an
 out-of-cadence pentest and patch publication. Document the exception in the
-release notes and pentest report.
+release notes and pentest report, set the release metadata kind to `emergency`
+with a non-empty reason, and use
+`Release kind: Emergency publication checkpoint` in the release notes.
 
 Patch releases contain only bug/security/documentation/test corrections. Minor
 pre-1.0 releases add one bounded capability. Every named version is committed

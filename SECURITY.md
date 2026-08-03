@@ -6,9 +6,10 @@ resource limits, dependencies, CI, and releases as security-sensitive.
 
 ## Current status
 
-Version 0.1.0 is a repository foundation and contains no image decoder or
-encoder. It is not production-ready. Support claims in `FORMAT_SUPPORT.md`
-must remain evidence-based and fail closed.
+Version 0.5.0 provides checked arithmetic, validated geometry and plane
+layouts, and explicit sample-storage and pixel-layout domains. It contains no
+image decoder or encoder and is not production-ready. Support claims in
+`FORMAT_SUPPORT.md` must remain evidence-based and fail closed.
 
 ## Reporting
 
@@ -55,15 +56,25 @@ an advanced CodeQL workflow while default setup is active. See
 
 ## Release gate
 
-Every release keeps one matching pentest report in
-`security/pentest/vX.Y.Z.md`. The report starts before testing, accumulates
-findings, fixes, CI corrections, and retests, and must end at `Status: PASS`.
-There is no separate report-only commit requirement.
+Every planned version is committed, passes the complete applicable local gate,
+waits for green GitHub CI and CodeQL, and receives a GitHub tag. From v0.5.0
+onward, permanent pentest reports and crates.io publication occur only at the
+cumulative checkpoints v0.5.0, v0.10.0, v0.15.0, and each following fifth
+minor through v0.95.0. Interim tags carry their complete delta forward and
+must not contain placeholder pentest reports or publish crates.
 
-After the report reaches PASS, commit the complete candidate and wait for
-GitHub CI and CodeQL. A failure returns to the same fix, document, commit, and
-verify loop. The release tag points at the final commit only after its local
-release gate, GitHub CI, and CodeQL are green.
+A publication checkpoint keeps one matching report in
+`security/pentest/vX.Y.Z.md`. It covers the complete delta since the preceding
+published checkpoint, accumulates findings, fixes, CI corrections, and
+retests, and must end at `Status: PASS`. There is no separate report-only
+commit requirement.
+
+After a checkpoint report reaches PASS, commit the complete candidate and wait
+for GitHub CI and CodeQL. A failure returns to the same fix, document, commit,
+and verify loop. Every release tag points at the final commit only after its
+local release gate, GitHub CI, and CodeQL are green. A critical/high defect in
+an already published artifact may use a documented, fully pentested emergency
+publication outside the normal cadence.
 
 Required evidence grows with capability: formatting, lints, MSRV/current Rust,
 feature combinations, target builds, unit and documentation tests, package

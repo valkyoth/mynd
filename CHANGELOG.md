@@ -6,7 +6,7 @@ a time.
 
 ## [Unreleased]
 
-## [0.5.0] - Unreleased
+## [0.5.0] - 2026-08-03
 
 ### Added
 

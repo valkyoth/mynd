@@ -1,7 +1,8 @@
 # mynd 0.5.0 Release Notes
 
-Status: release candidate; cumulative pentest PASS; awaiting GitHub CI and
-CodeQL.
+Status: released 2026-08-03; cumulative pentest, GitHub CI, and CodeQL PASS.
+
+Release kind: Cumulative publication checkpoint
 
 This release adds explicit format-neutral pixel-layout and sample-storage
 domains. It does not add buffer access, allocation, format parsing, decoding,

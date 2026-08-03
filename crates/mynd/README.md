@@ -76,6 +76,12 @@ explicitly unpentested engineering checkpoints and are not published. See the
 [release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 for the checkpoint assigned to every version.
 
+Accordingly, `mynd` 0.5.0 remains the crates.io version throughout the
+v0.5.1-v0.9.0 GitHub engineering train. The next normal crates.io release and
+cumulative pentest are `mynd` 0.10.0; after that, the next checkpoint is
+0.15.0. Support crates may advance in GitHub tags, but only their latest
+versions required by the checkpoint facade are published with that checkpoint.
+
 ## Design goals
 
 - `no_std` from the first release, with `alloc` and `std` kept behind explicit

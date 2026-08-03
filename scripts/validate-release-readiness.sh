@@ -14,6 +14,13 @@ version="${tag#v}"
 release_notes="release-notes/RELEASE_NOTES_${version}.md"
 pentest_report="security/pentest/${tag}.md"
 publish_tag="${MYND_RELEASE_PUBLISH_TAG:-}"
+planned_version="$(python3 scripts/release_policy.py plan-field version)"
+kind="$(python3 scripts/release_policy.py plan-field kind)"
+
+if [ "$version" != "$planned_version" ]; then
+    echo "release tag ${tag} does not match planned version v${planned_version}" >&2
+    exit 1
+fi
 
 if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
     if [ "$publish_tag" != "$tag" ]; then
@@ -52,16 +59,22 @@ if [ ! -s sbom/mynd.spdx.json ]; then
     exit 1
 fi
 
+if [ "$kind" = "engineering" ]; then
+    if [ -e "$pentest_report" ]; then
+        echo "engineering checkpoint must not keep a pentest report" >&2
+        exit 1
+    fi
+    exit 0
+fi
+
 if [ ! -s "$pentest_report" ]; then
     echo "missing or empty pentest report: ${pentest_report}" >&2
     exit 1
 fi
-
 if ! git cat-file -e "HEAD:${pentest_report}" 2>/dev/null; then
     echo "pentest report must be committed in the release candidate" >&2
     exit 1
 fi
-
 if ! grep -q '^Status: PASS$' "$pentest_report"; then
     echo "pentest report must say Status: PASS" >&2
     exit 1
@@ -83,13 +96,8 @@ if grep -Eq '^(Tester|Scope|Date): pending$' "$pentest_report"; then
     exit 1
 fi
 
-for heading in \
-    "## Summary" \
-    "## Scope" \
-    "## Evidence" \
-    "## Findings And Remediation" \
-    "## Residual Risk" \
-    "## Release Decision"; do
+for heading in "## Summary" "## Scope" "## Evidence" \
+    "## Findings And Remediation" "## Residual Risk" "## Release Decision"; do
     if ! grep -q "^${heading}$" "$pentest_report"; then
         echo "pentest report is missing ${heading}" >&2
         exit 1
