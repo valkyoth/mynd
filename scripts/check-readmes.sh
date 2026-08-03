@@ -10,7 +10,8 @@ if ! cmp -s README.md "$facade_readme"; then
     exit 1
 fi
 
-for readme in README.md "$facade_readme" crates/mynd-core/README.md; do
+for readme in README.md "$facade_readme" crates/mynd-core/README.md \
+    crates/mynd-math/README.md; do
     if ! grep -Fq "<img src=\"$logo_url\"" "$readme"; then
         echo "$readme must use the repository-hosted Mynd logo URL" >&2
         exit 1
@@ -22,7 +23,7 @@ for readme in README.md "$facade_readme" crates/mynd-core/README.md; do
     fi
 done
 
-for package in mynd mynd-core; do
+for package in mynd mynd-core mynd-math; do
     package_files="$(cargo package -p "$package" --allow-dirty --list)"
     if printf '%s\n' "$package_files" \
         | grep -Eq '(^|/)\.github/images/|\.(gif|jpe?g|png|svg|webp)$'; then

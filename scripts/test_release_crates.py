@@ -27,7 +27,7 @@ class ReleasePlannerTests(unittest.TestCase):
 
     def test_current_plan_loads(self) -> None:
         plan = MODULE.release_plan(MODULE.DEFAULT_PLAN)
-        self.assertEqual(plan["version"], "0.2.1")
+        self.assertEqual(plan["version"], "0.3.0")
         self.assertEqual(tuple(plan["crates"]), MODULE.PUBLISH_ORDER)
 
     def test_unchanged_crate_cannot_publish(self) -> None:
@@ -39,7 +39,7 @@ class ReleasePlannerTests(unittest.TestCase):
             "reason": "test",
         }
         with self.assertRaises(RuntimeError):
-            MODULE.validate_plan_entry("mynd-core", entry, "0.2.1")
+            MODULE.validate_plan_entry("mynd-core", entry, "0.3.0")
 
     def test_support_code_change_requires_next_minor(self) -> None:
         entry = {
@@ -50,7 +50,17 @@ class ReleasePlannerTests(unittest.TestCase):
             "reason": "test",
         }
         with self.assertRaises(RuntimeError):
-            MODULE.validate_plan_entry("mynd-core", entry, "0.2.1")
+            MODULE.validate_plan_entry("mynd-core", entry, "0.3.0")
+
+    def test_new_support_crate_starts_at_first_minor(self) -> None:
+        entry = {
+            "previous_version": "0.0.0",
+            "version": "0.1.0",
+            "change": "code",
+            "publish": True,
+            "reason": "test",
+        }
+        MODULE.validate_plan_entry("mynd-math", entry, "0.3.0")
 
     def test_plan_requires_every_workspace_crate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

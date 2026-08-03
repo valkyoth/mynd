@@ -4,11 +4,16 @@ version = 4
 
 [[package]]
 name = "mynd"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "mynd-core",
+ "mynd-math",
 ]
 
 [[package]]
 name = "mynd-core"
+version = "0.1.0"
+
+[[package]]
+name = "mynd-math"
 version = "0.1.0"

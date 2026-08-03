@@ -986,7 +986,7 @@ Exit criteria:
 
 ### v0.2.1 - Reproducible specification corpus and legal-disposition gate
 
-Status: Release candidate; pentest PASS; awaiting green GitHub CI and CodeQL.
+Status: Released 2026-07-27.
 
 Context:
 
@@ -1035,7 +1035,7 @@ Exit criteria:
 
 ### v0.3.0 - Checked conversion/add/multiply/align/range primitives
 
-Status: Planned.
+Status: Implementation complete; awaiting exact-version pentest.
 
 Context:
 

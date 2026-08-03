@@ -1,6 +1,6 @@
 # mynd 0.2.1 Release Notes
 
-Status: release candidate; pentest PASS; awaiting GitHub CI and CodeQL.
+Status: released 2026-07-27.
 
 This governance-only release completes the reproducible specification-corpus
 and legal-disposition handoff. It adds no image parser, decoder, encoder,

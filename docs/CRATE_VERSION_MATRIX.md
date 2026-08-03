@@ -10,8 +10,9 @@ workspace version without changing its package inputs.
 
 | Crate | Previous | Planned | Change | Publish | Reason |
 | --- | --- | --- | --- | --- | --- |
+| `mynd-math` | `0.0.0` | `0.1.0` | code | Yes | Introduce checked conversion, arithmetic, alignment, range, tests, and Kani proofs. |
 | `mynd-core` | `0.1.0` | `0.1.0` | unchanged | No | No published code, dependency, or package metadata changed. |
-| `mynd` | `0.2.0` | `0.2.1` | metadata | Yes | Publish reproducible corpus, legal-disposition, and verification documentation. |
+| `mynd` | `0.2.1` | `0.3.0` | code | Yes | Re-export the checked `mynd-math` 0.1.0 API through the facade. |
 
 Change kinds follow the adapted `eth` release tool: facade code uses the
 milestone version; support-crate code gets its next independent minor; bugfixes

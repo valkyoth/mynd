@@ -2,6 +2,7 @@
 members = [
     "crates/mynd",
     "crates/mynd-core",
+    "crates/mynd-math",
 ]
 default-members = ["crates/mynd"]
 resolver = "3"
@@ -19,6 +20,7 @@ unsafe_code = "forbid"
 unsafe_op_in_unsafe_fn = "forbid"
 unused_must_use = "deny"
 missing_docs = "deny"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
 [workspace.lints.clippy]
 panic = "forbid"
@@ -32,6 +34,7 @@ cast_sign_loss = "deny"
 
 [workspace.dependencies]
 mynd-core = { path = "crates/mynd-core", version = "=0.1.0", default-features = false }
+mynd-math = { path = "crates/mynd-math", version = "=0.1.0", default-features = false }
 
 [profile.release]
 overflow-checks = true

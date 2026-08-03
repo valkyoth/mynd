@@ -6,8 +6,22 @@ a time.
 
 ## [Unreleased]
 
+## [0.3.0] - Unreleased
+
+### Added
+
+- Added the dependency-free `mynd-math` 0.1.0 support crate with explicit
+  checked integer conversions, `u64`/`usize` addition and multiplication,
+  upward alignment, bounded half-open ranges, and structured errors.
+- Added extrema cross-products, exhaustive reduced-domain alignment/range
+  tests, facade re-export coverage, and 12 Kani arithmetic proof harnesses.
+- Added a requirement-to-implementation/test/proof contract and a dedicated
+  Kani CI job using the current pinned verifier.
+
 ### Changed
 
+- Advanced the `mynd` facade to 0.3.0 and re-exported `mynd-math` as
+  `mynd::math`; `mynd-core` remains unchanged at 0.1.0.
 - Defined the v0.5.0-and-later release cadence: every planned version remains a
   green GitHub tag, while cumulative pentests and crates.io publication occur
   at each fifth minor checkpoint (`v0.5.0`, `v0.10.0`, `v0.15.0`, and so on).
@@ -15,7 +29,15 @@ a time.
   added cumulative pentest scope, and retained an emergency security-release
   exception for affected published artifacts.
 
-## [0.2.1] - Unreleased
+### Security
+
+- Checked operations never wrap, saturate, truncate, allocate, or include
+  attacker-controlled operands in errors; alignment zero and range overflow
+  are distinct failures.
+- Added exact-version v0.3.0 pentest scope for the new public arithmetic and
+  crate-publication surface.
+
+## [0.2.1] - 2026-07-27
 
 ### Added
 
@@ -116,7 +138,8 @@ a time.
 - Explicit crates.io version-and-lockfile trust boundary for CI security-tool
   installation.
 
-[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/valkyoth/mynd/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/valkyoth/mynd/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/valkyoth/mynd/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/valkyoth/mynd/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/valkyoth/mynd/releases/tag/v0.1.0

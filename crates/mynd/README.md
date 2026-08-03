@@ -29,9 +29,9 @@
 resource use, deterministic behavior, and deployment from embedded `no_std`
 systems through desktop and server applications.
 
-The project is in its current 0.2.1 specification-corpus phase. The workspace,
-security policy, verification gates, crate boundaries, scope contract, and
-standards ledger exist; image decoding and encoding APIs do not yet exist. The
+The project is in its current 0.3.0 checked-arithmetic phase. The workspace now
+provides audited conversion, addition, multiplication, alignment, and bounded
+range primitives; image-model, decoding, and encoding APIs do not yet exist. The
 [release plan](https://github.com/valkyoth/mynd/blob/main/docs/VERSION_PLAN.md)
 defines the incremental path to the first production-ready 1.0.0 release.
 
@@ -42,7 +42,7 @@ they need:
 
 ```toml
 [dependencies]
-mynd = { version = "0.2.1", default-features = false }
+mynd = { version = "0.3.0", default-features = false }
 ```
 
 The default feature set is intentionally empty.
@@ -52,7 +52,8 @@ The default feature set is intentionally empty.
 | Capability | Status | Planned release family |
 |---|---|---|
 | `no_std` facade, core boundary, and governance contract | Foundation available | 0.1.x-0.2.x |
-| Checked image foundations and caller-owned buffers | Planned | 0.3.x-0.12.x |
+| Checked integer arithmetic | Release candidate | 0.3.x |
+| Validated image foundations and caller-owned buffers | Planned | 0.4.x-0.12.x |
 | Shared I/O, probing, and codec contracts | Planned | 0.13.x-0.19.x |
 | BMP, QOI, Netpbm PNM/PAM, and farbfeld | Planned | 0.20.x-0.35.x |
 | PNG, GIF, JPEG, WebP, and TIFF | Planned | 0.36.x-0.77.x |
@@ -102,7 +103,7 @@ features only when their release gates are complete.
 The minimum supported Rust version is Rust `1.90.0`. New deployments should use
 the pinned stable Rust `1.97.1` until the toolchain policy is updated.
 
-Compatibility evidence for `0.2.1`:
+Compatibility evidence for `0.3.0`:
 
 | Rust | Local Evidence |
 | --- | --- |
@@ -116,8 +117,9 @@ The compatibility policy is documented in
 
 | Crate | Role | Runtime dependencies |
 |---|---|---:|
-| [`mynd`](https://crates.io/crates/mynd) | Public facade and feature composition | 1 first-party crate |
+| [`mynd`](https://crates.io/crates/mynd) | Public facade and feature composition | 2 first-party crates |
 | [`mynd-core`](https://crates.io/crates/mynd-core) | Format-neutral `no_std` image foundations | 0 |
+| [`mynd-math`](https://crates.io/crates/mynd-math) | Checked integer conversion, arithmetic, alignment, and ranges | 0 |
 
 Application-facing APIs should enter through `mynd`. Support crates are
 published separately for workspace architecture and expert use, but are not
@@ -134,7 +136,8 @@ rustup run 1.97.1 scripts/checks.sh
 The repository gate covers formatting, lints, tests, documentation, `no_std`
 builds, MSRV checks, dependency policy, and package contents. The full release
 gate and CI additionally run vulnerability auditing, the complete Rust and
-platform matrices, latest-tool checks, and SBOM verification. See
+platform matrices, Kani arithmetic proofs, latest-tool checks, and SBOM
+verification. See
 [toolchain policy](https://github.com/valkyoth/mynd/blob/main/docs/toolchain-policy.md) for the
 full command matrix.
 

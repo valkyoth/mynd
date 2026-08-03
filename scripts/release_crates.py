@@ -23,6 +23,7 @@ DEFAULT_PLAN = ROOT / "release-crates.toml"
 CHANGE_KINDS = ("code", "bugfix", "dependency", "metadata", "unchanged")
 
 PUBLISH_ORDER = (
+    "mynd-math",
     "mynd-core",
     "mynd",
 )

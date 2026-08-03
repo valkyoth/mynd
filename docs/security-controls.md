@@ -11,6 +11,8 @@ Initial enforced controls:
   multiple dependency versions;
 - 500-line source ceiling and inward-only crate boundaries;
 - MSRV/current-stable and platform compilation matrices;
+- checked conversion, addition, multiplication, alignment, and range
+  primitives with extrema tests and Kani proofs;
 - GitHub CodeQL default setup policy.
 
 Cargo profiles belong to the top-level build. Downstream consumers control
@@ -26,6 +28,6 @@ Controls activated with parser work:
 - format corpora with provenance;
 - fuzz targets for probes, headers, streaming, chunk boundaries, policies,
   encoders, and round trips;
-- Kani proofs for bounded arithmetic/state invariants;
+- additional Kani proofs for parser and state-machine invariants;
 - Miri and sanitizer evidence;
 - independent differential and official conformance tests.

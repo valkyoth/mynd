@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-version="${1:-0.2.1}"
+version="${1:-0.3.0}"
 tag="v${version}"
 report="security/pentest/${tag}.md"
 

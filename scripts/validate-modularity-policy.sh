@@ -18,7 +18,9 @@ fi
 
 grep -q '"crates/mynd"' Cargo.toml
 grep -q '"crates/mynd-core"' Cargo.toml
+grep -q '"crates/mynd-math"' Cargo.toml
 grep -q 'mynd-core.*default-features = false' Cargo.toml
+grep -q 'mynd-math.*default-features = false' Cargo.toml
 
 if find crates -type f \( -name 'lib.rs' -o -name 'main.rs' \) \
     -exec grep -L '#!\[forbid(unsafe_code)\]' {} + |

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-for package in mynd mynd-core; do
+for package in mynd mynd-core mynd-math; do
     for license in LICENSE-MIT LICENSE-APACHE; do
         packaged="crates/${package}/${license}"
         if ! cmp -s "$license" "$packaged"; then

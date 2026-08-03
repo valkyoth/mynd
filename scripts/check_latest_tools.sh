@@ -148,5 +148,6 @@ fi
 check_cargo_tool cargo-deny
 check_cargo_tool cargo-audit
 check_cargo_tool cargo-sbom
+check_cargo_tool kani-verifier
 check_all_actions_sha_pinned
 check_checkout_action

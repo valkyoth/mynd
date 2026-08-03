@@ -48,6 +48,20 @@ jobs:
       - name: Verify committed SBOM
         run: scripts/generate-sbom.sh --check
 
+  kani:
+    name: Kani checked-arithmetic proofs
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Kani
+        run: |
+          cargo install --locked kani-verifier --version 0.67.0
+          cargo kani setup
+      - name: Prove checked arithmetic
+        run: scripts/check-kani.sh
+
   rust-compatibility:
     name: Rust ${{ matrix.rust }}
     runs-on: ubuntu-latest

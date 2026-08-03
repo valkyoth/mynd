@@ -4,8 +4,9 @@
 
 //! Security-first image codecs and processing for Rust.
 //!
-//! Version 0.1.0 is the repository foundation. Codec APIs are not available
-//! until their implementation, conformance, and security milestones pass.
+//! Version 0.3.0 exposes checked arithmetic foundations. Image-model and codec
+//! APIs remain unavailable until their implementation and security milestones
+//! pass.
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
@@ -15,3 +16,6 @@ extern crate std;
 
 /// Format-neutral image foundations.
 pub use mynd_core as core;
+
+/// Checked integer arithmetic for image-data boundaries.
+pub use mynd_math as math;

@@ -1,15 +1,15 @@
 [package]
-name = "mynd"
-version = "0.3.0"
+name = "mynd-math"
+version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
-description = "Security-first, resource-bounded no_std image codecs and processing."
+description = "Checked no_std arithmetic primitives for the mynd ecosystem."
 license.workspace = true
 readme = "README.md"
-documentation = "https://docs.rs/mynd"
+documentation = "https://docs.rs/mynd-math"
 homepage.workspace = true
 repository.workspace = true
-keywords = ["image", "codec", "no-std", "graphics"]
+keywords = ["image", "no-std", "arithmetic", "overflow"]
 categories = ["multimedia::images", "no-std"]
 include = [
     "Cargo.toml",
@@ -22,12 +22,6 @@ include = [
 
 [features]
 default = []
-alloc = ["mynd-core/alloc"]
-std = ["alloc", "mynd-core/std"]
-
-[dependencies]
-mynd-core.workspace = true
-mynd-math.workspace = true
 
 [package.metadata.docs.rs]
 all-features = true

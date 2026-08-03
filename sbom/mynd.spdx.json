@@ -1,20 +1,20 @@
 {
   "SPDXID": "SPDXRef-DOCUMENT",
   "creationInfo": {
-    "created": "2026-07-27T14:31:02Z",
+    "created": "2026-08-03T12:26:12Z",
     "creators": [
       "Tool: cargo-sbom-v0.10.0"
     ]
   },
   "dataLicense": "CC0-1.0",
-  "documentNamespace": "https://spdx.org/spdxdocs/mynd-40a6c296-2562-476b-82ad-ea783fef5f0f",
+  "documentNamespace": "https://spdx.org/spdxdocs/mynd-a0cab0ea-d736-42fe-9064-3e937ce81221",
   "files": [
     {
       "SPDXID": "SPDXRef-File-mynd",
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "1da59777a7529e205044716ae0e2e6323c8b62af"
+          "checksumValue": "437d762db1857be6d03b13f04e124ab1bb26a5c7"
         }
       ],
       "fileName": "./Cargo.lock",
@@ -28,7 +28,21 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "1da59777a7529e205044716ae0e2e6323c8b62af"
+          "checksumValue": "437d762db1857be6d03b13f04e124ab1bb26a5c7"
+        }
+      ],
+      "fileName": "./Cargo.lock",
+      "fileTypes": [
+        "SOURCE",
+        "TEXT"
+      ]
+    },
+    {
+      "SPDXID": "SPDXRef-File-mynd_math",
+      "checksums": [
+        {
+          "algorithm": "SHA1",
+          "checksumValue": "437d762db1857be6d03b13f04e124ab1bb26a5c7"
         }
       ],
       "fileName": "./Cargo.lock",
@@ -41,16 +55,6 @@
   "name": "mynd",
   "packages": [
     {
-      "SPDXID": "SPDXRef-Package-mynd-0.2.1",
-      "description": "Security-first, resource-bounded no_std image codecs and processing.",
-      "downloadLocation": "NONE",
-      "homepage": "https://github.com/valkyoth/mynd",
-      "licenseConcluded": "MIT OR Apache-2.0",
-      "licenseDeclared": "MIT OR Apache-2.0",
-      "name": "mynd",
-      "versionInfo": "0.2.1"
-    },
-    {
       "SPDXID": "SPDXRef-Package-mynd-core-0.1.0",
       "description": "Format-neutral no_std image types for the mynd ecosystem.",
       "downloadLocation": "NONE",
@@ -59,9 +63,59 @@
       "licenseDeclared": "MIT OR Apache-2.0",
       "name": "mynd-core",
       "versionInfo": "0.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mynd-0.3.0",
+      "description": "Security-first, resource-bounded no_std image codecs and processing.",
+      "downloadLocation": "NONE",
+      "homepage": "https://github.com/valkyoth/mynd",
+      "licenseConcluded": "MIT OR Apache-2.0",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "name": "mynd",
+      "versionInfo": "0.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mynd-math-0.1.0",
+      "description": "Checked no_std arithmetic primitives for the mynd ecosystem.",
+      "downloadLocation": "NONE",
+      "homepage": "https://github.com/valkyoth/mynd",
+      "licenseConcluded": "MIT OR Apache-2.0",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "name": "mynd-math",
+      "versionInfo": "0.1.0"
     }
   ],
   "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-File-mynd_math",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-mynd-0.3.0",
+      "relationshipType": "GENERATED_FROM",
+      "spdxElementId": "SPDXRef-File-mynd"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-mynd-math-0.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mynd-0.3.0"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-mynd-math-0.1.0",
+      "relationshipType": "GENERATED_FROM",
+      "spdxElementId": "SPDXRef-File-mynd_math"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-Package-mynd-core-0.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mynd-0.3.0"
+    },
+    {
+      "relatedSpdxElement": "SPDXRef-File-mynd",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
     {
       "relatedSpdxElement": "SPDXRef-File-mynd_core",
       "relationshipType": "DESCRIBES",
@@ -71,21 +125,6 @@
       "relatedSpdxElement": "SPDXRef-Package-mynd-core-0.1.0",
       "relationshipType": "GENERATED_FROM",
       "spdxElementId": "SPDXRef-File-mynd_core"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-Package-mynd-core-0.1.0",
-      "relationshipType": "DEPENDS_ON",
-      "spdxElementId": "SPDXRef-Package-mynd-0.2.1"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-File-mynd",
-      "relationshipType": "DESCRIBES",
-      "spdxElementId": "SPDXRef-DOCUMENT"
-    },
-    {
-      "relatedSpdxElement": "SPDXRef-Package-mynd-0.2.1",
-      "relationshipType": "GENERATED_FROM",
-      "spdxElementId": "SPDXRef-File-mynd"
     }
   ],
   "spdxVersion": "SPDX-2.3"
